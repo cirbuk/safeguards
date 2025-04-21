@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Budget Override Request</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .details {
+            background-color: #ffffff;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .label {
+            font-weight: bold;
+            color: #495057;
+        }
+        .actions {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .approve {
+            background-color: #28a745;
+            color: white;
+        }
+        .reject {
+            background-color: #dc3545;
+            color: white;
+        }
+        .view {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .footer {
+            font-size: 12px;
+            color: #6c757d;
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Budget Override Request</h1>
+        <p>A new budget override request requires your attention.</p>
+    </div>
+
+    <div class="details">
+        <p><span class="label">Agent:</span> ${agent_id}</p>
+        <p><span class="label">Requester:</span> ${requester}</p>
+        <p>
+            <span class="label">Current Budget:</span>
+            <span class="amount">$${current_allocation}</span>
+        </p>
+        <p>
+            <span class="label">Requested Amount:</span>
+            <span class="amount">$${requested_amount}</span>
+        </p>
+        <p><span class="label">Override Type:</span> ${override_type}</p>
+        <p><span class="label">Duration:</span> ${duration}</p>
+        <p><span class="label">Justification:</span><br>${justification}</p>
+    </div>
+
+    <div class="actions">
+        <a href="${api_base_url}/api/v1/budget-overrides/${request_id}/approve?token=${approval_token}" 
+           class="button approve">Approve</a>
+        <a href="${api_base_url}/api/v1/budget-overrides/${request_id}/reject?token=${rejection_token}" 
+           class="button reject">Reject</a>
+        <a href="${dashboard_url}/overrides/${request_id}" 
+           class="button view">View Details</a>
+    </div>
+
+    <div class="footer">
+        <p>Request ID: ${request_id}</p>
+        <p>Created at: ${created_at}</p>
+        <p>This is an automated message. Please do not reply to this email.</p>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,60 @@
+{% extends "email_alert.html" %}
+
+{% block alert_details %}
+<div style="margin-bottom: 20px;">
+    <h3 style="margin: 0 0 10px 0;">Resource Details</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6;">Resource Type:</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold;">{{ resource.type }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6;">Current Usage:</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold;">{{ resource.current_usage }}{{ resource.unit }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6;">Threshold:</td>
+            <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold;">{{ resource.threshold }}{{ resource.unit }}</td>
+        </tr>
+    </table>
+</div>
+
+<div style="margin-bottom: 20px;">
+    <h3 style="margin: 0 0 10px 0;">Usage Level</h3>
+    <div style="
+        background-color: #e9ecef;
+        border-radius: 4px;
+        height: 24px;
+        overflow: hidden;
+    ">
+        <div style="
+            width: {{ resource.usage_percentage }}%;
+            height: 100%;
+            background-color: {% if resource.usage_percentage < 75 %}#28a745{% elif resource.usage_percentage < 90 %}#ffc107{% else %}#dc3545{% endif %};
+            transition: width 0.3s ease;
+        "></div>
+    </div>
+    <p style="margin: 5px 0 0 0; text-align: right; font-weight: bold; color: {% if resource.usage_percentage < 75 %}#28a745{% elif resource.usage_percentage < 90 %}#ffc107{% else %}#dc3545{% endif %};">
+        {{ resource.usage_percentage }}%
+    </p>
+</div>
+
+{% if resource.top_processes %}
+<div style="margin-bottom: 20px;">
+    <h3 style="margin: 0 0 10px 0;">Top Processes</h3>
+    <div style="
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        padding: 10px;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 14px;
+    ">
+        {% for process in resource.top_processes %}
+        <div style="margin-bottom: 5px;">
+            {{ process.name }} (PID: {{ process.pid }}) - {{ process.usage }}{{ resource.unit }}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

@@ -1,0 +1,42 @@
+{% extends "email_alert.html" %}
+
+{% block alert_details %}
+<div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <h3 style="margin-top: 0;">Cost Details</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 8px 0;"><strong>Cost Type:</strong></td>
+            <td style="padding: 8px 0;">{{ alert.cost_type }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0;"><strong>Current Usage:</strong></td>
+            <td style="padding: 8px 0;">${{ "%.2f"|format(alert.current_usage) }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0;"><strong>Budget Limit:</strong></td>
+            <td style="padding: 8px 0;">${{ "%.2f"|format(alert.budget_limit) }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 8px 0;"><strong>Usage Level:</strong></td>
+            <td style="padding: 8px 0;">
+                <div style="
+                    width: 200px;
+                    height: 20px;
+                    background-color: #e9ecef;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    display: inline-block;
+                    vertical-align: middle;
+                ">
+                    <div style="
+                        width: {{ alert.usage_percentage }}%;
+                        height: 100%;
+                        background-color: {% if alert.usage_percentage >= 90 %}#dc3545{% elif alert.usage_percentage >= 75 %}#ffc107{% else %}#28a745{% endif %};
+                    "></div>
+                </div>
+                <span style="margin-left: 10px;">{{ alert.usage_percentage }}%</span>
+            </td>
+        </tr>
+    </table>
+</div>
+{% endblock %} 

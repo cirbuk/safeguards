@@ -1,0 +1,114 @@
+{
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "Budget Override Request",
+        "emoji": true
+      }
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "*Agent:*\n${agent_id}"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*Requester:*\n${requester}"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "*Current Budget:*\n$${current_allocation}"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*Requested Amount:*\n$${requested_amount}"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "*Override Type:*\n${override_type}"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*Duration:*\n${duration}"
+        }
+      ]
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*Justification:*\n${justification}"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "Please review and take action on this override request."
+      }
+    },
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Approve",
+            "emoji": true
+          },
+          "style": "primary",
+          "value": "approve_${request_id}",
+          "action_id": "approve_override"
+        },
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "Reject",
+            "emoji": true
+          },
+          "style": "danger",
+          "value": "reject_${request_id}",
+          "action_id": "reject_override"
+        },
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "View Details",
+            "emoji": true
+          },
+          "url": "${dashboard_url}/overrides/${request_id}",
+          "action_id": "view_details"
+        }
+      ]
+    },
+    {
+      "type": "context",
+      "elements": [
+        {
+          "type": "mrkdwn",
+          "text": "Request ID: ${request_id} • Created at: ${created_at}"
+        }
+      ]
+    }
+  ]
+} 

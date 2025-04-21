@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Budget Override Request</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin: 20px 0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #2d3748;
+            margin: 0;
+            font-size: 24px;
+        }
+        .header p {
+            color: #718096;
+            margin: 10px 0 0;
+        }
+        .details {
+            background-color: #f8fafc;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .amount {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        .increase {
+            color: #38a169;
+            font-size: 14px;
+        }
+        .decrease {
+            color: #e53e3e;
+            font-size: 14px;
+        }
+        .label {
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
+        .actions {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .approve {
+            background-color: #38a169;
+            color: white;
+        }
+        .approve:hover {
+            background-color: #2f855a;
+        }
+        .reject {
+            background-color: #e53e3e;
+            color: white;
+        }
+        .reject:hover {
+            background-color: #c53030;
+        }
+        .view {
+            background-color: #4299e1;
+            color: white;
+        }
+        .view:hover {
+            background-color: #3182ce;
+        }
+        .footer {
+            font-size: 12px;
+            color: #718096;
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .metadata {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Budget Override Request</h1>
+            <p>A new budget override request requires your attention</p>
+        </div>
+
+        <div class="details">
+            <p><span class="label">Agent:</span><br>{{ agent_id }}</p>
+            <p><span class="label">Requester:</span><br>{{ requester }}</p>
+            <p>
+                <span class="label">Current Budget:</span><br>
+                <span class="amount">${{ "{:,.2f}".format(current_allocation) }}</span>
+            </p>
+            <p>
+                <span class="label">Requested Amount:</span><br>
+                <span class="amount">${{ "{:,.2f}".format(requested_amount) }}</span>
+                {% set increase = ((requested_amount - current_allocation) / current_allocation * 100)|round(1) %}
+                <span class="{{ 'increase' if increase > 0 else 'decrease' }}">
+                    ({{ '+' if increase > 0 }}{{ increase }}%)
+                </span>
+            </p>
+            <p><span class="label">Override Type:</span><br>{{ override_type }}</p>
+            <p><span class="label">Duration:</span><br>{{ duration or 'Permanent' }}</p>
+            <p><span class="label">Justification:</span><br>{{ justification }}</p>
+        </div>
+
+        <div class="actions">
+            <a href="{{ api_base_url }}/api/v1/budget-overrides/{{ request_id }}/approve?token={{ approval_token }}" 
+               class="button approve">Approve Request</a>
+            <a href="{{ api_base_url }}/api/v1/budget-overrides/{{ request_id }}/reject?token={{ rejection_token }}" 
+               class="button reject">Reject Request</a>
+            <a href="{{ dashboard_url }}/overrides/{{ request_id }}" 
+               class="button view">View Details</a>
+        </div>
+
+        <div class="footer">
+            <div class="metadata">
+                <p>Request ID: {{ request_id }}</p>
+                <p>Created at: {{ created_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</p>
+            </div>
+            <p>This is an automated message from FounderX. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html> 

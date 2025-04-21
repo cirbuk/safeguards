@@ -1,0 +1,70 @@
+{
+    "blocks": [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": "🚨 {{ alert.title }}",
+                "emoji": true
+            }
+        },
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": "*Severity:*\n{{ alert.severity }}"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "*Time:*\n{{ alert.timestamp }}"
+                }
+            ]
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "{{ alert.message }}"
+            }
+        },
+        {% if alert.cost_type is defined %}
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": "*Cost Type:*\n{{ alert.cost_type }}"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "*Usage:*\n{{ alert.current_usage }} / {{ alert.budget_limit }}"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "*Usage %:*\n{{ alert.usage_percentage }}"
+                }
+            ]
+        },
+        {% endif %}
+        {% if alert.resource_type is defined %}
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": "*Resource:*\n{{ alert.resource_type }}"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "*Current Value:*\n{{ alert.current_value }}{{ alert.unit }}"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "*Threshold:*\n{{ alert.threshold }}{{ alert.unit }}"
+                }
+            ]
+        }
+        {% endif %}
+    ]
+} 
