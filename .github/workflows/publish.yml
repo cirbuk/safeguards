@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - staging
     paths:
       - 'src/**'
       - 'pyproject.toml'
@@ -57,7 +58,15 @@ jobs:
         python -m build
         twine check dist/*
 
+    - name: Test importability
+      run: |
+        # Install the built package
+        pip install dist/*.whl
+        # Test that it can be imported correctly
+        python -c "import safeguards; print(f'Successfully imported safeguards {safeguards.__version__}')"
+
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
+      if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release'
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}

@@ -3,7 +3,7 @@
 A comprehensive framework for implementing safety measures in multi-agent systems, focusing on budget coordination, monitoring, and guardrails.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Security: Bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 
 ## Overview
@@ -171,7 +171,7 @@ The Safeguards framework is designed for a variety of use cases:
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - pip package manager
 
 ### Setting Up Development Environment

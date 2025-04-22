@@ -2,11 +2,11 @@
 
 This guide will help you get started with the Safeguards, covering installation, basic setup, and common use cases.
 
-## Installation
+## Prerequisites
 
-### Prerequisites
+Before you begin, ensure you have the following:
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - pip package manager
 
 ### Install from PyPI

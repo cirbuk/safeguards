@@ -1,4 +1,11 @@
-"""Setup configuration for safeguards package."""
+"""DEPRECATED: This file is maintained for backward compatibility only.
+
+The project now uses pyproject.toml for build configuration.
+Please refer to pyproject.toml for the current build configuration.
+"""
+
+# This file is kept for backward compatibility
+# All configuration has been moved to pyproject.toml
 
 from setuptools import setup, find_packages
 
@@ -27,13 +34,12 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Security",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=requirements,
     extras_require={
         "dev": [

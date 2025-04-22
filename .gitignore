@@ -17,3 +17,7 @@ wheels/
 *~
 
 .DS_Store
+
+# PyPI configuration
+.pypirc
+site/
