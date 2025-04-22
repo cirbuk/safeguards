@@ -78,6 +78,12 @@ docs = [
 testpaths = ["src/safeguards"]
 python_files = ["test_*.py"]
 addopts = "-v --cov=safeguards"
+markers = [
+    "asyncio: mark a test as an asynchronous test using pytest-asyncio",
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "performance: Performance tests"
+]
 
 [tool.black]
 line-length = 88
