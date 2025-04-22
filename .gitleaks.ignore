@@ -1,0 +1,14 @@
+# Ignore build artifacts
+dist/
+build/
+
+# Ignore testing-related directories
+.pytest_cache/
+__pycache__/
+
+# Ignore the virtual environment
+.venv/
+
+# Ignore any generated files
+coverage.xml
+.coverage

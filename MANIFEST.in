@@ -1,0 +1,15 @@
+include LICENSE
+include README.md
+include VERSION.txt
+include CHANGELOG.md
+include mypy.ini
+include .gitleaks.toml
+include requirements.txt
+include requirements-dev.txt
+recursive-include src/safeguards *.py
+recursive-include src/safeguards/templates *.html *.txt
+recursive-include src/safeguards/static *.js *.css
+recursive-exclude src/safeguards/tests *
+recursive-exclude tests *
+recursive-exclude docs *
+recursive-exclude examples *
