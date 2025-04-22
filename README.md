@@ -1,4 +1,4 @@
-# Agent Safety Framework
+# Safeguards
 
 A comprehensive framework for implementing safety measures in multi-agent systems, focusing on budget coordination, monitoring, and guardrails.
 
@@ -8,7 +8,7 @@ A comprehensive framework for implementing safety measures in multi-agent system
 
 ## Overview
 
-The Agent Safety Framework provides tools and infrastructure for ensuring safe and controlled operation of AI agent systems. It addresses key challenges in multi-agent environments:
+The Safeguards framework provides tools and infrastructure for ensuring safe and controlled operation of AI agent systems. It addresses key challenges in multi-agent environments:
 
 - Resource management and budget enforcement
 - Agent coordination and priority-based allocation
@@ -58,17 +58,17 @@ This framework is ideal for organizations deploying multiple AI agents that need
 ### Installation
 
 ```bash
-pip install agent-safety
+pip install safeguards
 ```
 
 ### Basic Setup
 
 ```python
 from decimal import Decimal
-from agent_safety.core.budget_coordination import BudgetCoordinator
-from agent_safety.core.notification_manager import NotificationManager
-from agent_safety.api import APIFactory, APIVersion
-from agent_safety.types.agent import Agent
+from safeguards.core.budget_coordination import BudgetCoordinator
+from safeguards.core.notification_manager import NotificationManager
+from safeguards.api import APIFactory, APIVersion
+from safeguards.types.agent import Agent
 
 # Create core components
 notification_manager = NotificationManager()
@@ -103,7 +103,7 @@ print(f"Agent {agent.name} has budget: {budget}")
 ```python
 from decimal import Decimal
 from typing import Dict, Any
-from agent_safety.types.agent import Agent
+from safeguards.types.agent import Agent
 
 class MyAgent(Agent):
     def __init__(self, name: str, cost_per_action: Decimal = Decimal("0.1")):
@@ -146,9 +146,10 @@ For more detailed examples, see the [Quick Start Guide](docs/quickstart.md).
 - [Core Concepts](docs/concepts.md) - Essential concepts and terminology
 - [Installation Guide](docs/installation.md) - Detailed installation instructions
 - [Quick Start Guide](docs/quickstart.md) - Get started with the framework
+- [Component Status](COMPONENT_STATUS.md) - Current status of framework components
 - [Budget Management](docs/guides/budget_management.md) - How to manage agent budgets
 - [Safety Policies](docs/guides/safety_policies.md) - Implementing and enforcing safety policies
-- [Agent Safety](docs/guides/agent_safety.md) - Safety features and guardrails
+- [Safeguards](docs/guides/safeguards.md) - Safety features and guardrails
 - [Monitoring](docs/guides/monitoring.md) - Metrics, visualization, and alerts
 - [Agent Coordination](docs/guides/agent_coordination.md) - Multi-agent coordination
 - [API Reference](docs/api/core.md) - Detailed API documentation
@@ -158,7 +159,7 @@ For a complete documentation index, see the [Documentation README](docs/README.m
 
 ## Use Cases
 
-The Agent Safety Framework is designed for a variety of use cases:
+The Safeguards framework is designed for a variety of use cases:
 
 - **Enterprise AI Systems**: Manage resource allocation across multiple AI services
 - **Autonomous Systems**: Ensure safety constraints in autonomous operations
@@ -177,8 +178,8 @@ The Agent Safety Framework is designed for a variety of use cases:
 
 ```bash
 # Clone the repository
-git clone https://github.com/mason-ai/agent-safety.git
-cd agent-safety
+git clone https://github.com/cirbuk/safeguards.git
+cd safeguards
 
 # Create and activate virtual environment
 python -m venv .venv
@@ -234,7 +235,7 @@ This framework implements several security measures:
 - Regular dependency updates
 - Code analysis tools
 
-If you discover a security vulnerability, please report it to team@mason.com.
+If you discover a security vulnerability, please report it to dev@getmason.io.
 
 ## License
 

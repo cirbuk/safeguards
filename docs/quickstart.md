@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-This guide will help you get started with the Agent Safety Framework, covering installation, basic setup, and common use cases.
+This guide will help you get started with the Safeguards, covering installation, basic setup, and common use cases.
 
 ## Installation
 
@@ -12,27 +12,27 @@ This guide will help you get started with the Agent Safety Framework, covering i
 ### Install from PyPI
 
 ```bash
-pip install agent-safety
+pip install safeguards
 ```
 
 ### Install from Source
 
 ```bash
-git clone https://github.com/mason-ai/agent-safety.git
-cd agent-safety
+git clone https://github.com/cirbuk/safeguards.git
+cd safeguards
 pip install -e .
 ```
 
 ## Core Components Setup
 
-The Agent Safety Framework consists of several components working together:
+The Safeguards consists of several components working together:
 
 ```python
 from decimal import Decimal
-from agent_safety.core.budget_coordination import BudgetCoordinator
-from agent_safety.core.notification_manager import NotificationManager
-from agent_safety.core.violation_reporter import ViolationReporter
-from agent_safety.api import APIFactory, APIVersion
+from safeguards.core.budget_coordination import BudgetCoordinator
+from safeguards.core.notification_manager import NotificationManager
+from safeguards.core.violation_reporter import ViolationReporter
+from safeguards.api import APIFactory, APIVersion
 
 # Initialize core components
 notification_manager = NotificationManager()
@@ -129,7 +129,7 @@ Implement your own agent by extending the base `Agent` class:
 ```python
 from typing import Dict, Any
 from decimal import Decimal
-from agent_safety.types.agent import Agent
+from safeguards.types.agent import Agent
 
 class CustomAssistantAgent(Agent):
     def __init__(self, name: str, model: str = "gpt-4"):
@@ -200,7 +200,7 @@ for question in ["What is the weather?", "Tell me a joke", "Explain quantum phys
 Coordinate multiple agents working together:
 
 ```python
-from agent_safety.types.enums import AgentPriority
+from safeguards.types.enums import AgentPriority
 
 def run_pipeline(input_text):
     """Run a multi-agent pipeline with budget awareness."""
@@ -268,7 +268,7 @@ usage_history = metrics_api.get_agent_usage_history(
 Set up violation handling and notifications:
 
 ```python
-from agent_safety.types.enums import AlertSeverity, ViolationType
+from safeguards.types.enums import AlertSeverity, ViolationType
 
 # Setup notification callbacks
 def budget_alert_callback(agent_id, alert_type, severity, message):
@@ -300,7 +300,7 @@ violation_reporter.report_violation(
 Configure the framework for your specific needs:
 
 ```python
-from agent_safety.config import SafetyConfig
+from safeguards.config import SafetyConfig
 
 # Create a custom configuration
 config = SafetyConfig(

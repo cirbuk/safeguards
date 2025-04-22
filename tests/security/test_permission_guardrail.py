@@ -2,9 +2,9 @@
 
 import pytest
 
-from agent_safety.rules.defaults import PermissionGuardrail
-from agent_safety.rules.base import RuleContext
-from agent_safety.base.guardrails import ValidationResult
+from safeguards.rules.defaults import PermissionGuardrail
+from safeguards.rules.base import RuleContext
+from safeguards.base.guardrails import ValidationResult
 
 
 @pytest.fixture

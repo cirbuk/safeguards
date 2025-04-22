@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "agent-safety"
+name = "safeguards"
 version = "0.1.0"
 description = "A comprehensive framework for implementing safety controls in AI agent systems"
 readme = "README.md"
@@ -34,10 +34,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/mason-ai/agent-safety"
-Documentation = "https://github.com/mason-ai/agent-safety/tree/main/docs"
-Issues = "https://github.com/mason-ai/agent-safety/issues"
-Changelog = "https://github.com/mason-ai/agent-safety/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/cirbuk/safeguards"
+Documentation = "https://github.com/cirbuk/safeguards/tree/main/docs"
+Issues = "https://github.com/cirbuk/safeguards/issues"
+Changelog = "https://github.com/cirbuk/safeguards/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = [
@@ -60,9 +60,9 @@ docs = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["src/agent_safety"]
+testpaths = ["src/safeguards"]
 python_files = ["test_*.py"]
-addopts = "-v --cov=agent_safety"
+addopts = "-v --cov=safeguards"
 
 [tool.black]
 line-length = 88

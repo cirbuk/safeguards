@@ -4,7 +4,7 @@ import pytest
 from datetime import datetime
 from decimal import Decimal
 
-from agent_safety.base.monitoring import ResourceMetrics, ResourceThresholds
+from safeguards.base.monitoring import ResourceMetrics, ResourceThresholds
 
 
 def test_resource_metrics():

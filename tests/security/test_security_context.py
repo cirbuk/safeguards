@@ -2,8 +2,8 @@
 
 import pytest
 
-from agent_safety.rules.defaults import SecurityContextRule
-from agent_safety.rules.base import RuleContext
+from safeguards.rules.defaults import SecurityContextRule
+from safeguards.rules.base import RuleContext
 
 
 @pytest.fixture

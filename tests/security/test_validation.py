@@ -4,7 +4,7 @@ import pytest
 import re
 from decimal import Decimal
 
-from agent_safety.security.validation import (
+from safeguards.security.validation import (
     SecurityPolicy,
     InputValidator,
     OutputEncoder,

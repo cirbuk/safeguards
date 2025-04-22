@@ -1,6 +1,6 @@
 # Agent Coordination Guide
 
-This guide explains how to coordinate multiple agents within the Agent Safety Framework, covering communication patterns, resource sharing, and task allocation.
+This guide explains how to coordinate multiple agents within the Safeguards, covering communication patterns, resource sharing, and task allocation.
 
 ## Introduction to Agent Coordination
 
@@ -11,7 +11,7 @@ In multi-agent systems, coordination is essential for:
 - Enabling specialized agents to collaborate effectively
 - Supporting graceful degradation when resources are constrained
 
-The Agent Safety Framework provides several mechanisms to facilitate agent coordination.
+The Safeguards provides several mechanisms to facilitate agent coordination.
 
 ## Basic Multi-Agent Setup
 
@@ -21,9 +21,9 @@ Start by creating different agents with appropriate priorities:
 
 ```python
 from decimal import Decimal
-from agent_safety.core.budget_coordination import BudgetCoordinator
-from agent_safety.core.notification_manager import NotificationManager
-from agent_safety.api import APIFactory, APIVersion
+from safeguards.core.budget_coordination import BudgetCoordinator
+from safeguards.core.notification_manager import NotificationManager
+from safeguards.api import APIFactory, APIVersion
 
 # Setup core components
 notification_manager = NotificationManager()
@@ -80,7 +80,7 @@ general_pool = budget_api.create_budget_pool(
 Implement communication between agents using the notification system:
 
 ```python
-from agent_safety.types.enums import AlertSeverity
+from safeguards.types import AlertSeverity
 
 def agent_communication_handler(notification):
     """Handle inter-agent communication."""
@@ -117,7 +117,7 @@ notification_manager.send_alert(
 For more direct coordination, implement a shared state service:
 
 ```python
-from agent_safety.coordination.shared_state import SharedStateManager
+from safeguards.coordination.shared_state import SharedStateManager
 
 # Create a shared state manager
 state_manager = SharedStateManager()
@@ -312,7 +312,7 @@ def balance_agent_resources(pool_id):
 Manage dependencies between agent tasks:
 
 ```python
-from agent_safety.coordination.dependency_manager import DependencyManager
+from safeguards.coordination.dependency_manager import DependencyManager
 
 # Create a dependency manager
 dependency_manager = DependencyManager()
@@ -347,7 +347,7 @@ else:
 Implement a supervisor agent that coordinates other agents:
 
 ```python
-from agent_safety.types.agent import Agent
+from safeguards.types.agent import Agent
 from typing import Dict, Any, List
 
 class SupervisorAgent(Agent):
@@ -505,7 +505,7 @@ publish_event(
 Create agent teams for specialized tasks:
 
 ```python
-from agent_safety.coordination.team import AgentTeam
+from safeguards.coordination.team import AgentTeam
 
 # Create a research team
 research_team = AgentTeam(
@@ -526,7 +526,7 @@ team_result = research_team.execute_task(
 Implement dynamic discovery of available agents:
 
 ```python
-from agent_safety.coordination.discovery import AgentDiscoveryService
+from safeguards.coordination.discovery import AgentDiscoveryService
 
 # Create discovery service
 discovery_service = AgentDiscoveryService(budget_coordinator)
@@ -562,6 +562,6 @@ Effective agent coordination is essential for building robust multi-agent system
 
 For more information, see:
 - [Budget Management Guide](budget_management.md)
-- [Agent Safety Guide](agent_safety.md)
+- [Safeguards Guide](safeguards.md)
 - [Monitoring Guide](monitoring.md)
 - [API Reference](../api/core.md)

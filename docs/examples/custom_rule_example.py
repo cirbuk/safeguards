@@ -2,8 +2,8 @@
 
 from typing import Dict, List, Optional, Type, cast
 
-from agent_safety.rules.base import RuleContext, RulePriority, SafetyRule, RuleChain
-from agent_safety.base.guardrails import GuardrailViolation, ValidationResult
+from safeguards.rules.base import RuleContext, RulePriority, SafetyRule, RuleChain
+from safeguards.base.guardrails import GuardrailViolation, ValidationResult
 
 
 class DataPrivacyRule(SafetyRule):

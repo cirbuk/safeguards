@@ -1,13 +1,13 @@
 # Monitoring API Reference
 
-This document provides a detailed reference for the monitoring APIs in the Agent Safety Framework.
+This document provides a detailed reference for the monitoring APIs in the Safeguards.
 
 ## MetricsCollector
 
 `MetricsCollector` is the core class for gathering and storing metrics about agent performance and resource usage.
 
 ```python
-from agent_safety.monitoring.metrics_collector import MetricsCollector
+from safeguards.monitoring.metrics_collector import MetricsCollector
 
 # Create a metrics collector
 metrics_collector = MetricsCollector()
@@ -123,8 +123,8 @@ def get_pool_metrics(
 `ViolationReporter` is responsible for detecting and reporting safety violations.
 
 ```python
-from agent_safety.monitoring.violation_reporter import ViolationReporter
-from agent_safety.core.notification_manager import NotificationManager
+from safeguards.monitoring.violation_reporter import ViolationReporter
+from safeguards.core.notification_manager import NotificationManager
 
 # Create a violation reporter
 notification_manager = NotificationManager()
@@ -190,7 +190,7 @@ def get_violations(
 `RuntimeMonitor` provides real-time monitoring of agent activities.
 
 ```python
-from agent_safety.monitoring.runtime_monitor import RuntimeMonitor
+from safeguards.monitoring.runtime_monitor import RuntimeMonitor
 
 # Create a runtime monitor
 runtime_monitor = RuntimeMonitor(metrics_collector)
@@ -264,7 +264,7 @@ def stop(self) -> None:
 `AgentMonitor` is the base class for implementing custom monitoring logic.
 
 ```python
-from agent_safety.monitoring.agent_monitor import AgentMonitor
+from safeguards.monitoring.agent_monitor import AgentMonitor
 
 class CustomMonitor(AgentMonitor):
     def check(self, agent_id: str, metrics: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -297,7 +297,7 @@ def check(self, agent_id: str, metrics: Dict[str, Any]) -> Optional[Dict[str, An
 `MetricsAPI` provides a unified interface for metrics operations.
 
 ```python
-from agent_safety.api import APIFactory, APIVersion
+from safeguards.api import APIFactory, APIVersion
 
 # Create a metrics API
 api_factory = APIFactory()
@@ -419,7 +419,7 @@ def get_violations(
 `DashboardGenerator` assists with creating monitoring dashboards.
 
 ```python
-from agent_safety.monitoring.visualization import DashboardGenerator
+from safeguards.monitoring.visualization import DashboardGenerator
 
 # Create a dashboard generator
 dashboard = DashboardGenerator()
@@ -496,7 +496,7 @@ def generate_config(
 `AlertManager` manages alert rules and triggers notifications.
 
 ```python
-from agent_safety.monitoring.alert_manager import AlertManager
+from safeguards.monitoring.alert_manager import AlertManager
 
 # Create an alert manager
 alert_manager = AlertManager(notification_manager)
@@ -552,8 +552,8 @@ def check_metrics(
 ### Basic Metrics Collection
 
 ```python
-from agent_safety.api import APIFactory, APIVersion
-from agent_safety.monitoring.metrics_collector import MetricsCollector
+from safeguards.api import APIFactory, APIVersion
+from safeguards.monitoring.metrics_collector import MetricsCollector
 from decimal import Decimal
 
 # Setup
@@ -602,9 +602,9 @@ print(f"API cost: {agent_metrics.get('api_cost', 'N/A')}")
 ### Custom Monitoring
 
 ```python
-from agent_safety.monitoring.agent_monitor import AgentMonitor
-from agent_safety.monitoring.runtime_monitor import RuntimeMonitor
-from agent_safety.types.enums import AlertSeverity
+from safeguards.monitoring.agent_monitor import AgentMonitor
+from safeguards.monitoring.runtime_monitor import RuntimeMonitor
+from safeguards.types.enums import AlertSeverity
 from typing import Dict, Any, Optional
 
 # Create a custom monitor
@@ -659,9 +659,9 @@ runtime_monitor.start()
 ### Violation Reporting
 
 ```python
-from agent_safety.monitoring.violation_reporter import ViolationReporter
-from agent_safety.core.notification_manager import NotificationManager
-from agent_safety.types.enums import ViolationType, AlertSeverity
+from safeguards.monitoring.violation_reporter import ViolationReporter
+from safeguards.core.notification_manager import NotificationManager
+from safeguards.types.enums import ViolationType, AlertSeverity
 
 # Setup
 notification_manager = NotificationManager()
@@ -693,7 +693,7 @@ for violation in violations:
     print(f"- {violation['timestamp']}: {violation['message']} ({violation['severity']})")
 ```
 
-For more information about monitoring in the Agent Safety Framework, see:
+For more information about monitoring in the Safeguards, see:
 - [Monitoring Guide](../guides/monitoring.md)
 - [Budget Management Guide](../guides/budget_management.md)
-- [Agent Safety Guide](../guides/agent_safety.md)
+- [Agent Safety Guide](../guides/safeguards.md)

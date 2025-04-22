@@ -7,16 +7,16 @@ from typing import Dict, List, Any
 import asyncio
 import concurrent.futures
 
-from agent_safety.core.budget_coordination import (
+from safeguards.core.budget_coordination import (
     BudgetCoordinator,
     TransferType,
     TransferStatus,
 )
-from agent_safety.core.notification_manager import NotificationManager
-from agent_safety.monitoring.metrics import MetricsAnalyzer
-from agent_safety.core.alert_types import AlertSeverity
-from agent_safety.types import Agent
-from agent_safety.monitoring.violation_reporter import ViolationReporter
+from safeguards.core.notification_manager import NotificationManager
+from safeguards.monitoring.metrics import MetricsAnalyzer
+from safeguards.core.alert_types import AlertSeverity
+from safeguards.types import Agent
+from safeguards.monitoring.violation_reporter import ViolationReporter
 
 
 class TestAgent(Agent):
@@ -273,8 +273,8 @@ class TestBudgetMonitoring:
         emergency_amount = Decimal("150")
 
         # For testing, manually add an emergency alert
-        from agent_safety.types import SafetyAlert
-        from agent_safety.core.alert_types import AlertSeverity
+        from safeguards.types import SafetyAlert
+        from safeguards.core.alert_types import AlertSeverity
         from datetime import datetime
 
         notification_manager.create_alert(
@@ -447,7 +447,7 @@ class TestBudgetMonitoring:
 
     def test_get_agent_metrics_invalid_agent(self, budget_coordinator):
         """Test that getting metrics for a non-existent agent raises an error."""
-        from agent_safety.exceptions import AgentSafetyError
+        from safeguards.exceptions import AgentSafetyError
 
         with pytest.raises(AgentSafetyError):
             budget_coordinator.get_agent_metrics("non_existent_agent")

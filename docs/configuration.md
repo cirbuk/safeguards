@@ -1,4 +1,4 @@
-# Agent Safety Framework Configuration Guide
+# Safeguards Configuration Guide
 
 ## Table of Contents
 1. [Security Rules Configuration](#security-rules-configuration)
@@ -11,8 +11,8 @@
 
 ### Basic Rule Chain Setup
 ```python
-from agent_safety.rules.base import RuleChain
-from agent_safety.rules.defaults import PermissionGuardrail, SecurityContextRule
+from safeguards.rules.base import RuleChain
+from safeguards.rules.defaults import PermissionGuardrail, SecurityContextRule
 
 chain = RuleChain()
 chain.add_rule(rule1)

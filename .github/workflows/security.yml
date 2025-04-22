@@ -26,18 +26,38 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install safety bandit
+          # Install specific versions to avoid compatibility issues
+          pip install bandit==1.7.8
+
+      - name: Check for Gitleaks License
+        id: check_license
+        run: |
+          if [ -n "${{ secrets.GITLEAKS_LICENSE }}" ]; then
+            echo "has_license=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_license=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Run GitLeaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        continue-on-error: ${{ steps.check_license.outputs.has_license != 'true' }}
+
+      - name: Gitleaks License Info
+        if: ${{ steps.check_license.outputs.has_license != 'true' }}
+        run: |
+          echo "::warning::Gitleaks license not found! Secret scanning was skipped."
+          echo "::warning::To enable secret scanning, obtain a license from gitleaks.io and add it as a GitHub Secret named GITLEAKS_LICENSE."
 
       - name: Run Safety Check
-        run: safety check
+        run: |
+          pip install --upgrade pip-audit
+          pip-audit
 
       - name: Run Bandit
-        run: bandit -r src/ -ll -ii -f json -o bandit-results.json
+        run: bandit -r src/safeguards -ll -ii -f json -o bandit-results.json
 
       - name: Run Semgrep
         run: |

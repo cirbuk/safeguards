@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 import numpy as np
 from decimal import Decimal
 
-from agent_safety.monitoring.metrics_analyzer import MetricsAnalyzer
-from agent_safety.base.monitoring import ResourceMetrics
-from agent_safety.base.budget import BudgetMetrics
+from safeguards.monitoring.metrics_analyzer import MetricsAnalyzer
+from safeguards.base.monitoring import ResourceMetrics
+from safeguards.base.budget import BudgetMetrics
 
 
 def create_test_resource_metrics(

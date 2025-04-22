@@ -1,10 +1,10 @@
 # Agent Monitoring Guide
 
-This guide covers the monitoring capabilities of the Agent Safety Framework, helping you track agent performance, resource usage, and detect potential safety issues.
+This guide covers the monitoring capabilities of the Safeguards, helping you track agent performance, resource usage, and detect potential safety issues.
 
 ## Monitoring Overview
 
-The Agent Safety Framework provides several monitoring components:
+The Safeguards provides several monitoring components:
 
 - **Metrics Collection**: Tracking numeric measurements of agent activity
 - **Runtime Monitoring**: Real-time observation of agent behavior
@@ -19,8 +19,8 @@ The Agent Safety Framework provides several monitoring components:
 Start by setting up a metrics collector:
 
 ```python
-from agent_safety.monitoring.metrics_collector import MetricsCollector
-from agent_safety.types.metrics import MetricType
+from safeguards.monitoring.metrics_collector import MetricsCollector
+from safeguards.types import MetricType
 
 # Create a metrics collector
 metrics_collector = MetricsCollector()
@@ -58,8 +58,8 @@ print(f"All metrics: {all_metrics}")
 Set up real-time monitoring of agent behavior:
 
 ```python
-from agent_safety.monitoring.runtime_monitor import RuntimeMonitor
-from agent_safety.types.monitors import ResourceMonitor, ActivityMonitor
+from safeguards.monitoring.runtime_monitor import RuntimeMonitor
+from safeguards.types.monitors import ResourceMonitor, ActivityMonitor
 
 # Create a runtime monitor
 runtime_monitor = RuntimeMonitor()
@@ -116,9 +116,9 @@ runtime_monitor.start()
 Set up violation detection and reporting:
 
 ```python
-from agent_safety.monitoring.violation_reporter import ViolationReporter
-from agent_safety.types.enums import ViolationType, AlertSeverity
-from agent_safety.core.notification_manager import NotificationManager
+from safeguards.monitoring.violation_reporter import ViolationReporter
+from safeguards.types import ViolationType, AlertSeverity
+from safeguards.core.notification_manager import NotificationManager
 
 # Create a notification manager (for alerting)
 notification_manager = NotificationManager()
@@ -148,15 +148,15 @@ runtime_monitor.set_violation_reporter(violation_reporter)
 Here's a complete example that sets up a comprehensive monitoring system:
 
 ```python
-from agent_safety.monitoring import (
+from safeguards.monitoring import (
     MetricsCollector,
     RuntimeMonitor,
     ViolationReporter,
     LogManager
 )
-from agent_safety.core import NotificationManager, BudgetCoordinator
-from agent_safety.types.enums import MetricType, ViolationType, AlertSeverity
-from agent_safety.types.monitors import ResourceMonitor, ActivityMonitor, BudgetMonitor
+from safeguards.core import NotificationManager, BudgetCoordinator
+from safeguards.types import MetricType, ViolationType, AlertSeverity
+from safeguards.types.monitors import ResourceMonitor, ActivityMonitor, BudgetMonitor
 
 def setup_monitoring_system():
     """Set up a comprehensive monitoring system."""
@@ -422,7 +422,7 @@ print(f"Average data processing task duration: {task_metrics} seconds")
 You can create custom monitors for domain-specific behaviors:
 
 ```python
-from agent_safety.types.monitors import CustomMonitor
+from safeguards.types.monitors import CustomMonitor
 
 def data_quality_monitor(agent_id, metrics):
     """Monitor data quality produced by the agent."""
@@ -505,7 +505,7 @@ print(f"Total memory usage across all assistant agents: {system_metrics} MB")
 Create visualizations of your monitoring data:
 
 ```python
-from agent_safety.visualization import MetricsDashboard
+from safeguards.visualization import MetricsDashboard
 
 # Create a metrics dashboard
 dashboard = MetricsDashboard(metrics_collector)
@@ -545,8 +545,8 @@ print(f"Dashboard available at: {dashboard_url}")
 Implement comprehensive health checks for your agents:
 
 ```python
-from agent_safety.monitoring.health import HealthChecker
-from agent_safety.types.health import HealthStatus, HealthCheck
+from safeguards.monitoring.health import HealthChecker
+from safeguards.types.health import HealthStatus, HealthCheck
 
 # Create a health checker
 health_checker = HealthChecker()
@@ -623,8 +623,8 @@ def ping_agent(agent_id, timeout=2):
 Implement an audit trail for agent activities:
 
 ```python
-from agent_safety.monitoring.audit import AuditLogger
-from agent_safety.types.audit import AuditEvent, AuditEventType
+from safeguards.monitoring.audit import AuditLogger
+from safeguards.types.audit import AuditEvent, AuditEventType
 
 # Create an audit logger
 audit_logger = AuditLogger(
@@ -673,8 +673,8 @@ for event in events[:5]:
 Generate compliance reports for agents:
 
 ```python
-from agent_safety.monitoring.compliance import ComplianceReporter
-from agent_safety.types.compliance import ComplianceCheck, ComplianceStatus
+from safeguards.monitoring.compliance import ComplianceReporter
+from safeguards.types.compliance import ComplianceCheck, ComplianceStatus
 
 # Create a compliance reporter
 compliance_reporter = ComplianceReporter()
@@ -765,7 +765,7 @@ Consider tracking these key metrics for agents:
 
 ## Conclusion
 
-Effective monitoring is critical for maintaining the safety and reliability of agent systems. The Agent Safety Framework provides a comprehensive set of tools for metrics collection, runtime monitoring, violation detection, and visualization that allow you to keep track of your agents' behavior and resource usage.
+Effective monitoring is critical for maintaining the safety and reliability of agent systems. The Safeguards provides a comprehensive set of tools for metrics collection, runtime monitoring, violation detection, and visualization that allow you to keep track of your agents' behavior and resource usage.
 
 By implementing the patterns shown in this guide, you can gain visibility into your agents' operations, detect potential issues before they become critical, and maintain an audit trail for compliance purposes.
 

@@ -1,6 +1,6 @@
-# Agent Safety Framework Documentation
+# Safeguards Documentation
 
-Welcome to the Agent Safety Framework documentation. This documentation provides comprehensive information about installing, configuring, and using the framework to implement safety measures in multi-agent systems.
+Welcome to the Safeguards documentation. This documentation provides comprehensive information about installing, configuring, and using the framework to implement safety measures in multi-agent systems.
 
 ## Documentation Structure
 
@@ -13,7 +13,7 @@ Welcome to the Agent Safety Framework documentation. This documentation provides
 - [Basic Usage](usage/basic.md) - General usage patterns
 - [Budget Management](guides/budget_management.md) - Managing agent budgets and resource allocation
 - [Safety Policies](guides/safety_policies.md) - Implementing and enforcing safety policies
-- [Agent Safety](guides/agent_safety.md) - Safety features, guardrails, and protection mechanisms
+- [Agent Safety](guides/safeguards.md) - Safety features, guardrails, and protection mechanisms
 - [Monitoring](guides/monitoring.md) - Metrics collection, visualization, and alerting
 - [Agent Coordination](guides/agent_coordination.md) - Managing multiple agents
 - [Notifications & Alerts](guides/notifications.md) - Setting up and managing notifications

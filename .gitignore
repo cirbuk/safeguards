@@ -15,3 +15,5 @@ wheels/
 .idea/
 *.swp
 *~
+
+.DS_Store

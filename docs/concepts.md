@@ -1,10 +1,10 @@
 # Core Concepts
 
-This document explains the core concepts and terminology used throughout the Agent Safety Framework.
+This document explains the core concepts and terminology used throughout the Safeguards.
 
 ## Overview
 
-The Agent Safety Framework is built around several key concepts:
+The Safeguards is built around several key concepts:
 
 1. **Agents** - The entities that perform tasks
 2. **Budgets** - Resource constraints for agent operations

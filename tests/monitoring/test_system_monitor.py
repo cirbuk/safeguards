@@ -4,8 +4,8 @@ import pytest
 from datetime import datetime, timedelta
 import psutil
 
-from agent_safety.monitoring.system_monitor import SystemResourceMonitor
-from agent_safety.base.monitoring import ResourceThresholds
+from safeguards.monitoring.system_monitor import SystemResourceMonitor
+from safeguards.base.monitoring import ResourceThresholds
 
 
 class TestSystemResourceMonitor:

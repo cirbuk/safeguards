@@ -1,6 +1,6 @@
-# Contributing to Agent Safety Framework
+# Contributing to Safeguards
 
-First off, thank you for considering contributing to Agent Safety Framework! It's people like you that make this project such a great tool for the AI safety community.
+First off, thank you for considering contributing to Safeguards! It's people like you that make this project such a great tool for the AI safety community.
 
 ## Code of Conduct
 
@@ -66,7 +66,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 5. Run the test suite:
    ```bash
    pytest
-   pytest --cov=agent_safety
+   pytest --cov=safeguards
    ```
 
 6. Run the linters:
@@ -104,9 +104,9 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ## Project Structure
 
 ```
-agent_safety/
+safeguards/
 ├── src/
-│   └── agent_safety/
+│   └── safeguards/
 │       ├── api/           # API interfaces
 │       ├── core/          # Core functionality
 │       ├── monitoring/    # Monitoring and metrics
@@ -141,4 +141,4 @@ agent_safety/
 * Join our community discussions
 * Check out our FAQ in the wiki
 
-Thank you for contributing to Agent Safety Framework!
+Thank you for contributing to Safeguards!

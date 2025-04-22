@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 
-from agent_safety.monitoring.resource_monitor import ResourceMonitor, ResourceMetrics
+from safeguards.monitoring.resource_monitor import ResourceMonitor, ResourceMetrics
 
 
 @pytest.fixture

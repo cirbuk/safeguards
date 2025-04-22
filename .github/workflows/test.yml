@@ -14,7 +14,10 @@ jobs:
         python-version: ["3.8", "3.9", "3.10"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref }}
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -27,17 +30,26 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-cov black mypy
 
-    - name: Run linting
+    - name: Format with Black
       run: |
-        black --check .
-        mypy src/agent_safety
+        black .
+
+    - name: Commit changes
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
+        git diff --quiet && git diff --staged --quiet || (git add -A && git commit -m "Apply automatic formatting with Black" && git push)
+
+    - name: Check types with mypy
+      run: |
+        mypy src/safeguards
 
     - name: Run tests with coverage
       run: |
-        pytest --cov=src/agent_safety --cov-report=xml
+        pytest --cov=src/safeguards --cov-report=xml
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         fail_ci_if_error: true
@@ -49,7 +61,7 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -58,9 +70,9 @@ jobs:
 
     - name: Install security tools
       run: |
-        pip install bandit safety
+        pip install bandit==1.7.8 pip-audit
 
     - name: Run security scan
       run: |
-        bandit -r src/agent_safety -ll
-        safety check
+        bandit -r src/safeguards -ll
+        pip-audit

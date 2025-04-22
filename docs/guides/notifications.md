@@ -1,10 +1,10 @@
 # Notifications & Alerts Guide
 
-This guide explains how to set up and customize the notification system in the Agent Safety Framework, enabling you to monitor agent activity, detect problems, and respond to events.
+This guide explains how to set up and customize the notification system in the Safeguards, enabling you to monitor agent activity, detect problems, and respond to events.
 
 ## Core Notification Concepts
 
-The notification system in the Agent Safety Framework is built around:
+The notification system in the Safeguards is built around:
 
 - **Alerts**: Structured messages about significant events
 - **Notification Channels**: Methods for delivering alerts (email, Slack, etc.)
@@ -19,8 +19,8 @@ The notification system in the Agent Safety Framework is built around:
 Start by creating a notification manager:
 
 ```python
-from agent_safety.core.notification_manager import NotificationManager
-from agent_safety.types.enums import AlertSeverity
+from safeguards.core.notification_manager import NotificationManager
+from safeguards.types import AlertSeverity
 
 # Create a notification manager
 notification_manager = NotificationManager()
@@ -137,7 +137,7 @@ notification_manager.add_handler(agent_specific_handler)
 Send alerts via email:
 
 ```python
-from agent_safety.notification.channels import EmailChannel
+from safeguards.notification.channels import EmailChannel
 
 # Create an email channel
 email_channel = EmailChannel(
@@ -161,13 +161,13 @@ notification_manager.register_channel(
 Send alerts to Slack:
 
 ```python
-from agent_safety.notification.channels import SlackChannel
+from safeguards.notification.channels import SlackChannel
 
 # Create a Slack channel
 slack_channel = SlackChannel(
     webhook_url="https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
     channel="#agent-alerts",
-    username="Agent Safety Monitor"
+    username="Safeguards Monitor"
 )
 
 # Register the channel with custom formatting
@@ -191,7 +191,7 @@ notification_manager.register_channel(
 Send alerts to custom webhooks:
 
 ```python
-from agent_safety.notification.channels import WebhookChannel
+from safeguards.notification.channels import WebhookChannel
 
 # Create a webhook channel
 webhook_channel = WebhookChannel(
@@ -214,8 +214,8 @@ notification_manager.register_channel(
 Implement a custom notification channel:
 
 ```python
-from agent_safety.notification.base import NotificationChannel
-from agent_safety.types.alerts import Alert
+from safeguards.notification.base import NotificationChannel
+from safeguards.types.alerts import Alert
 
 class CustomChannel(NotificationChannel):
     def __init__(self, config):
@@ -246,7 +246,7 @@ notification_manager.register_channel(custom_channel)
 Prevent alert floods with throttling:
 
 ```python
-from agent_safety.notification.throttling import ThrottlingManager
+from safeguards.notification.throttling import ThrottlingManager
 
 # Create a throttling manager
 throttling_manager = ThrottlingManager()
@@ -279,7 +279,7 @@ notification_manager.add_handler(throttled_alert_handler)
 Aggregate similar alerts:
 
 ```python
-from agent_safety.notification.aggregation import AlertAggregator
+from safeguards.notification.aggregation import AlertAggregator
 from datetime import timedelta
 
 # Create an alert aggregator
@@ -332,7 +332,7 @@ notification_manager.add_handler(aggregating_handler)
 Automatically escalate unhandled alerts:
 
 ```python
-from agent_safety.notification.escalation import EscalationManager
+from safeguards.notification.escalation import EscalationManager
 from datetime import timedelta
 
 # Create an escalation manager
@@ -385,7 +385,7 @@ escalation_manager.acknowledge_alert(alert_id)
 Set up alerts for budget-related issues:
 
 ```python
-from agent_safety.types.enums import ViolationType
+from safeguards.types import ViolationType
 
 def setup_budget_alerts(budget_coordinator, notification_manager):
     """Set up budget monitoring alerts."""
@@ -447,7 +447,7 @@ def setup_budget_alerts(budget_coordinator, notification_manager):
 Set up alerts for safety violations:
 
 ```python
-from agent_safety.monitoring.violation_reporter import ViolationReporter
+from safeguards.monitoring.violation_reporter import ViolationReporter
 
 def setup_violation_alerts(notification_manager):
     """Set up violation-to-alert conversion."""
@@ -527,7 +527,7 @@ def setup_periodic_status_alerts(notification_manager, interval_seconds=3600):
 Visualize alerts in a dashboard:
 
 ```python
-from agent_safety.notification.dashboard import AlertDashboard
+from safeguards.notification.dashboard import AlertDashboard
 
 # Create an alert dashboard
 dashboard = AlertDashboard()
@@ -601,7 +601,7 @@ print(f"Dashboard available at: {dashboard_url}")
 ### Building an Alert Response Runbook
 
 ```python
-from agent_safety.notification.runbook import Runbook, RemediationStep
+from safeguards.notification.runbook import Runbook, RemediationStep
 
 # Create a runbook for handling specific alerts
 cpu_limit_runbook = Runbook(
@@ -653,7 +653,7 @@ notification_manager.register_runbook(cpu_limit_runbook)
 Implement alert analytics:
 
 ```python
-from agent_safety.notification.analytics import AlertAnalytics
+from safeguards.notification.analytics import AlertAnalytics
 from datetime import datetime, timedelta
 
 # Create alert analytics
@@ -697,5 +697,5 @@ A well-configured notification system is essential for maintaining visibility in
 
 For more information, see:
 - [Monitoring Guide](monitoring.md)
-- [Agent Safety Guide](agent_safety.md)
+- [Safeguards Guide](safeguards.md)
 - [API Reference](../api/core.md)

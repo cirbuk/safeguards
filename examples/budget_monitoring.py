@@ -5,11 +5,11 @@ import random
 from datetime import datetime
 from decimal import Decimal
 
-from agent_safety.base.budget import BudgetPeriod
-from agent_safety.budget.cost_tracker import CostTracker
-from agent_safety.budget.dashboard_server import DashboardServer
-from agent_safety.budget.realtime_tracker import RealtimeBudgetTracker
-from agent_safety.budget.token_tracker import TokenTracker
+from safeguards.base.budget import BudgetPeriod
+from safeguards.budget.cost_tracker import CostTracker
+from safeguards.budget.dashboard_server import DashboardServer
+from safeguards.budget.realtime_tracker import RealtimeBudgetTracker
+from safeguards.budget.token_tracker import TokenTracker
 
 
 async def simulate_agent_activity(

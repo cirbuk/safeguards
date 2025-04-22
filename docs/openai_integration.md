@@ -1,30 +1,30 @@
 # Integrating with OpenAI Agent SDK
 
-This guide demonstrates how to integrate the Agent Safety Framework with the OpenAI Agent SDK to implement budget controls and monitoring.
+This guide demonstrates how to integrate the Safeguards with the OpenAI Agent SDK to implement budget controls and monitoring.
 
 ## Installation
 
 ```bash
-pip install agent-safety openai
+pip install safeguards openai
 ```
 
 ## Basic Usage
 
 ```python
 from openai import OpenAI
-from agent_safety import AgentSafety, ConfigManager
-from agent_safety.monitoring import MetricsAnalyzer
+from safeguards import AgentSafety, ConfigManager
+from safeguards.monitoring import MetricsAnalyzer
 
 # Initialize configuration
 config_manager = ConfigManager()
 config = config_manager.load_config("config.yaml")
 
 # Initialize Agent Safety
-agent_safety = AgentSafety(config)
+safeguards = AgentSafety(config)
 
 # Initialize OpenAI client with safety wrapper
 client = OpenAI()
-safe_client = agent_safety.wrap_openai_client(client)
+safe_client = safeguards.wrap_openai_client(client)
 
 # Create an agent with budget controls
 agent = safe_client.beta.agents.create(
@@ -51,7 +51,7 @@ run = safe_client.beta.threads.runs.create(
 )
 
 # Monitor the run
-metrics = agent_safety.get_metrics(agent.id)
+metrics = safeguards.get_metrics(agent.id)
 print(f"Current budget usage: {metrics.budget_usage}%")
 print(f"CPU usage: {metrics.cpu_percent}%")
 ```
@@ -61,9 +61,9 @@ print(f"CPU usage: {metrics.cpu_percent}%")
 ### Environment Variables
 
 ```bash
-export AGENT_SAFETY_API_API_KEY=your_api_key
-export AGENT_SAFETY_BUDGET_DEFAULT_POOL_SIZE=2000.0
-export AGENT_SAFETY_MONITORING_ALERT_THRESHOLD_CPU=90.0
+export SAFEGUARDS_API_API_KEY=your_api_key
+export SAFEGUARDS_BUDGET_DEFAULT_POOL_SIZE=2000.0
+export SAFEGUARDS_MONITORING_ALERT_THRESHOLD_CPU=90.0
 ```
 
 ### YAML Configuration
@@ -87,17 +87,17 @@ monitoring:
 
 ```python
 # Create a new budget pool
-pool = agent_safety.create_budget_pool(
+pool = safeguards.create_budget_pool(
     name="research_pool",
     initial_size=1000.0,
     priority=1
 )
 
 # Assign agent to pool
-agent_safety.assign_agent_to_pool(agent.id, pool.id)
+safeguards.assign_agent_to_pool(agent.id, pool.id)
 
 # Monitor pool usage
-pool_metrics = agent_safety.get_pool_metrics(pool.id)
+pool_metrics = safeguards.get_pool_metrics(pool.id)
 print(f"Pool utilization: {pool_metrics.utilization}%")
 ```
 
@@ -105,7 +105,7 @@ print(f"Pool utilization: {pool_metrics.utilization}%")
 
 ```python
 # Enable auto-scaling for the pool
-agent_safety.enable_pool_auto_scaling(
+safeguards.enable_pool_auto_scaling(
     pool_id=pool.id,
     min_size=500.0,
     max_size=2000.0,
@@ -113,7 +113,7 @@ agent_safety.enable_pool_auto_scaling(
 )
 
 # Set up budget alerts
-agent_safety.set_budget_alert(
+safeguards.set_budget_alert(
     agent_id=agent.id,
     threshold=90.0,
     callback=lambda: print("Budget alert triggered!")
@@ -126,10 +126,10 @@ agent_safety.set_budget_alert(
 
 ```python
 # Get real-time metrics
-metrics = agent_safety.get_real_time_metrics(agent.id)
+metrics = safeguards.get_real_time_metrics(agent.id)
 
 # Set up monitoring dashboard
-dashboard_url = agent_safety.get_dashboard_url()
+dashboard_url = safeguards.get_dashboard_url()
 print(f"Monitor your agents at: {dashboard_url}")
 ```
 
@@ -139,7 +139,7 @@ print(f"Monitor your agents at: {dashboard_url}")
 # Analyze resource usage trends
 analyzer = MetricsAnalyzer()
 trends = analyzer.analyze_resource_trends(
-    metrics_history=agent_safety.get_metrics_history(agent.id),
+    metrics_history=safeguards.get_metrics_history(agent.id),
     metric_name="cpu_percent"
 )
 
@@ -152,7 +152,7 @@ print(f"Forecast next hour: {trends.forecast_next_hour}%")
 ```python
 # Analyze usage patterns
 patterns = analyzer.analyze_usage_patterns(
-    metrics_history=agent_safety.get_metrics_history(agent.id)
+    metrics_history=safeguards.get_metrics_history(agent.id)
 )
 
 print("Peak usage hours:", patterns.peak_hours)
@@ -170,7 +170,7 @@ print("Weekly pattern:", patterns.weekly_pattern)
 ## Error Handling
 
 ```python
-from agent_safety.exceptions import BudgetExceededError, ResourceLimitError
+from safeguards.exceptions import BudgetExceededError, ResourceLimitError
 
 try:
     # Run agent with safety controls
@@ -188,10 +188,10 @@ except ResourceLimitError as e:
 
 ## Dashboard Integration
 
-The Agent Safety Framework provides a web dashboard for monitoring and controlling your agents. Access it at `http://localhost:8000` after starting the dashboard server:
+The Safeguards provides a web dashboard for monitoring and controlling your agents. Access it at `http://localhost:8000` after starting the dashboard server:
 
 ```python
-from agent_safety.dashboard import start_dashboard
+from safeguards.dashboard import start_dashboard
 
 # Start the dashboard server
 start_dashboard(host="localhost", port=8000)

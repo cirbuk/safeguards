@@ -1,10 +1,10 @@
-# Agent Safety Policies Guide
+# Safeguards Policies Guide
 
-This guide covers how to implement, enforce, and monitor safety policies for AI agents using the Agent Safety Framework.
+This guide covers how to implement, enforce, and monitor safety policies for AI agents using the Safeguards.
 
 ## Introduction to Safety Policies
 
-Safety policies are rules and constraints that govern agent behavior to prevent harmful, unethical, or unexpected actions. The Agent Safety Framework provides a structured approach to defining and enforcing these policies.
+Safety policies are rules and constraints that govern agent behavior to prevent harmful, unethical, or unexpected actions. The Safeguards provides a structured approach to defining and enforcing these policies.
 
 ## Core Policy Components
 
@@ -22,8 +22,13 @@ The framework's policy system consists of:
 Start by defining a set of safety policies:
 
 ```python
-from agent_safety.policies import PolicySet, PolicyRule
-from agent_safety.types.enums import PolicySeverity, ViolationType
+from safeguards.policies import PolicySet, PolicyRule
+from safeguards.types import (
+    PolicySeverity,
+    ViolationType,
+    AlertSeverity,
+    RemediationActionType
+)
 
 # Create a policy set
 policy_set = PolicySet(
@@ -83,8 +88,8 @@ def contains_harmful_content(content):
 Configure the policy enforcer to apply your policies:
 
 ```python
-from agent_safety.policies import PolicyEnforcer
-from agent_safety.core import NotificationManager, ViolationReporter
+from safeguards.policies import PolicyEnforcer
+from safeguards.core import NotificationManager, ViolationReporter
 
 # Create dependencies
 notification_manager = NotificationManager()
@@ -124,24 +129,24 @@ else:
 Here's a complete example that sets up an advanced policy system:
 
 ```python
-from agent_safety.policies import (
+from safeguards.policies import (
     PolicySet,
     PolicyRule,
     PolicyEnforcer,
     RemediationAction
 )
-from agent_safety.core import (
+from safeguards.core import (
     NotificationManager,
     ViolationReporter,
     BudgetCoordinator
 )
-from agent_safety.types.enums import (
+from safeguards.types import (
     PolicySeverity,
     ViolationType,
     AlertSeverity,
     RemediationActionType
 )
-from agent_safety.monitoring import MetricsCollector
+from safeguards.monitoring import MetricsCollector
 
 def setup_policy_system():
     """Set up a comprehensive policy system."""
@@ -563,8 +568,8 @@ def passes_moderation_check(content):
 You can implement custom rules for domain-specific requirements:
 
 ```python
-from agent_safety.policies import PolicyRule
-from agent_safety.types.enums import PolicySeverity, ViolationType
+from safeguards.policies import PolicyRule
+from safeguards.types import PolicySeverity, ViolationType
 
 # Create a custom rule for domain-specific requirements
 domain_specific_rule = PolicyRule(
@@ -608,7 +613,7 @@ def contains_financial_advice(content):
 You can organize policies into hierarchies:
 
 ```python
-from agent_safety.policies import PolicyHierarchy
+from safeguards.policies import PolicyHierarchy
 
 # Create a policy hierarchy
 policy_hierarchy = PolicyHierarchy(name="agent_policies")
@@ -648,7 +653,7 @@ hierarchical_enforcer = PolicyEnforcer(
 Handle conflicts between policies:
 
 ```python
-from agent_safety.policies import ConflictResolutionStrategy
+from safeguards.policies import ConflictResolutionStrategy
 
 # Create a policy enforcer with conflict resolution
 policy_enforcer = PolicyEnforcer(
@@ -706,8 +711,8 @@ policy_enforcer.add_policy_set(new_policy_set)
 Track and analyze policy enforcement:
 
 ```python
-from agent_safety.monitoring import PolicyMetricsCollector
-from agent_safety.visualization import PolicyDashboard
+from safeguards.monitoring import PolicyMetricsCollector
+from safeguards.visualization import PolicyDashboard
 
 # Create a policy metrics collector
 policy_metrics = PolicyMetricsCollector()
@@ -801,7 +806,7 @@ print(f"Policy dashboard available at: {dashboard_url}")
 
 ## Conclusion
 
-Implementing robust safety policies is essential for responsible AI agent deployment. The Agent Safety Framework provides a flexible and comprehensive system for defining, enforcing, and monitoring these policies.
+Implementing robust safety policies is essential for responsible AI agent deployment. The Safeguards provides a flexible and comprehensive system for defining, enforcing, and monitoring these policies.
 
 By following the patterns shown in this guide, you can create safety policies that protect against harmful behavior while allowing agents to operate effectively within well-defined constraints.
 

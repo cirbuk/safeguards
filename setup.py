@@ -1,4 +1,4 @@
-"""Setup configuration for agent_safety package."""
+"""Setup configuration for safeguards package."""
 
 from setuptools import setup, find_packages
 
@@ -11,14 +11,14 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
     ]
 
 setup(
-    name="agent-safety",
+    name="safeguards",
     version="0.1.0",
     author="Mason Team",
-    author_email="team@mason.com",
+    author_email="dev@getmason.io",
     description="A comprehensive framework for implementing safety controls in AI agent systems",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/mason/agent-safety",
+    url="https://github.com/cirbuk/safeguards",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     classifiers=[

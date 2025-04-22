@@ -23,4 +23,4 @@ api:
   host: localhost
   port: 8000
   debug: false
-  # api_key should be set via environment variable AGENT_SAFETY_API_API_KEY
+  # api_key should be set via environment variable SAFEGUARDS_API_API_KEY

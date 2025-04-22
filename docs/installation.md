@@ -10,7 +10,7 @@
 Install the package using pip:
 
 ```bash
-pip install agent-safety
+pip install safeguards
 ```
 
 This will install the core package with all required dependencies.
@@ -20,7 +20,7 @@ This will install the core package with all required dependencies.
 For development work, install with additional development dependencies:
 
 ```bash
-pip install agent-safety[dev]
+pip install safeguards[dev]
 ```
 
 This includes:
@@ -34,7 +34,7 @@ This includes:
 To build documentation locally:
 
 ```bash
-pip install agent-safety[docs]
+pip install safeguards[docs]
 ```
 
 This includes:
@@ -47,8 +47,8 @@ This includes:
 You can verify the installation by running:
 
 ```python
-from agent_safety import BudgetManager, ResourceMonitor
-from agent_safety.types import Agent
+from safeguards import BudgetManager, ResourceMonitor
+from safeguards.types import Agent
 
 # Should not raise any ImportError
 ```
@@ -90,7 +90,7 @@ No additional system packages required.
 
 3. Permission errors during installation
    ```bash
-   pip install --user agent-safety
+   pip install --user safeguards
    ```
 
-For more issues, please check our [GitHub Issues](https://github.com/mason-ai/agent-safety/issues) page.
+For more issues, please check our [GitHub Issues](https://github.com/cirbuk/safeguards/issues) page.

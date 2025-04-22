@@ -1,10 +1,10 @@
 # Architecture Overview
 
-This document provides a detailed overview of the Agent Safety Framework architecture, its components, and how they interact.
+This document provides a detailed overview of the Safeguards architecture, its components, and how they interact.
 
 ## High-Level Architecture
 
-The Agent Safety Framework is structured as a layered architecture with several key components:
+The Safeguards is structured as a layered architecture with several key components:
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -318,21 +318,21 @@ class TransferRequest:
 The framework has the following key module dependencies:
 
 ```
-agent_safety.api
-├── agent_safety.core.budget_coordination
-└── agent_safety.monitoring.metrics
+safeguards.api
+├── safeguards.core.budget_coordination
+└── safeguards.monitoring.metrics
 
-agent_safety.core.budget_coordination
-├── agent_safety.core.transaction
-├── agent_safety.core.notification_manager
-└── agent_safety.monitoring.violation_reporter
+safeguards.core.budget_coordination
+├── safeguards.core.transaction
+├── safeguards.core.notification_manager
+└── safeguards.monitoring.violation_reporter
 
-agent_safety.monitoring.violation_reporter
-└── agent_safety.core.notification_manager
+safeguards.monitoring.violation_reporter
+└── safeguards.core.notification_manager
 
-agent_safety.core.pool_health
-├── agent_safety.core.notification_manager
-└── agent_safety.monitoring.violation_reporter
+safeguards.core.pool_health
+├── safeguards.core.notification_manager
+└── safeguards.monitoring.violation_reporter
 ```
 
 ## Thread Safety

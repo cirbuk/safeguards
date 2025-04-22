@@ -5,14 +5,53 @@ from typing import Dict, Any, List, Optional
 import asyncio
 import time
 from dataclasses import dataclass
+import inspect
 
-from agent_safety.types.agent import Agent
-from agent_safety.guardrails.budget import BudgetGuardrail
-from agent_safety.guardrails.resource import ResourceGuardrail
-from agent_safety.budget.manager import BudgetManager
-from agent_safety.monitoring.resource_monitor import ResourceMonitor
-from agent_safety.core.notification_manager import NotificationManager
-from agent_safety.types.enums import AlertSeverity
+from safeguards.types.agent import Agent
+from safeguards.guardrails.budget import BudgetGuardrail
+from safeguards.guardrails.resource import ResourceGuardrail
+from safeguards.budget.manager import BudgetManager as BaseManager
+from safeguards.monitoring.resource_monitor import ResourceMonitor
+from safeguards.core.notification_manager import NotificationManager
+from safeguards.types import BudgetConfig, ResourceThresholds
+
+
+# Create a customized BudgetManager that's compatible with our example
+class BudgetManager(BaseManager):
+    """Extended BudgetManager for the example."""
+
+    def has_sufficient_budget(self, agent_id=None) -> bool:
+        """Check if there is sufficient budget for a given cost.
+
+        Args:
+            agent_id: Optional agent ID, not used in this simple example
+
+        Returns:
+            bool: True if there is sufficient budget, False otherwise
+        """
+        return self.get_remaining_budget() > Decimal("0")
+
+    def has_exceeded_budget(self, agent_id=None) -> bool:
+        """Check if total spending has exceeded the budget.
+
+        Args:
+            agent_id: Optional agent ID, not used in this simple example
+
+        Returns:
+            bool: True if budget is exceeded, False otherwise
+        """
+        return self.get_remaining_budget() <= Decimal("0")
+
+    def get_minimum_required(self, agent_id=None) -> Decimal:
+        """Get minimum required budget for an agent.
+
+        Args:
+            agent_id: Optional agent ID
+
+        Returns:
+            Decimal: Minimum budget required
+        """
+        return Decimal("10.0")
 
 
 class ExampleAgent(Agent):
@@ -54,7 +93,9 @@ class ContentGuardrail:
     def __init__(self, forbidden_words: List[str]):
         self.forbidden_words = [word.lower() for word in forbidden_words]
 
-    def validate(self, input_text: Optional[str] = None, **kwargs) -> ValidationResult:
+    def validate_input(
+        self, input_text: Optional[str] = None, **kwargs
+    ) -> ValidationResult:
         """Validate that input doesn't contain forbidden words."""
         if not input_text:
             input_text = kwargs.get("input", "")
@@ -83,18 +124,51 @@ class ContentGuardrail:
             is_valid=True, message="Input content is safe", details={}
         )
 
-    async def run(self, context: Dict[str, Any]) -> Optional[str]:
-        """Run function with content safety checks."""
+    async def run(self, context) -> Optional[str]:
+        """Run function with content safety checks.
+
+        Args:
+            context: Either a RunContext object or a dictionary with inputs
+
+        Returns:
+            Error message or None
+        """
         # Extract input text
-        input_text = context.get("input", "")
+        if hasattr(context, "inputs"):
+            # It's a RunContext
+            input_text = context.inputs.get("input", "")
+        else:
+            # It's a dictionary
+            input_text = context.get("input", "")
 
         # Validate content
-        validation_result = self.validate(input_text)
+        validation_result = self.validate_input(input_text)
 
         if not validation_result.is_valid:
             return f"Content safety violation: {validation_result.message}"
 
         # No issues found
+        return None
+
+    async def validate(self, context, result) -> Optional[str]:
+        """Framework-compatible validation method.
+
+        Validates results to ensure they don't contain any forbidden words.
+
+        Args:
+            context: RunContext object
+            result: Result from agent execution
+
+        Returns:
+            Error message if validation fails, None otherwise
+        """
+        # In a real scenario, we might want to check the agent's output too
+        if isinstance(result, dict) and "result" in result:
+            # Validate the result string
+            validation_result = self.validate_input(result["result"])
+            if not validation_result.is_valid:
+                return f"Output content violation: {validation_result.message}"
+
         return None
 
 
@@ -109,11 +183,25 @@ class CompositeGuardrail:
         # Create context for guardrails
         context = kwargs.copy()
 
+        # For framework guardrails, we need to create a proper RunContext
+        # Create a mock agent for demonstration purposes
+        from safeguards.types.guardrail import RunContext
+
+        # Get the agent from kwargs
+        agent = kwargs.get("agent", None)
+
+        # Make sure we have a valid agent
+        if agent is None:
+            raise ValueError("An agent instance must be provided to run guardrails")
+
+        # Create a RunContext for framework guardrails
+        run_context = RunContext(agent=agent, inputs=kwargs, metadata={})
+
         # Check each guardrail
         for guardrail in self.guardrails:
-            # For custom guardrails
-            if hasattr(guardrail, "validate"):
-                validation_result = guardrail.validate(**kwargs)
+            # For custom guardrails with only validate_input method (not framework-compatible)
+            if hasattr(guardrail, "validate_input") and not hasattr(guardrail, "run"):
+                validation_result = guardrail.validate_input(**kwargs)
                 if (
                     hasattr(validation_result, "is_valid")
                     and not validation_result.is_valid
@@ -122,14 +210,27 @@ class CompositeGuardrail:
                         f"Guardrail violation: {validation_result.message}"
                     )
 
-            # For framework guardrails
+            # For framework-compatible guardrails
             elif hasattr(guardrail, "run"):
-                error = await guardrail.run(context)
+                error = await guardrail.run(run_context)
                 if error:
                     raise ValueError(f"Guardrail violation: {error}")
 
         # All guardrails passed, run the function
-        return fn(**kwargs)
+        # Check if the function is async
+        if inspect.iscoroutinefunction(fn):
+            result = await fn(**kwargs)
+        else:
+            result = fn(**kwargs)
+
+        # Validate result with framework guardrails
+        for guardrail in self.guardrails:
+            if hasattr(guardrail, "validate") and hasattr(guardrail, "run"):
+                error = await guardrail.validate(run_context, result)
+                if error:
+                    raise ValueError(f"Result validation failed: {error}")
+
+        return result
 
 
 async def main():
@@ -143,18 +244,21 @@ async def main():
     def alert_callback(agent_id, alert_type, severity, message):
         print(f"ALERT: [{severity.name}] {message}")
 
-    notification_manager.register_callback("alerts", alert_callback)
-
     # Create an agent
     agent = ExampleAgent("example_agent", cost_per_action=Decimal("10.0"))
 
     # Create budget components
-    budget_manager = BudgetManager(agent_id=agent.id, initial_budget=Decimal("100.0"))
+    budget_config = BudgetConfig(
+        total_budget=Decimal("100.0"),
+        hourly_limit=Decimal("50.0"),
+        daily_limit=Decimal("100.0"),
+        warning_threshold=75.0,
+    )
+    budget_manager = BudgetManager(config=budget_config)
 
     # Create resource monitoring
-    resource_monitor = ResourceMonitor(
-        agent_id=agent.id, thresholds={"cpu_percent": 80, "memory_percent": 70}
-    )
+    resource_thresholds = ResourceThresholds(cpu_percent=80.0, memory_percent=70.0)
+    resource_monitor = ResourceMonitor(thresholds=resource_thresholds)
 
     # Create content guardrail
     content_guardrail = ContentGuardrail(
@@ -176,7 +280,7 @@ async def main():
     try:
         print("\nTest 1: Valid input")
         result = await composite_guardrail.run(
-            agent.run, input="Process this normal text safely"
+            agent.run, agent=agent, input="Process this normal text safely"
         )
         print(f"Result: {result}")
 
@@ -191,7 +295,7 @@ async def main():
     try:
         print("\nTest 2: Content violation")
         result = await composite_guardrail.run(
-            agent.run, input="Process this dangerous and harmful content"
+            agent.run, agent=agent, input="Process this dangerous and harmful content"
         )
         print(f"Result: {result}")  # Should not reach here
 
@@ -200,27 +304,28 @@ async def main():
 
     # Test budget violation
     try:
-        print("\nTest 3: Budget violation")
-        # Reduce budget to force violation
-        for _ in range(8):
-            budget_manager.record_cost(Decimal("10.0"))
+        print("\nTest 3: Budget violation (simulated)")
+        # Deplete the budget
+        budget_manager.record_cost(budget_manager.get_remaining_budget())
+        print(
+            f"Remaining budget after depletion: {budget_manager.get_remaining_budget()}"
+        )
 
-        print(f"Remaining budget: {budget_manager.get_remaining_budget()}")
-
+        # This should now fail due to budget constraint
         result = await composite_guardrail.run(
-            agent.run, input="Process this after budget depletion"
+            agent.run, agent=agent, input="This should fail due to budget constraints"
         )
         print(f"Result: {result}")  # Should not reach here
 
     except Exception as e:
         print(f"Error: {str(e)}")
 
-    # Report how guardrails helped
-    print("\n=== Guardrails Protection Summary ===")
-    print("1. Content Guardrail: Prevented processing of unsafe content")
-    print("2. Budget Guardrail: Prevented exceeding allocated budget")
-    print("3. Resource Guardrail: Monitored system resource usage")
-    print("\nAll guardrails worked together to ensure safe operation.")
+    # Print a summary
+    print("\n=== Guardrails Demonstration Summary ===")
+    print("1. Content Guardrail: Prevents processing of unsafe content")
+    print("2. Budget Guardrail: Ensures operations stay within budget limits")
+    print("3. Resource Guardrail: Monitors system resource usage")
+    print("\nAll guardrails worked together to provide a safety framework.")
 
 
 if __name__ == "__main__":

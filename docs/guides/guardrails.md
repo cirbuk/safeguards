@@ -1,6 +1,6 @@
 # Safety Guardrails Guide
 
-This guide explains how to implement and use safety guardrails in the Agent Safety Framework, providing protection mechanisms for your agent systems.
+This guide explains how to implement and use safety guardrails in the Safeguards, providing protection mechanisms for your agent systems.
 
 ## Introduction to Safety Guardrails
 
@@ -12,7 +12,7 @@ Safety guardrails are preventative mechanisms that constrain agent behavior with
 - Provide fallback mechanisms when violations occur
 - Create audit trails of safety-critical decisions
 
-The Agent Safety Framework offers several types of guardrails for different safety concerns.
+The Safeguards offers several types of guardrails for different safety concerns.
 
 ## Core Guardrail Types
 
@@ -22,9 +22,9 @@ Budget guardrails prevent agents from exceeding their allocated resources:
 
 ```python
 from decimal import Decimal
-from agent_safety.guardrails.budget import BudgetGuardrail
-from agent_safety.types.agent import Agent
-from agent_safety.budget.manager import BudgetManager
+from safeguards.guardrails.budget import BudgetGuardrail
+from safeguards.types.agent import Agent
+from safeguards.budget.manager import BudgetManager
 
 # Create a budget manager
 budget_manager = BudgetManager(
@@ -72,8 +72,8 @@ def process_request(agent, input_data, expected_cost):
 Resource guardrails prevent excessive CPU, memory, or disk usage:
 
 ```python
-from agent_safety.guardrails.resource import ResourceGuardrail
-from agent_safety.monitoring.resource_monitor import ResourceMonitor
+from safeguards.guardrails.resource import ResourceGuardrail
+from safeguards.monitoring.resource_monitor import ResourceMonitor
 
 # Create a resource monitor
 resource_monitor = ResourceMonitor(
@@ -124,8 +124,8 @@ def perform_resource_intensive_task(agent, task_params):
 Security guardrails prevent unauthorized access and operations:
 
 ```python
-from agent_safety.security.auth import SecurityManager, Permission, Role
-from agent_safety.types.guardrail import SecurityGuardrail
+from safeguards.security.auth import SecurityManager, Permission, Role
+from safeguards.types.guardrail import SecurityGuardrail
 
 # Create a security manager
 security_manager = SecurityManager()
@@ -187,7 +187,7 @@ You can create custom guardrails for specific needs:
 
 ```python
 from typing import Any, Dict, Optional, Callable
-from agent_safety.types.guardrail import Guardrail, ValidationResult
+from safeguards.types.guardrail import Guardrail, ValidationResult
 
 class CustomGuardrail(Guardrail):
     """A custom guardrail implementation."""
@@ -250,7 +250,7 @@ def process_text_safely(agent, text):
 For comprehensive safety, combine multiple guardrails:
 
 ```python
-from agent_safety.types.guardrail import CompositeGuardrail
+from safeguards.types.guardrail import CompositeGuardrail
 
 # Create a composite guardrail
 composite_guardrail = CompositeGuardrail([
@@ -287,8 +287,8 @@ def safe_agent_execution(agent, input_data, agent_id, expected_cost):
 Define guardrail policies to apply consistent safety measures:
 
 ```python
-from agent_safety.rules.base import RuleSet, Rule
-from agent_safety.types.guardrail import PolicyGuardrail
+from safeguards.rules.base import RuleSet, Rule
+from safeguards.types.guardrail import PolicyGuardrail
 
 # Define rules
 budget_rule = Rule(
@@ -313,7 +313,7 @@ resource_rule = Rule(
 )
 
 # Create a rule set
-rule_set = RuleSet("agent_safety_policy")
+rule_set = RuleSet("safeguards_policy")
 rule_set.add_rule(budget_rule)
 rule_set.add_rule(security_rule)
 rule_set.add_rule(resource_rule)
@@ -346,7 +346,7 @@ def execute_with_policy(agent, input_data, context):
 Implement circuit breakers to prevent repeated failures:
 
 ```python
-from agent_safety.types.guardrail import CircuitBreakerGuardrail
+from safeguards.types.guardrail import CircuitBreakerGuardrail
 
 # Create a circuit breaker
 circuit_breaker = CircuitBreakerGuardrail(
@@ -380,9 +380,9 @@ def call_service_safely(service_fn, *args, **kwargs):
 Track guardrail interventions:
 
 ```python
-from agent_safety.monitoring.violation_reporter import ViolationReporter
-from agent_safety.core.notification_manager import NotificationManager
-from agent_safety.types.enums import ViolationType, AlertSeverity
+from safeguards.monitoring.violation_reporter import ViolationReporter
+from safeguards.core.notification_manager import NotificationManager
+from safeguards.types import ViolationType, AlertSeverity
 
 # Create required components
 notification_manager = NotificationManager()
@@ -466,5 +466,5 @@ Safety guardrails are a powerful way to ensure agent systems operate within defi
 
 For more information, see:
 - [Budget Management](budget_management.md) for budget constraint details
-- [Security Guide](agent_safety.md) for security policy information
+- [Security Guide](safeguards.md) for security policy information
 - [Monitoring Guide](monitoring.md) for tracking guardrail effectiveness

@@ -1,6 +1,6 @@
 # Basic Usage Guide
 
-This guide covers the basic usage of the Agent Safety Framework.
+This guide covers the basic usage of the Safeguards.
 
 ## Core Components
 
@@ -14,9 +14,9 @@ The framework consists of four main components:
 ## Basic Setup
 
 ```python
-from agent_safety import BudgetManager, ResourceMonitor, NotificationManager
-from agent_safety.guardrails import BudgetGuardrail, ResourceGuardrail
-from agent_safety.types import Agent
+from safeguards import BudgetManager, ResourceMonitor, NotificationManager
+from safeguards.guardrails import BudgetGuardrail, ResourceGuardrail
+from safeguards.types import Agent
 
 # Initialize managers
 budget_manager = BudgetManager(
@@ -80,7 +80,7 @@ notifications = notification_manager.get_notifications(agent_id=agent.id)
 ## Error Handling
 
 ```python
-from agent_safety.notifications import NotificationLevel
+from safeguards.notifications import NotificationLevel
 
 try:
     result = agent.run(input_data="Your input here")
@@ -103,14 +103,14 @@ except Exception as e:
 ## Example: Complete Workflow
 
 ```python
-from agent_safety import (
+from safeguards import (
     BudgetManager,
     ResourceMonitor,
     NotificationManager,
     SafetyController,
 )
-from agent_safety.types import Agent
-from agent_safety.notifications import NotificationLevel
+from safeguards.types import Agent
+from safeguards.notifications import NotificationLevel
 
 # Initialize components
 budget_manager = BudgetManager(total_budget=1000)

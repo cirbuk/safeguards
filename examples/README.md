@@ -1,15 +1,15 @@
-# Agent Safety Framework Examples
+# Safeguards Examples
 
-This directory contains example implementations demonstrating how to use the Agent Safety Framework with different agent systems.
+This directory contains example implementations demonstrating how to use the Safeguards with different agent systems.
 
 ## OpenAI Agents SDK Integration
 
-The examples in this directory show how to integrate the Agent Safety Framework with the OpenAI Agents SDK.
+The examples in this directory show how to integrate the Safeguards with the OpenAI Agents SDK.
 
 ### Prerequisites
 
 - Python 3.8 or higher
-- Agent Safety Framework installed
+- Safeguards installed
 - OpenAI Agents SDK installed
 - OpenAI API key
 
@@ -19,18 +19,58 @@ The examples in this directory show how to integrate the Agent Safety Framework 
    - Simple integration of a single OpenAI agent with budget tracking
    - Demonstrates basic budget management and resource monitoring
    - Good starting point for understanding the integration process
+   - ✅ Production-ready
 
 2. **Advanced Integration** (`openai_agents_advanced.py`)
    - Multi-agent system with research and writing agents
    - Demonstrates content filtering, budget guardrails, and resource monitoring
    - Includes violation reporting and notification systems
    - Shows how to collect and display metrics
+   - ✅ Production-ready
+
+3. **Single Agent Example** (`single_agent.py`)
+   - Basic example of setting up safety controls for a single agent
+   - Demonstrates budget tracking and violation reporting
+   - ✅ Production-ready
+
+4. **Multi-Agent Example** (`multi_agent.py`)
+   - Demonstrates coordinating multiple agents with shared budget controls
+   - Shows how to use BudgetCoordinator for agent coordination
+   - ✅ Production-ready
+
+5. **Budget Monitoring Example** (`budget_monitoring.py`)
+   - Shows how to implement budget monitoring and alerts
+   - Demonstrates real-time tracking and visualization
+   - ✅ Production-ready
+
+6. **Budget Control Example** (`budget_control_example.py`)
+   - Comprehensive example of budget control integration
+   - Demonstrates budget pools, agent registration, and metrics
+   - ✅ Production-ready
+
+7. **Guardrails Example** (`guardrails_example.py`)
+   - Demonstrates implementing and using safety guardrails
+   - Shows how to combine multiple guardrails for comprehensive protection
+   - ✅ Production-ready
+
+8. **Notification Setup Example** (`notification_setup.py`)
+   - Shows how to configure Slack and Email notifications
+   - Demonstrates notification channels and formatting
+   - ✅ Production-ready
+
+### Experimental Components
+
+The following components are still in development and should be used with caution:
+
+- **SwarmController** (`safeguards.swarm.SwarmController`): This component is still experimental and not ready for production use. For multi-agent coordination, please use the BudgetCoordinator directly as shown in `examples/multi_agent.py`.
+
+For details on component status, see the [Component Status](../COMPONENT_STATUS.md) document.
 
 ### Setup and Usage
 
 1. **Install dependencies**:
    ```bash
-   pip install -e .  # Install Agent Safety Framework in dev mode
+   pip install -e .  # Install Safeguards in dev mode
    pip install agents-sdk  # Install OpenAI Agents SDK
    ```
 
@@ -50,7 +90,7 @@ The examples in this directory show how to integrate the Agent Safety Framework 
 
 ### Key Concepts Demonstrated
 
-- **Agent Wrapping**: Creating a wrapper class to make external agents compatible with the Agent Safety Framework
+- **Agent Wrapping**: Creating a wrapper class to make external agents compatible with the Safeguards
 - **Budget Management**: Setting up and tracking budget usage for agents and pools
 - **Guardrails**: Implementing budget, resource, and content guardrails
 - **Violation Reporting**: Reporting and handling safety violations
@@ -73,7 +113,7 @@ If you encounter issues when running the examples:
 
 - Ensure your OpenAI API key is set correctly
 - Check that all dependencies are installed
-- Verify that the Agent Safety Framework is installed properly
+- Verify that the Safeguards is installed properly
 - Look for error messages that might indicate version incompatibilities
 
 For more assistance, please refer to the main documentation or create an issue on the GitHub repository.
@@ -92,7 +132,7 @@ For more assistance, please refer to the main documentation or create an issue o
 
 ### Prerequisites
 - Python 3.8 or higher
-- Agent Safety Framework installed
+- Safeguards installed
 - Required dependencies (see requirements.txt in root directory)
 
 ### Setup

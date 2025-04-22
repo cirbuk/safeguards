@@ -1,6 +1,6 @@
-# Agent Safety Framework Guides
+# Safeguards Guides
 
-This directory contains comprehensive guides for using the Agent Safety Framework. Each guide focuses on a specific aspect of the framework and provides detailed explanations, code examples, and best practices.
+This directory contains comprehensive guides for using the Safeguards. Each guide focuses on a specific aspect of the framework and provides detailed explanations, code examples, and best practices.
 
 ## Available Guides
 
@@ -12,7 +12,7 @@ This guide covers how to effectively manage agent budgets, including:
 - Monitoring and controlling budget usage
 - Setting up alerts for budget-related events
 
-### [Agent Safety](agent_safety.md)
+### [Safeguards](safeguards.md)
 This guide explains safety features and protection mechanisms, including:
 - Setting up core safety components
 - Implementing safety guardrails and action filters
@@ -47,11 +47,11 @@ This guide covers setting up and customizing notification systems, including:
 
 ## Getting Started
 
-If you're new to the Agent Safety Framework, we recommend starting with:
+If you're new to the Safeguards, we recommend starting with:
 
 1. The [Quick Start Guide](../quickstart.md) for a basic introduction
 2. The [Budget Management Guide](budget_management.md) to understand core concepts
-3. The [Agent Safety Guide](agent_safety.md) to learn about protection mechanisms
+3. The [Safeguards Guide](safeguards.md) to learn about protection mechanisms
 4. The [Monitoring Guide](monitoring.md) to set up proper observability
 
 ## Additional Resources

@@ -3,9 +3,9 @@
 import pytest
 from unittest.mock import MagicMock
 
-from agent_safety.monitoring.resource_monitor import ResourceMonitor, ResourceMetrics
-from agent_safety.guardrails.resource import ResourceGuardrail
-from agent_safety.types import Agent, RunContext
+from safeguards.monitoring.resource_monitor import ResourceMonitor, ResourceMetrics
+from safeguards.guardrails.resource import ResourceGuardrail
+from safeguards.types import Agent, RunContext
 
 
 class TestAgent(Agent):

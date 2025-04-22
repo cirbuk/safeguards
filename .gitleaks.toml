@@ -14,14 +14,14 @@ paths = [
 [[rules]]
 id = "agent-safety-api-key"
 description = "Agent Safety API Key"
-regex = '''(?i)(agent_safety_key|agent_key|safety_key)['\"][0-9a-zA-Z]{32}['\"]'''
+regex = '''(?i)(safeguards_key|agent_key|safety_key)['\"][0-9a-zA-Z]{32}['\"]'''
 secretGroup = 1
 entropy = 3.5
 
 [[rules]]
 id = "agent-safety-secret"
 description = "Agent Safety Secret"
-regex = '''(?i)(agent_safety_secret|agent_secret|safety_secret)['\"][0-9a-zA-Z]{32,64}['\"]'''
+regex = '''(?i)(safeguards_secret|agent_secret|safety_secret)['\"][0-9a-zA-Z]{32,64}['\"]'''
 secretGroup = 1
 entropy = 3.5
 

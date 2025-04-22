@@ -5,9 +5,9 @@ from typing import List, Dict, Any
 import uuid
 from datetime import datetime, timedelta
 
-from agent_safety.types.agent import Agent
-from agent_safety.core.budget_coordination import BudgetPool
-from agent_safety.monitoring.metrics import AgentMetrics, SystemMetrics
+from safeguards.types.agent import Agent
+from safeguards.core.budget_coordination import BudgetPool
+from safeguards.monitoring.metrics import AgentMetrics, SystemMetrics
 
 
 class TestAgent(Agent):

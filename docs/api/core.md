@@ -1,6 +1,6 @@
 # Core API Reference
 
-This document provides detailed information about the core API components of the Agent Safety Framework.
+This document provides detailed information about the core API components of the Safeguards.
 
 ## Agent
 
@@ -9,7 +9,7 @@ The `Agent` class is the base abstraction for all agent implementations.
 ### Agent Base Class
 
 ```python
-from agent_safety.types.agent import Agent
+from safeguards.types.agent import Agent
 ```
 
 #### Constructor
@@ -55,7 +55,7 @@ def run(self, **kwargs: Any) -> Dict[str, Any]:
 ```python
 from decimal import Decimal
 from typing import Dict, Any
-from agent_safety.types.agent import Agent
+from safeguards.types.agent import Agent
 
 class MyAgent(Agent):
     def __init__(self, name: str, cost_per_action: Decimal = Decimal("0.1")):
@@ -83,7 +83,7 @@ class MyAgent(Agent):
 The `BudgetCoordinator` class manages resource allocation and budget tracking.
 
 ```python
-from agent_safety.core.budget_coordination import BudgetCoordinator
+from safeguards.core.budget_coordination import BudgetCoordinator
 ```
 
 ### Constructor
@@ -373,7 +373,7 @@ def auto_scale_pools(self) -> None:
 The `NotificationManager` manages notifications and alerts.
 
 ```python
-from agent_safety.core.notification_manager import NotificationManager
+from safeguards.core.notification_manager import NotificationManager
 ```
 
 ### Constructor
@@ -424,7 +424,7 @@ def remove_handler(self, handler: Callable[[Any], None]) -> None:
 The `ViolationReporter` reports and tracks safety violations.
 
 ```python
-from agent_safety.monitoring.violation_reporter import ViolationReporter
+from safeguards.monitoring.violation_reporter import ViolationReporter
 ```
 
 ### Constructor
@@ -500,7 +500,7 @@ def get_violations_by_pool(self, pool_id: str) -> List[ViolationReport]:
 The `TransactionManager` ensures atomic operations.
 
 ```python
-from agent_safety.core.transaction import TransactionManager
+from safeguards.core.transaction import TransactionManager
 ```
 
 ### Methods
@@ -535,7 +535,7 @@ def set_state(self, state: T) -> None:
 The `BudgetPool` class represents a container for shared resources.
 
 ```python
-from agent_safety.core.dynamic_budget import BudgetPool
+from safeguards.core.dynamic_budget import BudgetPool
 ```
 
 ### Constructor
@@ -580,7 +580,7 @@ def initial_budget(self) -> Decimal:
 ## Alert Types
 
 ```python
-from agent_safety.core.alert_types import Alert, AlertSeverity
+from safeguards.core.alert_types import Alert, AlertSeverity
 ```
 
 ### Alert Class
@@ -613,7 +613,7 @@ class AlertSeverity(Enum):
 ## Violation Types
 
 ```python
-from agent_safety.monitoring.violation_reporter import ViolationType, ViolationSeverity
+from safeguards.monitoring.violation_reporter import ViolationType, ViolationSeverity
 ```
 
 ### ViolationType Enum
@@ -645,7 +645,7 @@ class ViolationSeverity(Enum):
 ## TransferType Enum
 
 ```python
-from agent_safety.core.budget_coordination import TransferType
+from safeguards.core.budget_coordination import TransferType
 ```
 
 ```python
@@ -663,7 +663,7 @@ class TransferType(Enum):
 ## AgentPriority Enum
 
 ```python
-from agent_safety.core.dynamic_budget import AgentPriority
+from safeguards.core.dynamic_budget import AgentPriority
 ```
 
 ```python
@@ -680,7 +680,7 @@ class AgentPriority(Enum):
 ## Exceptions
 
 ```python
-from agent_safety.exceptions import (
+from safeguards.exceptions import (
     AgentSafetyError,
     BudgetError,
     ResourceError,

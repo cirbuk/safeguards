@@ -1,6 +1,6 @@
 # Dynamic Budget Allocation
 
-This guide covers advanced techniques for dynamic budget allocation in the Agent Safety Framework, enabling more adaptive and efficient resource management for your agent systems.
+This guide covers advanced techniques for dynamic budget allocation in the Safeguards, enabling more adaptive and efficient resource management for your agent systems.
 
 ## Introduction to Dynamic Allocation
 
@@ -20,9 +20,9 @@ Automatically size budget pools based on usage patterns:
 
 ```python
 from decimal import Decimal
-from agent_safety.core.budget_coordination import BudgetCoordinator
-from agent_safety.core.dynamic_budget import AdaptivePoolSizer
-from agent_safety.types.enums import AgentPriority
+from safeguards.core.budget_coordination import BudgetCoordinator
+from safeguards.core.dynamic_budget import AdaptivePoolSizer
+from safeguards.types.enums import AgentPriority
 
 # Create core components
 notification_manager = NotificationManager()
@@ -61,8 +61,8 @@ pool_sizer.start()
 Dynamically reallocate budgets based on agent priorities:
 
 ```python
-from agent_safety.core.dynamic_budget import PriorityBasedReallocator
-from agent_safety.types.enums import AgentPriority
+from safeguards.core.dynamic_budget import PriorityBasedReallocator
+from safeguards.types.enums import AgentPriority
 from decimal import Decimal
 
 # Create a priority-based reallocator
@@ -113,7 +113,7 @@ reallocator.start()
 Implement rate limits for budget consumption:
 
 ```python
-from agent_safety.budget.rate_limiter import BudgetRateLimiter
+from safeguards.budget.rate_limiter import BudgetRateLimiter
 from datetime import timedelta
 from decimal import Decimal
 
@@ -166,7 +166,7 @@ def execute_agent_operation(agent_id, operation_cost):
 Adjust budgets based on time of day:
 
 ```python
-from agent_safety.budget.time_scheduler import BudgetTimeScheduler
+from safeguards.budget.time_scheduler import BudgetTimeScheduler
 from datetime import time, datetime, timedelta
 from decimal import Decimal
 
@@ -222,7 +222,7 @@ scheduler.start()
 Learn from agent usage patterns to optimize budgets:
 
 ```python
-from agent_safety.budget.pattern_learner import BudgetPatternLearner
+from safeguards.budget.pattern_learner import BudgetPatternLearner
 from datetime import datetime, timedelta
 import numpy as np
 
@@ -278,8 +278,8 @@ def apply_optimized_budgets():
 Use reinforcement learning to optimize budget allocation:
 
 ```python
-from agent_safety.budget.rl_optimizer import BudgetRLOptimizer
-from agent_safety.types.metrics import BudgetMetrics
+from safeguards.budget.rl_optimizer import BudgetRLOptimizer
+from safeguards.types.metrics import BudgetMetrics
 
 # Create a reinforcement learning budget optimizer
 rl_optimizer = BudgetRLOptimizer(
@@ -336,7 +336,7 @@ print(f"Learned allocation policy: {allocation_policy}")
 Manage multiple resource types independently:
 
 ```python
-from agent_safety.budget.multi_resource import MultiResourceBudget
+from safeguards.budget.multi_resource import MultiResourceBudget
 from decimal import Decimal
 
 # Create a multi-resource budget manager
@@ -400,7 +400,7 @@ def update_multi_resource_budget(agent_id, resources_used):
 Allocate budgets based on expected return on investment:
 
 ```python
-from agent_safety.budget.cost_benefit import CostBenefitAllocator
+from safeguards.budget.cost_benefit import CostBenefitAllocator
 from decimal import Decimal
 
 # Create a cost-benefit allocator
@@ -462,7 +462,7 @@ print(f"Allocation effectiveness: {effectiveness}")
 Coordinate budgets across multiple systems:
 
 ```python
-from agent_safety.budget.federation import BudgetFederation
+from safeguards.budget.federation import BudgetFederation
 import requests
 from decimal import Decimal
 

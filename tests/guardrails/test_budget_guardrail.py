@@ -4,9 +4,9 @@ from decimal import Decimal
 import pytest
 from unittest.mock import MagicMock
 
-from agent_safety.budget.manager import BudgetManager, BudgetOverride
-from agent_safety.guardrails.budget import BudgetGuardrail
-from agent_safety.types import Agent, RunContext
+from safeguards.budget.manager import BudgetManager, BudgetOverride
+from safeguards.guardrails.budget import BudgetGuardrail
+from safeguards.types import Agent, RunContext
 
 
 class TestAgent(Agent):

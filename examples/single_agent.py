@@ -9,13 +9,13 @@ from decimal import Decimal
 # Import OpenAI Agents SDK components
 from agents import Agent, Runner
 
-# Import Agent Safety Framework components
-from agent_safety.notifications import NotificationManager, NotificationLevel
-from agent_safety.violations import ViolationReporter, Violation, ViolationType
-from agent_safety.core import BudgetCoordinator, BudgetPool
-from agent_safety.monitoring.metrics import MetricsAnalyzer
-from agent_safety.types import NotificationChannel
-from agent_safety.monitoring.violation_reporter import (
+# Import Safeguards framework components
+from safeguards.notifications import NotificationManager, NotificationLevel
+from safeguards.violations import ViolationReporter, Violation, ViolationType
+from safeguards.core import BudgetCoordinator, BudgetPool
+from safeguards.monitoring.metrics import MetricsAnalyzer
+from safeguards.types import NotificationChannel
+from safeguards.monitoring.violation_reporter import (
     ViolationSeverity,
     ViolationContext,
 )
@@ -137,7 +137,7 @@ class SimpleAgentWrapper:
 
 
 def setup_safety_framework():
-    """Set up the core components of the Agent Safety Framework."""
+    """Set up the core components of the Safeguards framework."""
     # Create notification manager with console notifications enabled
     notification_manager = NotificationManager(
         enabled_channels={NotificationChannel.CONSOLE}
@@ -150,7 +150,7 @@ def setup_safety_framework():
     slack_webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
     if slack_webhook_url:
         notification_manager.configure_slack(
-            webhook_url=slack_webhook_url, channel="#agent-safety"
+            webhook_url=slack_webhook_url, channel="#safeguards"
         )
 
     # Create violation reporter

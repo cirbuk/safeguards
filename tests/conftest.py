@@ -5,8 +5,8 @@ from typing import Generator
 import pytest
 from unittest.mock import MagicMock
 
-from agent_safety.types.agent import Agent
-from agent_safety import (
+from safeguards.types.agent import Agent
+from safeguards import (
     SafetyController,
     SafetyConfig,
     BudgetManager,

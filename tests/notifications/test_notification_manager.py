@@ -4,7 +4,7 @@ from datetime import datetime
 import pytest
 from unittest.mock import patch
 
-from agent_safety.notifications.manager import (
+from safeguards.notifications.manager import (
     NotificationManager,
     NotificationLevel,
     Notification,

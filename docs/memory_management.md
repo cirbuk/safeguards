@@ -2,14 +2,14 @@
 
 ## Overview
 
-The Agent Safety Framework includes comprehensive memory management and caching features to optimize resource usage and improve performance. This guide covers the key components and their usage.
+The Safeguards includes comprehensive memory management and caching features to optimize resource usage and improve performance. This guide covers the key components and their usage.
 
 ## Memory Manager
 
 The `MemoryManager` class provides centralized memory optimization and resource tracking:
 
 ```python
-from agent_safety.core.memory_manager import MemoryManager
+from safeguards.core.memory_manager import MemoryManager
 
 # Initialize memory manager
 memory_manager = MemoryManager(gc_threshold=(700, 10, 10))
@@ -59,7 +59,7 @@ memory_manager.cleanup_resources()
 The `CacheManager` provides advanced caching strategies:
 
 ```python
-from agent_safety.core.cache_manager import CacheManager
+from safeguards.core.cache_manager import CacheManager
 
 cache_manager = CacheManager()
 

@@ -4,7 +4,7 @@ import pytest
 from datetime import datetime
 from uuid import UUID
 
-from agent_safety.security.auth import (
+from safeguards.security.auth import (
     Permission,
     Role,
     AuditLog,

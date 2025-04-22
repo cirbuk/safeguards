@@ -1,7 +1,7 @@
 """Example usage of memory and cache management features."""
 
-from agent_safety.core.memory_manager import MemoryManager
-from agent_safety.core.cache_manager import CacheManager
+from safeguards.core.memory_manager import MemoryManager
+from safeguards.core.cache_manager import CacheManager
 import time
 from dataclasses import dataclass
 from typing import Optional

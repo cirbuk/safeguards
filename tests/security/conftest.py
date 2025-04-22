@@ -3,8 +3,8 @@
 import pytest
 from typing import Dict, Set
 
-from agent_safety.rules.base import RuleContext, RulePriority
-from agent_safety.rules.defaults import (
+from safeguards.rules.base import RuleContext, RulePriority
+from safeguards.rules.defaults import (
     PermissionGuardrail,
     SecurityContextRule,
     RateLimitRule,
@@ -49,7 +49,7 @@ def test_environments() -> Set[str]:
 @pytest.fixture
 def security_rule_chain(test_roles, test_environments):
     """Create a chain of security rules for testing."""
-    from agent_safety.rules.base import RuleChain
+    from safeguards.rules.base import RuleChain
 
     chain = RuleChain()
 

@@ -1,7 +1,7 @@
 """Example usage of the Agent Safety security rules system."""
 
-from agent_safety.rules.base import RuleChain
-from agent_safety.rules.defaults import (
+from safeguards.rules.base import RuleChain
+from safeguards.rules.defaults import (
     PermissionGuardrail,
     SecurityContextRule,
     RateLimitRule,

@@ -4,12 +4,12 @@ import pytest
 from decimal import Decimal
 from typing import Dict, List
 
-from agent_safety.api import APIFactory, APIVersion
-from agent_safety.core.budget_coordination import BudgetCoordinator
-from agent_safety.core.notification_manager import NotificationManager
-from agent_safety.monitoring.violation_reporter import ViolationReporter
-from agent_safety.core.pool_health import PoolHealthMonitor, HealthStatus
-from agent_safety.types.agent import Agent
+from safeguards.api import APIFactory, APIVersion
+from safeguards.core.budget_coordination import BudgetCoordinator
+from safeguards.core.notification_manager import NotificationManager
+from safeguards.monitoring.violation_reporter import ViolationReporter
+from safeguards.core.pool_health import PoolHealthMonitor, HealthStatus
+from safeguards.types.agent import Agent
 from tests.utils.test_data_generator import TestDataGenerator, TestAgent
 
 

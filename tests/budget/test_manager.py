@@ -4,8 +4,8 @@ from decimal import Decimal
 import pytest
 from unittest.mock import MagicMock
 
-from agent_safety.budget.manager import BudgetManager
-from agent_safety.types import BudgetConfig
+from safeguards.budget.manager import BudgetManager
+from safeguards.types import BudgetConfig
 
 
 @pytest.fixture

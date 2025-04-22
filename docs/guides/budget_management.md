@@ -1,6 +1,6 @@
 # Budget Management Guide
 
-This guide provides a comprehensive overview of budget management features in the Agent Safety Framework.
+This guide provides a comprehensive overview of budget management features in the Safeguards.
 
 ## Core Concepts
 
@@ -16,8 +16,8 @@ Budget pools are containers for resources that can be allocated to agents. Each 
 
 ```python
 from decimal import Decimal
-from agent_safety.core.budget_coordination import BudgetCoordinator
-from agent_safety.api import APIFactory, APIVersion
+from safeguards.core.budget_coordination import BudgetCoordinator
+from safeguards.api import APIFactory, APIVersion
 
 # Setup
 notification_manager = NotificationManager()
@@ -202,7 +202,7 @@ def monitor_budget_usage(agent_id):
 Implement spending limits to prevent overconsumption:
 
 ```python
-from agent_safety.types.enums import ViolationType, AlertSeverity
+from safeguards.types import ViolationType, AlertSeverity
 
 def set_spending_limit(agent_id, limit_amount):
     """Set a spending limit for an agent."""

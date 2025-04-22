@@ -14,13 +14,12 @@ from decimal import Decimal
 from typing import Dict, Any
 from datetime import datetime, timedelta
 
-from agent_safety.types import Alert, AlertSeverity, NotificationChannel
-from agent_safety.types.agent import Agent
-from agent_safety.notifications.manager import NotificationManager
-from agent_safety.core.budget_coordination import BudgetCoordinator
-from agent_safety.core.violation_reporter import ViolationReporter
-from agent_safety.api import APIFactory, APIVersion
-from agent_safety.types.enums import ViolationType
+from safeguards.types import Alert, AlertSeverity, NotificationChannel
+from safeguards.types.agent import Agent
+from safeguards.notifications.manager import NotificationManager
+from safeguards.monitoring.violation_reporter import ViolationReporter, ViolationType
+from safeguards.core.budget_coordination import BudgetCoordinator
+from safeguards.api import APIFactory, APIVersion
 
 
 # Setup logging

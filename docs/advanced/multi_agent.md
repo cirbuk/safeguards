@@ -1,6 +1,6 @@
 # Advanced Multi-Agent Coordination
 
-This document covers advanced techniques for coordinating multiple agents within the Agent Safety Framework, focusing on complex coordination patterns, dynamic task allocation, and conflict resolution.
+This document covers advanced techniques for coordinating multiple agents within the Safeguards, focusing on complex coordination patterns, dynamic task allocation, and conflict resolution.
 
 ## Advanced Coordination Patterns
 
@@ -9,7 +9,7 @@ This document covers advanced techniques for coordinating multiple agents within
 Implement a hierarchical agent structure for complex tasks:
 
 ```python
-from agent_safety.types.agent import Agent
+from safeguards.types.agent import Agent
 from typing import Dict, Any, List
 from decimal import Decimal
 
