@@ -1,0 +1,97 @@
+site_name: Safeguards Framework
+site_description: Documentation for the Safeguards Framework
+repo_url: https://github.com/cirbuk/safeguards
+site_url: https://cirbuk.github.io/safeguards/
+
+docs_dir: ../docs
+
+theme:
+  name: material
+  palette:
+    # Light mode theme with dark header like OpenAI's site
+    scheme: default
+    primary: black
+    accent: indigo
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+  logo: stylesheets/logo.svg
+  favicon: assets/favicon.png
+
+extra:
+  version:
+    provider: mike
+    default: latest
+  generator: false
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/extra.js
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+  - def_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [../src]
+          options:
+            show_source: true
+            show_submodules: true
+
+nav:
+  - Home: README.md
+  - Getting Started:
+    - Installation: installation.md
+    - Quickstart: quickstart.md
+    - Concepts: concepts.md
+  - User Guide:
+    - Configuration: configuration.md
+    - Memory Management: memory_management.md
+    - OpenAI Integration: openai_integration.md
+  - Guides:
+    - Overview: guides/README.md
+    - Safeguards: guides/safeguards.md
+    - Guardrails: guides/guardrails.md
+    - Monitoring: guides/monitoring.md
+    - Budget Management: guides/budget_management.md
+    - Agent Coordination: guides/agent_coordination.md
+    - Safety Policies: guides/safety_policies.md
+    - Notifications: guides/notifications.md
+  - API Reference:
+    - Core API: api/core.md
+    - Monitoring: api/monitoring.md
+  - Examples:
+    - Code Examples: examples/
