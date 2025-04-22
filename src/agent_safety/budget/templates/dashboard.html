@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Safety Budget Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-8">Agent Safety Budget Dashboard</h1>
+
+        <!-- Budget Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Budget</h3>
+                <p class="text-3xl font-bold" id="total-budget">$0.00</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Current Usage</h3>
+                <p class="text-3xl font-bold" id="current-usage">$0.00</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">Remaining Budget</h3>
+                <p class="text-3xl font-bold" id="remaining-budget">$0.00</p>
+            </div>
+        </div>
+
+        <!-- Usage Graph -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Budget Usage Over Time</h2>
+            <div id="usage-graph" style="height: 400px;"></div>
+        </div>
+
+        <!-- Alerts Section -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">Budget Alerts</h2>
+            <div id="alerts-container" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize websocket connection
+        const ws = new WebSocket('ws://localhost:8765');
+
+        // Store historical data for graph
+        const usageHistory = {
+            timestamps: [],
+            usage: [],
+            remaining: []
+        };
+
+        // Initialize graph
+        const graph = document.getElementById('usage-graph');
+        Plotly.newPlot(graph, [
+            {
+                name: 'Usage',
+                x: usageHistory.timestamps,
+                y: usageHistory.usage,
+                type: 'scatter',
+                mode: 'lines',
+                line: {color: '#4F46E5'}
+            },
+            {
+                name: 'Remaining',
+                x: usageHistory.timestamps,
+                y: usageHistory.remaining,
+                type: 'scatter',
+                mode: 'lines',
+                line: {color: '#10B981'}
+            }
+        ], {
+            margin: {t: 20},
+            xaxis: {title: 'Time'},
+            yaxis: {title: 'Budget ($)'}
+        });
+
+        // Handle incoming messages
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+
+            // Update overview cards
+            document.getElementById('current-usage').textContent =
+                `$${parseFloat(data.current_usage).toFixed(2)}`;
+            document.getElementById('remaining-budget').textContent =
+                `$${parseFloat(data.remaining_budget).toFixed(2)}`;
+            document.getElementById('total-budget').textContent =
+                `$${parseFloat(data.budget_limit || 0).toFixed(2)}`;
+
+            // Update graph
+            const now = new Date();
+            usageHistory.timestamps.push(now);
+            usageHistory.usage.push(parseFloat(data.current_usage));
+            usageHistory.remaining.push(parseFloat(data.remaining_budget));
+
+            // Keep last 100 points
+            if (usageHistory.timestamps.length > 100) {
+                usageHistory.timestamps.shift();
+                usageHistory.usage.shift();
+                usageHistory.remaining.shift();
+            }
+
+            Plotly.update(graph, {
+                x: [usageHistory.timestamps, usageHistory.timestamps],
+                y: [usageHistory.usage, usageHistory.remaining]
+            });
+
+            // Handle alerts
+            if (data.alert) {
+                const alertsContainer = document.getElementById('alerts-container');
+                const alertEl = document.createElement('div');
+                alertEl.className = `p-4 rounded-lg ${getAlertClass(data.alert.alert_type)}`;
+                alertEl.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            ${getAlertIcon(data.alert.alert_type)}
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium">
+                                ${data.alert.message}
+                            </p>
+                            <p class="text-sm text-gray-500">
+                                Agent: ${data.alert.agent_id}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                alertsContainer.insertBefore(alertEl, alertsContainer.firstChild);
+
+                // Keep only last 5 alerts
+                if (alertsContainer.children.length > 5) {
+                    alertsContainer.removeChild(alertsContainer.lastChild);
+                }
+            }
+        };
+
+        function getAlertClass(type) {
+            switch(type) {
+                case 'emergency':
+                    return 'bg-red-50 text-red-800';
+                case 'critical':
+                    return 'bg-orange-50 text-orange-800';
+                case 'warning':
+                    return 'bg-yellow-50 text-yellow-800';
+                default:
+                    return 'bg-blue-50 text-blue-800';
+            }
+        }
+
+        function getAlertIcon(type) {
+            const iconClass = type === 'emergency' ? 'text-red-400' :
+                            type === 'critical' ? 'text-orange-400' :
+                            type === 'warning' ? 'text-yellow-400' : 'text-blue-400';
+            return `
+                <svg class="h-5 w-5 ${iconClass}" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+            `;
+        }
+    </script>
+</body>
+</html>

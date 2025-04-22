@@ -93,4 +93,4 @@ No additional system packages required.
    pip install --user agent-safety
    ```
 
-For more issues, please check our [GitHub Issues](https://github.com/mason-ai/agent-safety/issues) page. 
+For more issues, please check our [GitHub Issues](https://github.com/mason-ai/agent-safety/issues) page.

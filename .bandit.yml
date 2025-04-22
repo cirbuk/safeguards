@@ -1,0 +1,61 @@
+### Bandit config file generated for agent-safety
+
+# Skip tests for these paths
+exclude_dirs: ['.git', 'tests', 'docs', 'examples']
+
+# Tests to skip
+skips: []
+
+# Severity level threshold
+level: LOW
+
+# Confidence level threshold
+confidence: LOW
+
+# Per-test configurations
+any_other_function_with_shell_equals_true:
+  no_shell: [os.execl, os.execle, os.execlp, os.execlpe, os.execv, os.execve, os.execvp,
+    os.execvpe, os.spawnl, os.spawnle, os.spawnlp, os.spawnlpe, os.spawnv, os.spawnve,
+    os.spawnvp, os.spawnvpe, os.startfile]
+  shell: [os.system, os.popen, os.popen2, os.popen3, os.popen4, popen2.popen2, popen2.popen3,
+    popen2.popen4, popen2.Popen3, popen2.Popen4, commands.getoutput, commands.getstatusoutput]
+  subprocess: [subprocess.Popen, subprocess.call, subprocess.check_call, subprocess.check_output,
+    subprocess.run]
+
+hardcoded_tmp_directory:
+  tmp_dirs: ['/tmp', '/var/tmp', '/dev/shm']
+
+linux_commands_wildcard_injection:
+  no_shell: [os.execl, os.execle, os.execlp, os.execlpe, os.execv, os.execve, os.execvp,
+    os.execvpe, os.spawnl, os.spawnle, os.spawnlp, os.spawnlpe, os.spawnv, os.spawnve,
+    os.spawnvp, os.spawnvpe, os.startfile]
+  shell: [os.system, os.popen, os.popen2, os.popen3, os.popen4, popen2.popen2, popen2.popen3,
+    popen2.popen4, popen2.Popen3, popen2.Popen4, commands.getoutput, commands.getstatusoutput]
+  subprocess: [subprocess.Popen, subprocess.call, subprocess.check_call, subprocess.check_output,
+    subprocess.run]
+
+ssl_with_bad_defaults:
+  bad_protocol_versions: [PROTOCOL_SSLv2, SSLv2_METHOD, SSLv23_METHOD, PROTOCOL_SSLv3,
+    PROTOCOL_TLSv1, SSLv3_METHOD, TLSv1_METHOD]
+
+ssl_with_bad_version:
+  bad_protocol_versions: [PROTOCOL_SSLv2, SSLv2_METHOD, SSLv23_METHOD, PROTOCOL_SSLv3,
+    PROTOCOL_TLSv1, SSLv3_METHOD, TLSv1_METHOD]
+
+start_process_with_partial_path:
+  no_shell: [os.execl, os.execle, os.execlp, os.execlpe, os.execv, os.execve, os.execvp,
+    os.execvpe, os.spawnl, os.spawnle, os.spawnlp, os.spawnlpe, os.spawnv, os.spawnve,
+    os.spawnvp, os.spawnvpe, os.startfile]
+  shell: [os.system, os.popen, os.popen2, os.popen3, os.popen4, popen2.popen2, popen2.popen3,
+    popen2.popen4, popen2.Popen3, popen2.Popen4, commands.getoutput, commands.getstatusoutput]
+  subprocess: [subprocess.Popen, subprocess.call, subprocess.check_call, subprocess.check_output,
+    subprocess.run]
+
+subprocess_popen_with_shell_equals_true:
+  no_shell: [os.execl, os.execle, os.execlp, os.execlpe, os.execv, os.execve, os.execvp,
+    os.execvpe, os.spawnl, os.spawnle, os.spawnlp, os.spawnlpe, os.spawnv, os.spawnve,
+    os.spawnvp, os.spawnvpe, os.startfile]
+  shell: [os.system, os.popen, os.popen2, os.popen3, os.popen4, popen2.popen2, popen2.popen3,
+    popen2.popen4, popen2.Popen3, popen2.Popen4, commands.getoutput, commands.getstatusoutput]
+  subprocess: [subprocess.Popen, subprocess.call, subprocess.check_call, subprocess.check_output,
+    subprocess.run]

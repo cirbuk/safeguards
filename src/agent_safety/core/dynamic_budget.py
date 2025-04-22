@@ -58,9 +58,11 @@ class BudgetPool:
 
     pool_id: str
     total_budget: Decimal
+    priority: int = 0
     allocated_budget: Decimal = field(default=Decimal("0"))
     reserved_budget: Decimal = field(default=Decimal("0"))
     agent_allocations: Dict[str, Decimal] = field(default_factory=dict)
+    agents: Set[str] = field(default_factory=set)
     priority_weights: Dict[AgentPriority, float] = field(
         default_factory=lambda: {
             AgentPriority.CRITICAL: 1.0,
@@ -70,6 +72,33 @@ class BudgetPool:
             AgentPriority.MINIMAL: 0.2,
         }
     )
+    used_budget: Decimal = field(default=Decimal("0"))
+    last_update: datetime = field(default_factory=datetime.now)
+
+    def __post_init__(self):
+        """Initialize attributes after the dataclass constructor."""
+        # For backward compatibility with code that expects a name attribute
+        self._name = self.pool_id
+
+    @property
+    def name(self) -> str:
+        """Get pool name (alias for pool_id for compatibility)."""
+        return self.pool_id
+
+    @property
+    def id(self) -> str:
+        """Get pool ID (alias for pool_id for compatibility)."""
+        return self.pool_id
+
+    @property
+    def remaining_budget(self) -> Decimal:
+        """Get remaining budget in pool."""
+        return self.total_budget - self.used_budget
+
+    @property
+    def initial_budget(self) -> Decimal:
+        """For backward compatibility - Return total budget."""
+        return self.total_budget
 
 
 class DynamicBudgetManager:

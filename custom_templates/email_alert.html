@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ alert.title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: {% if alert.severity.name == 'CRITICAL' %}#FF0000{% elif alert.severity.name == 'HIGH' %}#FFA500{% elif alert.severity.name == 'WARNING' %}#FFCC00{% else %}#36a64f{% endif %};
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #F8F8F8;
+            padding: 20px;
+            border-radius: 0 0 5px 5px;
+            border: 1px solid #ddd;
+            border-top: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #F2F2F2;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ alert.title }}</h1>
+    </div>
+    <div class="content">
+        <p><strong>{{ alert.description }}</strong></p>
+
+        <table>
+            <tr>
+                <th>Severity</th>
+                <td>{{ alert.severity.name }}</td>
+            </tr>
+            <tr>
+                <th>Time</th>
+                <td>{{ alert.timestamp }}</td>
+            </tr>
+            {% if alert.metadata.agent_id %}
+            <tr>
+                <th>Agent ID</th>
+                <td>{{ alert.metadata.agent_id }}</td>
+            </tr>
+            {% endif %}
+            {% if alert.metadata.current_budget is defined %}
+            <tr>
+                <th>Current Budget</th>
+                <td>{{ alert.metadata.current_budget }}</td>
+            </tr>
+            <tr>
+                <th>Initial Budget</th>
+                <td>{{ alert.metadata.initial_budget }}</td>
+            </tr>
+            <tr>
+                <th>Usage Percentage</th>
+                <td>{{ alert.metadata.percentage }}%</td>
+            </tr>
+            {% endif %}
+            {% if alert.metadata.error_code is defined %}
+            <tr>
+                <th>Error Code</th>
+                <td>{{ alert.metadata.error_code }}</td>
+            </tr>
+            <tr>
+                <th>API Endpoint</th>
+                <td>{{ alert.metadata.api_endpoint }}</td>
+            </tr>
+            {% endif %}
+            {% if alert.metadata.task_id is defined %}
+            <tr>
+                <th>Task ID</th>
+                <td>{{ alert.metadata.task_id }}</td>
+            </tr>
+            <tr>
+                <th>Duration</th>
+                <td>{{ alert.metadata.duration_seconds }} seconds</td>
+            </tr>
+            {% endif %}
+        </table>
+
+        {% if alert.metadata.requires_immediate_action %}
+        <div style="background-color: #FFE0E0; padding: 10px; margin-top: 20px; border-radius: 5px;">
+            <p><strong>⚠️ This alert requires immediate action!</strong></p>
+        </div>
+        {% endif %}
+    </div>
+    <div class="footer">
+        <p>This is an automated message from the Agent Safety Framework. Please do not reply to this email.</p>
+    </div>
+</body>
+</html>

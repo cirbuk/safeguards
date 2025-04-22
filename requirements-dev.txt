@@ -1,4 +1,4 @@
--r agent_safety_requirements.txt
+-r requirements.txt
 
 # Testing
 pytest>=7.0.0
@@ -14,4 +14,4 @@ mypy>=1.0.0
 # Documentation
 sphinx>=6.0.0
 sphinx-rtd-theme>=1.2.0
-sphinx-autodoc-typehints>=1.23.0 
+sphinx-autodoc-typehints>=1.23.0

@@ -57,25 +57,25 @@ def test_get_current_metrics(
 def test_has_exceeded_thresholds(resource_monitor: ResourceMonitor):
     """Test checking if resource usage has exceeded thresholds."""
     # Test when all metrics are below thresholds
-    metrics = ResourceMetrics(cpu_usage=70.0, memory_usage=75.0, disk_usage=80.0)
+    metrics = ResourceMetrics(cpu_percent=70.0, memory_percent=75.0, disk_percent=80.0)
     assert not resource_monitor.has_exceeded_thresholds(metrics)
 
     # Test when CPU usage exceeds threshold
-    metrics = ResourceMetrics(cpu_usage=85.0, memory_usage=75.0, disk_usage=80.0)
+    metrics = ResourceMetrics(cpu_percent=85.0, memory_percent=75.0, disk_percent=80.0)
     assert resource_monitor.has_exceeded_thresholds(metrics)
 
     # Test when memory usage exceeds threshold
-    metrics = ResourceMetrics(cpu_usage=70.0, memory_usage=90.0, disk_usage=80.0)
+    metrics = ResourceMetrics(cpu_percent=70.0, memory_percent=90.0, disk_percent=80.0)
     assert resource_monitor.has_exceeded_thresholds(metrics)
 
     # Test when disk usage exceeds threshold
-    metrics = ResourceMetrics(cpu_usage=70.0, memory_usage=75.0, disk_usage=95.0)
+    metrics = ResourceMetrics(cpu_percent=70.0, memory_percent=75.0, disk_percent=95.0)
     assert resource_monitor.has_exceeded_thresholds(metrics)
 
 
 def test_get_resource_usage_summary(resource_monitor: ResourceMonitor):
     """Test getting resource usage summary."""
-    metrics = ResourceMetrics(cpu_usage=60.0, memory_usage=70.0, disk_usage=80.0)
+    metrics = ResourceMetrics(cpu_percent=60.0, memory_percent=70.0, disk_percent=80.0)
     summary = resource_monitor.get_resource_usage_summary(metrics)
 
     assert "CPU Usage" in summary

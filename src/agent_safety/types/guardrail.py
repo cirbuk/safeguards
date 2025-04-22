@@ -1,8 +1,9 @@
 """Base Guardrail interface and related types for agent safety module."""
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
+from datetime import datetime
 
 from .agent import Agent
 
@@ -14,6 +15,19 @@ class RunContext:
     agent: Agent
     inputs: Dict[str, Any]
     metadata: Dict[str, Any]
+
+
+@dataclass
+class ResourceUsage:
+    """Resource usage data for agent operations."""
+
+    cpu_usage: float
+    memory_usage: float
+    disk_usage: float
+    network_usage: float
+    timestamp: datetime = field(default_factory=datetime.now)
+    agent_id: Optional[str] = None
+    duration: Optional[float] = None
 
 
 class Guardrail(ABC):

@@ -8,3 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Editor files
+.cursorrules
+.vscode/
+.idea/
+*.swp
+*~

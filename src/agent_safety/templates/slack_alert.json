@@ -28,43 +28,39 @@
                 "text": "{{ alert.message }}"
             }
         },
-        {% if alert.cost_type is defined %}
         {
             "type": "section",
             "fields": [
                 {
                     "type": "mrkdwn",
-                    "text": "*Cost Type:*\n{{ alert.cost_type }}"
+                    "text": "*Cost Type:*\n{{ alert.cost_type | default('N/A') }}"
                 },
                 {
                     "type": "mrkdwn",
-                    "text": "*Usage:*\n{{ alert.current_usage }} / {{ alert.budget_limit }}"
+                    "text": "*Usage:*\n{{ alert.current_usage | default('N/A') }} / {{ alert.budget_limit | default('N/A') }}"
                 },
                 {
                     "type": "mrkdwn",
-                    "text": "*Usage %:*\n{{ alert.usage_percentage }}"
+                    "text": "*Usage %:*\n{{ alert.usage_percentage | default('N/A') }}"
                 }
             ]
         },
-        {% endif %}
-        {% if alert.resource_type is defined %}
         {
             "type": "section",
             "fields": [
                 {
                     "type": "mrkdwn",
-                    "text": "*Resource:*\n{{ alert.resource_type }}"
+                    "text": "*Resource:*\n{{ alert.resource_type | default('N/A') }}"
                 },
                 {
                     "type": "mrkdwn",
-                    "text": "*Current Value:*\n{{ alert.current_value }}{{ alert.unit }}"
+                    "text": "*Current Value:*\n{{ alert.current_value | default('') }}{{ alert.unit | default('') }}"
                 },
                 {
                     "type": "mrkdwn",
-                    "text": "*Threshold:*\n{{ alert.threshold }}{{ alert.unit }}"
+                    "text": "*Threshold:*\n{{ alert.threshold | default('') }}{{ alert.unit | default('') }}"
                 }
             ]
         }
-        {% endif %}
     ]
-} 
+}

@@ -1,0 +1,70 @@
+# GitLeaks configuration for agent-safety
+
+title = "GitLeaks configuration"
+
+[allowlist]
+description = "Global allowlist"
+paths = [
+    '''.*test.*''',
+    '''.*example.*''',
+    '''.*mock.*''',
+]
+
+# Custom rules for agent-safety
+[[rules]]
+id = "agent-safety-api-key"
+description = "Agent Safety API Key"
+regex = '''(?i)(agent_safety_key|agent_key|safety_key)['\"][0-9a-zA-Z]{32}['\"]'''
+secretGroup = 1
+entropy = 3.5
+
+[[rules]]
+id = "agent-safety-secret"
+description = "Agent Safety Secret"
+regex = '''(?i)(agent_safety_secret|agent_secret|safety_secret)['\"][0-9a-zA-Z]{32,64}['\"]'''
+secretGroup = 1
+entropy = 3.5
+
+[[rules]]
+id = "high-entropy-base64"
+description = "High entropy base64 string"
+regex = '''(?i)['\"][A-Za-z0-9+/]{40,}[=]{0,2}['\"]'''
+entropy = 4.5
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey|auth[_-]?key)['\"][0-9a-zA-Z]{16,}['\"]'''
+secretGroup = 1
+entropy = 3.0
+
+[[rules]]
+id = "generic-secret"
+description = "Generic Secret"
+regex = '''(?i)(secret|password|credentials)['\"][0-9a-zA-Z]{16,}['\"]'''
+secretGroup = 1
+entropy = 3.0
+
+[[rules]]
+id = "private-key"
+description = "Private Key"
+regex = '''(?i)-----BEGIN[ A-Z0-9_-]*PRIVATE[ A-Z0-9_-]*KEY-----'''
+
+[[rules]]
+id = "jwt-token"
+description = "JWT Token"
+regex = '''(?i)(eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*)'''
+
+[[rules]]
+id = "password-in-url"
+description = "Password in URL"
+regex = '''[a-zA-Z]{3,10}:\/\/[^\/\s:@]*?:[^\/\s:@]*?@[^\/\s:@]*'''
+
+[rules.allowlist]
+stopwords = [
+    "example",
+    "test",
+    "mock",
+    "dummy",
+    "sample",
+]

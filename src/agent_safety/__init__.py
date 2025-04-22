@@ -1,36 +1,17 @@
-"""Agent safety controls for OpenAI Agents SDK."""
+"""Agent Safety Framework - Core package."""
 
-from .budget import BudgetManager, BudgetConfig
-from .guardrails import BudgetGuardrail, ResourceGuardrail
-from .monitoring import ResourceMonitor, MonitorConfig
-from .notifications import NotificationManager, AlertConfig
-from .swarm import SwarmController, SwarmConfig
-from .types import (
-    SafetyController,
-    SafetyConfig,
-    SafetyMetrics,
-    BudgetMetrics,
-    ResourceMetrics,
-    AlertSeverity,
-    SafetyAlert,
-)
+from .core.safety_controller import SafetyController
+from .types import SafetyConfig, SafetyMetrics, SafetyAlert
+from .base.budget import BudgetManager
+from .base.monitoring import ResourceMonitor
+from .core.notification_manager import NotificationManager
 
 __all__ = [
     "SafetyController",
     "SafetyConfig",
-    "SwarmController",
-    "SwarmConfig",
-    "BudgetManager",
-    "BudgetConfig",
-    "ResourceMonitor",
-    "MonitorConfig",
-    "NotificationManager",
-    "AlertConfig",
-    "BudgetGuardrail",
-    "ResourceGuardrail",
     "SafetyMetrics",
-    "BudgetMetrics",
-    "ResourceMetrics",
-    "AlertSeverity",
     "SafetyAlert",
+    "BudgetManager",
+    "ResourceMonitor",
+    "NotificationManager",
 ]

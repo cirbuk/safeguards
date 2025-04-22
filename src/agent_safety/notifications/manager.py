@@ -3,11 +3,35 @@
 import logging
 from typing import Dict, List, Optional, Set
 from datetime import datetime, timedelta
+from enum import Enum, auto
+from dataclasses import dataclass, field
 
 from jinja2 import Environment, FileSystemLoader
 import requests
 
 from agent_safety.types import Alert, AlertSeverity, NotificationChannel
+
+
+# Backward compatibility classes
+class NotificationLevel(Enum):
+    """Notification severity levels (for backward compatibility)."""
+
+    INFO = auto()
+    WARNING = auto()
+    ERROR = auto()
+    CRITICAL = auto()
+
+
+@dataclass
+class Notification:
+    """Notification data class (for backward compatibility)."""
+
+    level: NotificationLevel
+    message: str
+    timestamp: datetime = field(default_factory=datetime.now)
+    agent_id: Optional[str] = None
+    metadata: Dict = field(default_factory=dict)
+
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +55,8 @@ class NotificationManager:
         """
         self.enabled_channels = enabled_channels or {NotificationChannel.CONSOLE}
         self.template_env = Environment(
-            loader=FileSystemLoader(template_dir or "src/agent_safety/templates")
+            loader=FileSystemLoader(template_dir or "src/agent_safety/templates"),
+            autoescape=True,  # Enable autoescaping for security
         )
         self.cooldown_period = cooldown_period
         self.last_alerts: Dict[str, datetime] = {}
@@ -40,6 +65,9 @@ class NotificationManager:
         self.email_config: Dict = {}
         self.slack_config: Dict = {}
         self.webhook_config: Dict = {}
+
+        # For backward compatibility
+        self.notifications: List[Notification] = []
 
     def configure_email(
         self,
@@ -156,7 +184,11 @@ class NotificationManager:
                 ],
             }
 
-            response = requests.post(self.slack_config["webhook_url"], json=payload)
+            response = requests.post(
+                self.slack_config["webhook_url"],
+                json=payload,
+                timeout=10,  # Add timeout for security
+            )
             response.raise_for_status()
             logger.info(f"Slack alert sent: {alert.title}")
             return True
@@ -179,6 +211,7 @@ class NotificationManager:
                 self.webhook_config["url"],
                 json=payload,
                 headers=self.webhook_config["headers"],
+                timeout=10,  # Add timeout for security
             )
             response.raise_for_status()
             logger.info(f"Webhook alert sent: {alert.title}")
@@ -200,3 +233,60 @@ class NotificationManager:
             log_level, f"[{alert.severity.name}] {alert.title}: {alert.description}"
         )
         return True
+
+    # Backward compatibility methods
+    def notify(
+        self,
+        level: NotificationLevel,
+        message: str,
+        agent_id: Optional[str] = None,
+        metadata: Optional[Dict] = None,
+    ):
+        """Create and store a notification (backward compatibility)."""
+        notification = Notification(
+            level=level,
+            message=message,
+            agent_id=agent_id,
+            metadata=metadata or {},
+        )
+        self.notifications.append(notification)
+
+        # Print to console for test compatibility
+        print(f"{level.name}: {message}")
+
+    def get_notifications(
+        self, level: Optional[NotificationLevel] = None, agent_id: Optional[str] = None
+    ) -> List[Notification]:
+        """Get notifications with optional filtering (backward compatibility)."""
+        result = self.notifications
+
+        if level is not None:
+            result = [n for n in result if n.level == level]
+
+        if agent_id is not None:
+            result = [n for n in result if n.agent_id == agent_id]
+
+        return result
+
+    def clear_notifications(
+        self, level: Optional[NotificationLevel] = None, agent_id: Optional[str] = None
+    ) -> None:
+        """Clear notifications with optional filtering (backward compatibility)."""
+        if level is None and agent_id is None:
+            self.notifications = []
+            return
+
+        to_keep = []
+        for notification in self.notifications:
+            keep = True
+
+            if level is not None and notification.level == level:
+                keep = False
+
+            if agent_id is not None and notification.agent_id == agent_id:
+                keep = False
+
+            if keep:
+                to_keep.append(notification)
+
+        self.notifications = to_keep

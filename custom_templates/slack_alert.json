@@ -1,0 +1,92 @@
+{
+    "blocks": [
+        {
+            "type": "header",
+            "text": {
+                "type": "plain_text",
+                "text": "🚨 {{ alert.title }}",
+                "emoji": true
+            }
+        },
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": "*Severity:*\n{{ alert.severity }}"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "*Time:*\n{{ alert.timestamp }}"
+                }
+            ]
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "{{ alert.description }}"
+            }
+        },
+        {
+            "type": "divider"
+        },
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": "*Agent ID:*\n{{ alert.metadata.agent_id | default('N/A') }}"
+                }
+            ]
+        },
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": "*Budget:*\n{{ alert.metadata.current_budget | default('N/A') }} / {{ alert.metadata.initial_budget | default('N/A') }}"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "*Usage %:*\n{{ alert.metadata.percentage | default('N/A') }}%"
+                }
+            ]
+        },
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": "*Error Code:*\n{{ alert.metadata.error_code | default('N/A') }}"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "*Endpoint:*\n{{ alert.metadata.api_endpoint | default('Unknown') }}"
+                }
+            ]
+        },
+        {
+            "type": "section",
+            "fields": [
+                {
+                    "type": "mrkdwn",
+                    "text": "*Task ID:*\n{{ alert.metadata.task_id | default('N/A') }}"
+                },
+                {
+                    "type": "mrkdwn",
+                    "text": "*Duration:*\n{{ alert.metadata.duration_seconds | default('N/A') }} seconds"
+                }
+            ]
+        },
+        {
+            "type": "context",
+            "elements": [
+                {
+                    "type": "mrkdwn",
+                    "text": "🔒 Agent Safety Framework"
+                }
+            ]
+        }
+    ]
+}

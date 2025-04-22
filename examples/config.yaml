@@ -1,0 +1,26 @@
+agent:
+  name: research_assistant
+  model: gpt-4
+  max_budget: 1000.0
+  priority: 1
+  cooldown_period: 60
+
+monitoring:
+  metrics_retention_days: 30
+  alert_threshold_cpu: 80.0
+  alert_threshold_memory: 80.0
+  alert_threshold_budget: 90.0
+  metrics_interval: 60
+
+budget:
+  default_pool_size: 1000.0
+  min_pool_size: 100.0
+  max_pools: 10
+  auto_scale_threshold: 80.0
+  emergency_reserve: 0.1
+
+api:
+  host: localhost
+  port: 8000
+  debug: false
+  # api_key should be set via environment variable AGENT_SAFETY_API_API_KEY

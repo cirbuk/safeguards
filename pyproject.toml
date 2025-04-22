@@ -1,22 +1,72 @@
 [build-system]
-requires = ["setuptools>=45", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "agent-safety"
 version = "0.1.0"
-description = "Safety framework for AI agents"
+description = "A comprehensive framework for implementing safety controls in AI agent systems"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {file = "LICENSE"}
 authors = [
-    {name = "Mason AI", email = "team@mason.ai"}
+    {name = "Mason Team", email = "dev@getmason.io"}
 ]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Security",
+]
+dependencies = [
+    "fastapi>=0.109.0",
+    "pydantic>=2.0.0",
+    "uvicorn>=0.27.0",
+    "python-dateutil>=2.8.0",
+    "typing-extensions>=4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/mason-ai/agent-safety"
+Documentation = "https://github.com/mason-ai/agent-safety/tree/main/docs"
+Issues = "https://github.com/mason-ai/agent-safety/issues"
+Changelog = "https://github.com/mason-ai/agent-safety/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.23.0",
+]
+dev = [
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.7.0",
+    "pylint>=3.0.0",
+    "pre-commit>=2.15.0",
+    "bandit>=1.7.0",
+]
+docs = [
+    "sphinx>=6.0.0",
+    "sphinx-rtd-theme>=1.2.0",
+    "sphinx-autodoc-typehints>=1.23.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["src/agent_safety"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=agent_safety"
 
 [tool.black]
 line-length = 88
-target-version = ['py38']
-include = '\.pyi?$'
+target-version = ["py38", "py39", "py310", "py311"]
 
 [tool.isort]
 profile = "black"
@@ -29,25 +79,14 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 check_untyped_defs = true
-plugins = [
-    "pydantic.mypy"
+
+[tool.pylint.messages_control]
+disable = [
+    "C0111",  # missing-docstring
+    "C0103",  # invalid-name
+    "C0330",  # bad-continuation
+    "C0326",  # bad-whitespace
 ]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py", "*_test.py"]
-addopts = "-v --cov=agent_safety --cov-report=term-missing"
-asyncio_mode = "auto"
-
-[tool.coverage.run]
-source = ["agent_safety"]
-omit = ["tests/*", "examples/*"]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:",
-    "pass",
-] 
+[tool.pylint.format]
+max-line-length = 88

@@ -1,6 +1,6 @@
-# Contributing to Agent Budget Control
+# Contributing to Agent Safety Framework
 
-First off, thank you for considering contributing to Agent Budget Control! It's people like you that make this project such a great tool for the AI safety community.
+First off, thank you for considering contributing to Agent Safety Framework! It's people like you that make this project such a great tool for the AI safety community.
 
 ## Code of Conduct
 
@@ -66,7 +66,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 5. Run the test suite:
    ```bash
    pytest
-   pytest --cov=agent_budget_control
+   pytest --cov=agent_safety
    ```
 
 6. Run the linters:
@@ -104,13 +104,14 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ## Project Structure
 
 ```
-agent_budget_control/
+agent_safety/
 ├── src/
-│   └── agent_budget_control/
-│       ├── controllers/     # Agent and swarm controllers
-│       ├── core/           # Core functionality
-│       ├── metrics/        # Monitoring and metrics
-│       └── utils/          # Utility functions
+│   └── agent_safety/
+│       ├── api/           # API interfaces
+│       ├── core/          # Core functionality
+│       ├── monitoring/    # Monitoring and metrics
+│       ├── notifications/ # Notification system
+│       └── types/         # Type definitions and interfaces
 ├── tests/
 │   ├── unit/             # Unit tests
 │   └── integration/      # Integration tests
@@ -140,4 +141,4 @@ agent_budget_control/
 * Join our community discussions
 * Check out our FAQ in the wiki
 
-Thank you for contributing to Agent Budget Control! 
+Thank you for contributing to Agent Safety Framework!

@@ -139,7 +139,7 @@ try:
             message="High resource usage detected",
             agent_id=agent.id,
         )
-        
+
     # Check budget
     if not budget_manager.has_sufficient_budget(agent.id):
         notification_manager.notify(
@@ -148,13 +148,13 @@ try:
             agent_id=agent.id,
         )
         raise ValueError("Insufficient budget")
-        
+
     # Run agent
     result = agent.run(input_data="Your input here")
-    
+
     # Record cost
     budget_manager.record_cost(agent.id, cost=10.0)
-    
+
 except Exception as e:
     notification_manager.notify(
         level=NotificationLevel.ERROR,
@@ -169,4 +169,4 @@ except Exception as e:
 - [Budget Management Guide](budget.md)
 - [Resource Monitoring Guide](resources.md)
 - [Safety Guardrails Guide](guardrails.md)
-- [Notification System Guide](notifications.md) 
+- [Notification System Guide](notifications.md)

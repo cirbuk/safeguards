@@ -1,6 +1,5 @@
-"""Safety guardrails for OpenAI Agents SDK integration."""
+"""Safety guardrail implementations for the Agent Safety Framework."""
 
-from .budget import BudgetGuardrail
 from .resource import ResourceGuardrail
 
-__all__ = ["BudgetGuardrail", "ResourceGuardrail"]
+__all__ = ["ResourceGuardrail"]

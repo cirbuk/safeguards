@@ -1,140 +1,251 @@
 # Agent Safety Framework
 
-A comprehensive framework for implementing safety controls and monitoring for AI agents. This framework provides tools and utilities to ensure AI agents operate within defined constraints and maintain system stability.
+A comprehensive framework for implementing safety measures in multi-agent systems, focusing on budget coordination, monitoring, and guardrails.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Security: Bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+
+## Overview
+
+The Agent Safety Framework provides tools and infrastructure for ensuring safe and controlled operation of AI agent systems. It addresses key challenges in multi-agent environments:
+
+- Resource management and budget enforcement
+- Agent coordination and priority-based allocation
+- Safety monitoring and violation detection
+- Health assessment and alerting
+- Dynamic resource adjustment based on operational needs
+
+This framework is ideal for organizations deploying multiple AI agents that need to:
+- Ensure predictable resource usage
+- Prioritize critical operations
+- Prevent runaway resource consumption
+- Implement safe failure modes
+- Monitor agent health and behavior
 
 ## Features
 
-### Budget Management
-- Track and control agent resource usage
-- Set and enforce budget limits
-- Handle budget overrides and alerts
-- Monitor hourly and daily spending
+- **Budget Coordination System**
+  - Direct transfer functionality between agents
+  - Dynamic pool selection and priority-based allocation
+  - Automatic pool scaling and load balancing
+  - Emergency allocation handling
+  - Priority levels (1-10) for agents and operations
 
-### Resource Monitoring
-- Real-time system resource tracking
-- CPU usage monitoring
-- Memory usage monitoring
-- Disk usage monitoring
-- Configurable thresholds and alerts
+- **Advanced Metrics Analysis**
+  - Resource trend analysis
+  - Usage pattern detection
+  - Budget efficiency tracking
+  - Anomaly detection
+  - Health monitoring and recommendations
 
-### Safety Guardrails
-- Implement pre-execution safety checks
-- Post-execution validation
-- Customizable safety rules
-- Extensible guardrail system
+- **Safety Rules System**
+  - Customizable rule definitions
+  - Priority-based execution
+  - Rule chain dependencies
+  - Context-aware evaluation
+  - Violation detection and reporting
 
-### Notification System
-- Multi-level alerting (INFO, WARNING, ERROR, CRITICAL)
-- Agent-specific notifications
-- Customizable notification handlers
-- Historical notification tracking
+- **API Contracts**
+  - Versioned API interfaces
+  - Budget management
+  - Metrics tracking
+  - Agent coordination
+  - Configuration management
 
-## Installation
+## Quick Start
+
+### Installation
 
 ```bash
 pip install agent-safety
 ```
 
-For development installation:
-```bash
-pip install agent-safety[dev]
-```
-
-## Quick Start
+### Basic Setup
 
 ```python
-from agent_safety import BudgetManager, ResourceMonitor
-from agent_safety.guardrails import BudgetGuardrail, ResourceGuardrail
-from agent_safety.types import Agent
+from decimal import Decimal
+from agent_safety.core.budget_coordination import BudgetCoordinator
+from agent_safety.core.notification_manager import NotificationManager
+from agent_safety.api import APIFactory, APIVersion
+from agent_safety.types.agent import Agent
 
-# Initialize safety components
-budget_manager = BudgetManager(
-    total_budget=1000,
-    hourly_limit=100,
-    daily_limit=500,
+# Create core components
+notification_manager = NotificationManager()
+budget_coordinator = BudgetCoordinator(notification_manager)
+api_factory = APIFactory()
+
+# Create APIs
+budget_api = api_factory.create_budget_api(APIVersion.V1, budget_coordinator)
+agent_api = api_factory.create_agent_api(APIVersion.V1, budget_coordinator)
+
+# Create a budget pool
+pool = budget_api.create_budget_pool(
+    name="main_pool",
+    initial_budget=Decimal("100.0"),
+    priority=5
 )
 
-resource_monitor = ResourceMonitor(
-    cpu_threshold=80.0,
-    memory_threshold=85.0,
-    disk_threshold=90.0,
+# Create an agent
+agent = agent_api.create_agent(
+    name="example_agent",
+    initial_budget=Decimal("10.0"),
+    priority=3
 )
 
-# Create an agent with safety controls
-agent = Agent(
-    name="safe_agent",
-    instructions="Your instructions here",
-    guardrails=[
-        BudgetGuardrail(budget_manager),
-        ResourceGuardrail(resource_monitor),
-    ]
-)
-
-# Run agent with safety controls
-result = agent.run(input_data="Your input here")
+# Check agent budget
+budget = budget_api.get_budget(agent.id)
+print(f"Agent {agent.name} has budget: {budget}")
 ```
+
+### Creating a Custom Agent
+
+```python
+from decimal import Decimal
+from typing import Dict, Any
+from agent_safety.types.agent import Agent
+
+class MyAgent(Agent):
+    def __init__(self, name: str, cost_per_action: Decimal = Decimal("0.1")):
+        super().__init__(name)
+        self.cost_per_action = cost_per_action
+        self.action_count = 0
+
+    def run(self, **kwargs: Any) -> Dict[str, Any]:
+        """Execute agent logic with cost tracking."""
+        self.action_count += 1
+        # Your agent implementation here
+        return {
+            "result": "Task completed",
+            "action_count": self.action_count,
+            "cost": self.cost_per_action,
+        }
+
+# Create and register agent
+my_agent = MyAgent("custom_agent")
+registered_agent = agent_api.create_agent(
+    name=my_agent.name,
+    initial_budget=Decimal("20.0"),
+    priority=5
+)
+
+# Run agent and update budget
+for _ in range(3):
+    result = my_agent.run(input="Example task")
+    current_budget = budget_api.get_budget(registered_agent.id)
+    budget_api.update_budget(
+        registered_agent.id,
+        current_budget - result["cost"]
+    )
+```
+
+For more detailed examples, see the [Quick Start Guide](docs/quickstart.md).
 
 ## Documentation
 
-### Installation & Setup
-- [Basic Installation](docs/installation.md)
-- [Development Setup](docs/development.md)
-- [Configuration Options](docs/configuration.md)
+- [Core Concepts](docs/concepts.md) - Essential concepts and terminology
+- [Installation Guide](docs/installation.md) - Detailed installation instructions
+- [Quick Start Guide](docs/quickstart.md) - Get started with the framework
+- [Budget Management](docs/guides/budget_management.md) - How to manage agent budgets
+- [Safety Policies](docs/guides/safety_policies.md) - Implementing and enforcing safety policies
+- [Agent Safety](docs/guides/agent_safety.md) - Safety features and guardrails
+- [Monitoring](docs/guides/monitoring.md) - Metrics, visualization, and alerts
+- [Agent Coordination](docs/guides/agent_coordination.md) - Multi-agent coordination
+- [API Reference](docs/api/core.md) - Detailed API documentation
+- [Architecture Overview](docs/development/architecture.md) - System design
 
-### Usage Guides
-- [Basic Usage](docs/usage/basic.md)
-- [Budget Management](docs/usage/budget.md)
-- [Resource Monitoring](docs/usage/resources.md)
-- [Safety Guardrails](docs/usage/guardrails.md)
-- [Notification System](docs/usage/notifications.md)
+For a complete documentation index, see the [Documentation README](docs/README.md).
 
-### API Reference
-- [Agent Types](docs/api/types.md)
-- [Budget Management](docs/api/budget.md)
-- [Resource Monitoring](docs/api/monitoring.md)
-- [Guardrails](docs/api/guardrails.md)
-- [Notifications](docs/api/notifications.md)
+## Use Cases
+
+The Agent Safety Framework is designed for a variety of use cases:
+
+- **Enterprise AI Systems**: Manage resource allocation across multiple AI services
+- **Autonomous Systems**: Ensure safety constraints in autonomous operations
+- **Research Environments**: Control experiment resource usage and monitor behavior
+- **Agent Orchestration**: Coordinate multiple specialized agents working together
+- **LLM Application Deployment**: Manage token budgets and processing resources
 
 ## Development
 
-1. Clone the repository:
+### Prerequisites
+
+- Python 3.8 or higher
+- pip package manager
+
+### Setting Up Development Environment
+
 ```bash
+# Clone the repository
 git clone https://github.com/mason-ai/agent-safety.git
 cd agent-safety
-```
 
-2. Create and activate virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-```
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-3. Install development dependencies:
-```bash
+# Install development dependencies
 pip install -r requirements-dev.txt
+
+# Install package in development mode
+pip install -e .
 ```
 
-4. Run tests:
+### Running Tests
+
 ```bash
-pytest
+pytest tests/
 ```
 
-5. Run linting and type checks:
+### Code Style
+
+The project uses:
+- Black for code formatting
+- isort for import sorting
+- mypy for type checking
+- flake8 and pylint for linting
+
+Run formatters:
 ```bash
 black .
 isort .
-flake8
-mypy .
+```
+
+Run type checking:
+```bash
+mypy src/
+```
+
+Run linters:
+```bash
+flake8 src/
+pylint src/
 ```
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to contribute to the project.
+
+## Security
+
+This framework implements several security measures:
+- Pre-commit hooks for security scanning
+- Automated security checks in CI/CD
+- Regular dependency updates
+- Code analysis tools
+
+If you discover a security vulnerability, please report it to team@mason.com.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Security
+## Support
 
-For security concerns, please email security@mason.ai. For our security policy and reporting guidelines, see [SECURITY.md](SECURITY.md). 
+For support, please open an issue on the GitHub repository or contact the Mason team at dev@getmason.io
+
+## Acknowledgments
+
+- Contributors and maintainers
+- Security research community
+- Open source projects that inspired this framework
