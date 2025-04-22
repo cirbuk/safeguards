@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [
-    {name = "The Anthropic Safeguards Team", email = "safeguards@anthropic.com"}
+    {name = "Dev Team @mason", email = "dev@getmason.io"}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
