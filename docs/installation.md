@@ -12,7 +12,7 @@ Before installing Safeguards, make sure you have:
 Install the package using pip:
 
 ```bash
-pip install safeguards
+pip install agent-safeguards
 ```
 
 This will install the core package with all required dependencies.
@@ -22,7 +22,7 @@ This will install the core package with all required dependencies.
 For development work, install with additional development dependencies:
 
 ```bash
-pip install safeguards[dev]
+pip install agent-safeguards[dev]
 ```
 
 This includes:
@@ -36,7 +36,7 @@ This includes:
 To build documentation locally:
 
 ```bash
-pip install safeguards[docs]
+pip install agent-safeguards[docs]
 ```
 
 This includes:
@@ -92,7 +92,7 @@ No additional system packages required.
 
 3. Permission errors during installation
    ```bash
-   pip install --user safeguards
+   pip install --user agent-safeguards
    ```
 
-For more issues, please check our [GitHub Issues](https://github.com/cirbuk/safeguards/issues) page.
+For more issues, please check our [GitHub Issues](https://github.com/cirbuk/agent-safeguards/issues) page.

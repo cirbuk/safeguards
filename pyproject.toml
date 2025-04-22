@@ -3,7 +3,7 @@ requires = ["hatchling", "setuptools>=65.5.1"]
 build-backend = "hatchling.build"
 
 [project]
-name = "safeguards"
+name = "agent-safeguards"
 version = "0.1.0"
 description = "Safeguards for custom agents."
 readme = "README.md"
@@ -46,10 +46,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/cirbuk/safeguards"
-Documentation = "https://github.com/cirbuk/safeguards/tree/main/docs"
-Issues = "https://github.com/cirbuk/safeguards/issues"
-Changelog = "https://github.com/cirbuk/safeguards/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/cirbuk/agent-safeguards"
+Documentation = "https://github.com/cirbuk/agent-safeguards/tree/main/docs"
+Issues = "https://github.com/cirbuk/agent-safeguards/issues"
+Changelog = "https://github.com/cirbuk/agent-safeguards/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = [
@@ -111,3 +111,6 @@ disable = [
 
 [tool.pylint.format]
 max-line-length = 88
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/safeguards"]

@@ -20,11 +20,11 @@ This project uses PyPI's trusted publishing with OpenID Connect (OIDC), which is
 1. Create an account on [PyPI](https://pypi.org/) if you don't have one
 2. Go to your PyPI account settings > "Add a new pending publisher"
 3. Fill in the form:
-   - Project name: `agent-safety`
+   - Project name: `agent-safeguards`
    - Workflow name: `Publish Python Package`
    - Environment name: `pypi-publish`
    - Repository owner: `YOUR_GITHUB_USERNAME_OR_ORG`
-   - Repository name: `agent-safety`
+   - Repository name: `agent-safeguards`
 4. Submit the form
 
 ## Alternative: Using PyPI API Token
@@ -33,7 +33,7 @@ If you prefer using a PyPI API token instead of trusted publishing:
 
 1. Create an account on [PyPI](https://pypi.org/) if you don't have one
 2. Go to your PyPI account settings > "API tokens"
-3. Create a new API token with the scope set to the `agent-safety` project
+3. Create a new API token with the scope set to the `agent-safeguards` project
 4. Go to your GitHub repository settings > "Environments" > "pypi-publish" > "Add secret"
 5. Add a secret named `PYPI_API_TOKEN` with the value of your PyPI token
 6. Update the `.github/workflows/publish.yml` file to use the token:
