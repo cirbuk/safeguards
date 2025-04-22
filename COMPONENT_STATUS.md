@@ -1,6 +1,6 @@
-# Safeguards Component Status
+# Agent Safeguards Component Status
 
-This document provides the current status of each component in the Safeguards framework, indicating which are ready for production use and which are still in development.
+This document provides the current status of each component in the Agent Safeguards framework, indicating which are ready for production use and which are still in development.
 
 ## Production-Ready Components
 

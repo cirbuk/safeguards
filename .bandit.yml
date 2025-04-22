@@ -1,4 +1,4 @@
-### Bandit config file generated for safeguards
+### Bandit config file generated for agent-safeguards
 
 # Skip tests for these paths
 exclude_dirs: ['.git', 'tests', 'docs', 'examples']

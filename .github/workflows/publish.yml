@@ -63,7 +63,7 @@ jobs:
         # Install the built package
         pip install dist/*.whl
         # Test that it can be imported correctly
-        python -c "import safeguards; print(f'Successfully imported safeguards {safeguards.__version__}')"
+        python -c "import safeguards; print(f'Successfully imported safeguards from agent-safeguards {safeguards.__version__}')"
 
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
