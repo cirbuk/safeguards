@@ -12,14 +12,14 @@ Before you begin, ensure you have the following:
 ### Install from PyPI
 
 ```bash
-pip install safeguards
+pip install agent-safeguards
 ```
 
 ### Install from Source
 
 ```bash
-git clone https://github.com/cirbuk/safeguards.git
-cd safeguards
+git clone https://github.com/cirbuk/agent-safeguards.git
+cd agent-safeguards
 pip install -e .
 ```
 

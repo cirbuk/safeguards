@@ -58,7 +58,7 @@ This framework is ideal for organizations deploying multiple AI agents that need
 ### Installation
 
 ```bash
-pip install safeguards
+pip install agent-safeguards
 ```
 
 ### Basic Setup
@@ -178,8 +178,8 @@ The Safeguards framework is designed for a variety of use cases:
 
 ```bash
 # Clone the repository
-git clone https://github.com/cirbuk/safeguards.git
-cd safeguards
+git clone https://github.com/cirbuk/agent-safeguards.git
+cd agent-safeguards
 
 # Create and activate virtual environment
 python -m venv .venv

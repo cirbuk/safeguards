@@ -18,14 +18,14 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
     ]
 
 setup(
-    name="safeguards",
+    name="agent-safeguards",
     version="0.1.0",
     author="Mason Team",
     author_email="dev@getmason.io",
     description="A comprehensive framework for implementing safety controls in AI agent systems",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/cirbuk/safeguards",
+    url="https://github.com/cirbuk/agent-safeguards",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     classifiers=[
