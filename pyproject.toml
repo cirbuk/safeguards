@@ -111,3 +111,6 @@ disable = [
 
 [tool.pylint.format]
 max-line-length = 88
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/safeguards"]
