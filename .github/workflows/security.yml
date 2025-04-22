@@ -43,6 +43,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+          GITLEAKS_ENABLE_SUMMARY: true
+          GITLEAKS_SCAN_DEPTH: 50
         continue-on-error: ${{ steps.check_license.outputs.has_license != 'true' }}
 
       - name: Gitleaks License Info
@@ -54,6 +56,7 @@ jobs:
       - name: Run Safety Check
         run: |
           pip install --upgrade pip-audit
+          pip install --upgrade setuptools>=65.5.1
           pip-audit
 
       - name: Run Bandit

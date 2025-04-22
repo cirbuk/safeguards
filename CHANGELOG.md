@@ -5,19 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-### Added
-- Comprehensive documentation and guides
-- Safety guardrails implementation
-- Advanced budget management techniques
-
-## [0.1.0] - 2023-07-26
+## [0.1.0] - 2024-04-22
 
 ### Added
-- Initial release of the Safeguards
-- Core budget coordination functionality
-- Agent safety monitoring system
-- Resource management for agent operations
-- Budget pools and priority-based allocation
-- Comprehensive documentation
-- Examples for common use cases
+- Initial release of the safeguards package
+- Core budget management functionality
+- Resource monitoring capabilities
+- Guardrails implementation
+- Notification system
+- Type definitions and safety controls
