@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum, auto
-from typing import Dict, List, Optional, Protocol
+from typing import Dict, List, Optional, Protocol, Tuple
 
 
 class BudgetPeriod(Enum):
@@ -149,7 +149,7 @@ class BudgetManager(ABC):
         """
         ...
 
-    def get_period_dates(self) -> tuple[datetime, datetime]:
+    def get_period_dates(self) -> Tuple[datetime, datetime]:
         """Get start and end dates for current period.
 
         Returns:

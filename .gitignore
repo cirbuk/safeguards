@@ -20,3 +20,4 @@ wheels/
 
 # PyPI configuration
 .pypirc
+site/

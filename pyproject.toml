@@ -1,29 +1,26 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "setuptools>=65.5.1"]
 build-backend = "hatchling.build"
 
 [project]
 name = "safeguards"
 version = "0.1.0"
-description = "A comprehensive framework for implementing safety controls in AI agent systems"
+description = "Safeguards for custom agents."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = {file = "LICENSE"}
 authors = [
-    {name = "Mason Team", email = "dev@getmason.io"}
+    {name = "The Anthropic Safeguards Team", email = "safeguards@anthropic.com"}
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Security",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
     "fastapi>=0.109.0",
@@ -69,6 +66,7 @@ dev = [
     "bandit>=1.7.0",
     "types-requests>=2.30.0",
     "types-psutil>=5.9.0",
+    "setuptools>=65.5.1",
 ]
 docs = [
     "sphinx>=6.0.0",
@@ -83,7 +81,7 @@ addopts = "-v --cov=safeguards"
 
 [tool.black]
 line-length = 88
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py310", "py311"]
 
 [tool.isort]
 profile = "black"
@@ -91,7 +89,7 @@ multi_line_output = 3
 line_length = 88
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

@@ -1,8 +1,10 @@
 # Installation Guide
 
-## Requirements
+## Prerequisites
 
-- Python 3.8 or higher
+Before installing Safeguards, make sure you have:
+
+- Python 3.10 or newer
 - pip package manager
 
 ## Basic Installation
