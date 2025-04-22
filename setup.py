@@ -1,4 +1,11 @@
-"""Setup configuration for safeguards package."""
+"""DEPRECATED: This file is maintained for backward compatibility only.
+
+The project now uses pyproject.toml for build configuration.
+Please refer to pyproject.toml for the current build configuration.
+"""
+
+# This file is kept for backward compatibility
+# All configuration has been moved to pyproject.toml
 
 from setuptools import setup, find_packages
 
