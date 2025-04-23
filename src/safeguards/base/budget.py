@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum, auto
-from typing import Dict, List, Optional, Protocol, Tuple
+from typing import Protocol
 
 
 class BudgetPeriod(Enum):
@@ -25,28 +25,34 @@ class BudgetConfig:
 
     total_budget: Decimal
     period: BudgetPeriod
-    hourly_limit: Optional[Decimal] = None
-    daily_limit: Optional[Decimal] = None
-    weekly_limit: Optional[Decimal] = None
-    monthly_limit: Optional[Decimal] = None
+    hourly_limit: Decimal | None = None
+    daily_limit: Decimal | None = None
+    weekly_limit: Decimal | None = None
+    monthly_limit: Decimal | None = None
     alert_threshold: float = 0.8  # Alert at 80% usage
 
     def __post_init__(self):
         """Validate budget configuration."""
         if self.total_budget <= 0:
-            raise ValueError("Total budget must be positive")
+            msg = "Total budget must be positive"
+            raise ValueError(msg)
         if self.alert_threshold <= 0 or self.alert_threshold > 1:
-            raise ValueError("Alert threshold must be between 0 and 1")
+            msg = "Alert threshold must be between 0 and 1"
+            raise ValueError(msg)
 
         # Validate period-specific limits
         if self.hourly_limit is not None and self.hourly_limit <= 0:
-            raise ValueError("Hourly limit must be positive")
+            msg = "Hourly limit must be positive"
+            raise ValueError(msg)
         if self.daily_limit is not None and self.daily_limit <= 0:
-            raise ValueError("Daily limit must be positive")
+            msg = "Daily limit must be positive"
+            raise ValueError(msg)
         if self.weekly_limit is not None and self.weekly_limit <= 0:
-            raise ValueError("Weekly limit must be positive")
+            msg = "Weekly limit must be positive"
+            raise ValueError(msg)
         if self.monthly_limit is not None and self.monthly_limit <= 0:
-            raise ValueError("Monthly limit must be positive")
+            msg = "Monthly limit must be positive"
+            raise ValueError(msg)
 
 
 @dataclass
@@ -63,13 +69,17 @@ class BudgetMetrics:
     def __post_init__(self):
         """Validate budget metrics."""
         if self.current_usage < 0:
-            raise ValueError("Current usage cannot be negative")
+            msg = "Current usage cannot be negative"
+            raise ValueError(msg)
         if self.total_budget <= 0:
-            raise ValueError("Total budget must be positive")
+            msg = "Total budget must be positive"
+            raise ValueError(msg)
         if self.usage_percentage < 0 or self.usage_percentage > 1:
-            raise ValueError("Usage percentage must be between 0 and 1")
+            msg = "Usage percentage must be between 0 and 1"
+            raise ValueError(msg)
         if self.period_end <= self.period_start:
-            raise ValueError("Period end must be after period start")
+            msg = "Period end must be after period start"
+            raise ValueError(msg)
 
     @property
     def usage_percent(self) -> float:
@@ -93,7 +103,7 @@ class BudgetStorage(Protocol):
         self,
         start_time: datetime,
         end_time: datetime,
-    ) -> List[Dict[str, Decimal]]:
+    ) -> list[dict[str, Decimal]]:
         """Get usage for time period."""
         ...
 
@@ -108,7 +118,7 @@ class BudgetManager(ABC):
     def __init__(
         self,
         config: BudgetConfig,
-        storage: Optional[BudgetStorage] = None,
+        storage: BudgetStorage | None = None,
     ):
         """Initialize budget manager.
 
@@ -149,7 +159,7 @@ class BudgetManager(ABC):
         """
         ...
 
-    def get_period_dates(self) -> Tuple[datetime, datetime]:
+    def get_period_dates(self) -> tuple[datetime, datetime]:
         """Get start and end dates for current period.
 
         Returns:
@@ -175,7 +185,12 @@ class BudgetManager(ABC):
         elif self.config.period == BudgetPeriod.QUARTERLY:
             quarter = (now.month - 1) // 3
             start = now.replace(
-                month=quarter * 3 + 1, day=1, hour=0, minute=0, second=0, microsecond=0
+                month=quarter * 3 + 1,
+                day=1,
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0,
             )
             if quarter == 3:
                 end = start.replace(year=now.year + 1, month=1)
@@ -183,7 +198,12 @@ class BudgetManager(ABC):
                 end = start.replace(month=start.month + 3)
         else:  # YEARLY
             start = now.replace(
-                month=1, day=1, hour=0, minute=0, second=0, microsecond=0
+                month=1,
+                day=1,
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0,
             )
             end = start.replace(year=now.year + 1)
 

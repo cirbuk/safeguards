@@ -11,17 +11,15 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum, auto
-from typing import Dict, List, Optional, Set
 from uuid import UUID, uuid4
 
 from .alert_types import Alert, AlertSeverity
-from .notification_manager import NotificationManager
 from .dynamic_budget import (
-    DynamicBudgetManager,
     AgentPriority,
     BudgetAdjustmentTrigger,
-    AgentBudgetProfile,
+    DynamicBudgetManager,
 )
+from .notification_manager import NotificationManager
 
 
 class OverrideType(Enum):
@@ -54,13 +52,13 @@ class OverrideRequest:
     justification: str = field()
     requester: str = field()
     request_id: UUID = field(default_factory=uuid4)
-    duration: Optional[timedelta] = None
-    priority_override: Optional[AgentPriority] = None
+    duration: timedelta | None = None
+    priority_override: AgentPriority | None = None
     created_at: datetime = field(default_factory=datetime.now)
-    approved_by: Optional[str] = None
-    approved_at: Optional[datetime] = None
+    approved_by: str | None = None
+    approved_at: datetime | None = None
     status: OverrideStatus = field(default=OverrideStatus.PENDING)
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -72,9 +70,9 @@ class OverrideAuditLog:
     action: str
     actor: str
     details: str
-    previous_state: Optional[Dict] = None
-    new_state: Optional[Dict] = None
-    metadata: Dict = field(default_factory=dict)
+    previous_state: dict | None = None
+    new_state: dict | None = None
+    metadata: dict = field(default_factory=dict)
 
 
 class BudgetOverrideManager:
@@ -84,7 +82,7 @@ class BudgetOverrideManager:
         self,
         budget_manager: DynamicBudgetManager,
         notification_manager: NotificationManager,
-        auto_approve_threshold: Optional[Decimal] = None,
+        auto_approve_threshold: Decimal | None = None,
         emergency_reserve_ratio: float = 0.2,
         max_override_duration: timedelta = timedelta(days=7),
     ):
@@ -104,11 +102,11 @@ class BudgetOverrideManager:
         self.max_override_duration = max_override_duration
 
         # Track override requests and audit logs
-        self._override_requests: Dict[UUID, OverrideRequest] = {}
-        self._audit_logs: List[OverrideAuditLog] = []
+        self._override_requests: dict[UUID, OverrideRequest] = {}
+        self._audit_logs: list[OverrideAuditLog] = []
 
         # Track active overrides by agent
-        self._active_overrides: Dict[str, Set[UUID]] = {}
+        self._active_overrides: dict[str, set[UUID]] = {}
 
     def request_override(
         self,
@@ -117,9 +115,9 @@ class BudgetOverrideManager:
         override_type: OverrideType,
         justification: str,
         requester: str,
-        duration: Optional[timedelta] = None,
-        priority_override: Optional[AgentPriority] = None,
-        metadata: Optional[Dict] = None,
+        duration: timedelta | None = None,
+        priority_override: AgentPriority | None = None,
+        metadata: dict | None = None,
     ) -> UUID:
         """Request a budget override.
 
@@ -138,7 +136,8 @@ class BudgetOverrideManager:
         """
         # Validate agent exists
         if agent_id not in self.budget_manager.agent_profiles:
-            raise ValueError(f"Unknown agent {agent_id}")
+            msg = f"Unknown agent {agent_id}"
+            raise ValueError(msg)
 
         # Get current allocation
         profile = self.budget_manager.agent_profiles[agent_id]
@@ -147,10 +146,12 @@ class BudgetOverrideManager:
         # Validate duration for temporary overrides
         if override_type == OverrideType.TEMPORARY:
             if not duration:
-                raise ValueError("Duration required for temporary overrides")
+                msg = "Duration required for temporary overrides"
+                raise ValueError(msg)
             if duration > self.max_override_duration:
+                msg = f"Override duration exceeds maximum of {self.max_override_duration}"
                 raise ValueError(
-                    f"Override duration exceeds maximum of {self.max_override_duration}"
+                    msg,
                 )
 
         # Create override request
@@ -205,11 +206,13 @@ class BudgetOverrideManager:
             auto_approved: Whether this was auto-approved
         """
         if override_id not in self._override_requests:
-            raise ValueError(f"Unknown override request {override_id}")
+            msg = f"Unknown override request {override_id}"
+            raise ValueError(msg)
 
         request = self._override_requests[override_id]
         if request.status != OverrideStatus.PENDING:
-            raise ValueError(f"Override {override_id} is not pending approval")
+            msg = f"Override {override_id} is not pending approval"
+            raise ValueError(msg)
 
         # Record approval
         old_state = self._request_to_dict(request)
@@ -252,11 +255,13 @@ class BudgetOverrideManager:
             reason: Reason for rejection
         """
         if override_id not in self._override_requests:
-            raise ValueError(f"Unknown override request {override_id}")
+            msg = f"Unknown override request {override_id}"
+            raise ValueError(msg)
 
         request = self._override_requests[override_id]
         if request.status != OverrideStatus.PENDING:
-            raise ValueError(f"Override {override_id} is not pending approval")
+            msg = f"Override {override_id} is not pending approval"
+            raise ValueError(msg)
 
         # Update status
         old_state = self._request_to_dict(request)
@@ -290,11 +295,13 @@ class BudgetOverrideManager:
             reason: Reason for cancellation
         """
         if override_id not in self._override_requests:
-            raise ValueError(f"Unknown override request {override_id}")
+            msg = f"Unknown override request {override_id}"
+            raise ValueError(msg)
 
         request = self._override_requests[override_id]
         if request.status != OverrideStatus.ACTIVE:
-            raise ValueError(f"Override {override_id} is not active")
+            msg = f"Override {override_id} is not active"
+            raise ValueError(msg)
 
         # Update status
         old_state = self._request_to_dict(request)
@@ -337,12 +344,15 @@ class BudgetOverrideManager:
             Current override request state
         """
         if override_id not in self._override_requests:
-            raise ValueError(f"Unknown override request {override_id}")
+            msg = f"Unknown override request {override_id}"
+            raise ValueError(msg)
         return self._override_requests[override_id]
 
     def get_agent_overrides(
-        self, agent_id: str, include_inactive: bool = False
-    ) -> List[OverrideRequest]:
+        self,
+        agent_id: str,
+        include_inactive: bool = False,
+    ) -> list[OverrideRequest]:
         """Get all overrides for an agent.
 
         Args:
@@ -359,7 +369,7 @@ class BudgetOverrideManager:
             and (include_inactive or req.status == OverrideStatus.ACTIVE)
         ]
 
-    def get_override_audit_logs(self, override_id: UUID) -> List[OverrideAuditLog]:
+    def get_override_audit_logs(self, override_id: UUID) -> list[OverrideAuditLog]:
         """Get audit logs for an override.
 
         Args:
@@ -405,7 +415,7 @@ class BudgetOverrideManager:
                 self.budget_manager.agent_pool_mapping[request.agent_id]
             ]
             emergency_budget = pool.total_budget * Decimal(
-                str(self.emergency_reserve_ratio)
+                str(self.emergency_reserve_ratio),
             )
             profile.current_allocation = min(request.requested_amount, emergency_budget)
         else:
@@ -440,7 +450,8 @@ class BudgetOverrideManager:
 
         # Trigger reallocation to rebalance
         self.budget_manager._reallocate_pool_budget(
-            pool, BudgetAdjustmentTrigger.MANUAL
+            pool,
+            BudgetAdjustmentTrigger.MANUAL,
         )
 
     def _add_audit_log(
@@ -449,9 +460,9 @@ class BudgetOverrideManager:
         action: str,
         actor: str,
         details: str,
-        previous_state: Optional[Dict] = None,
-        new_state: Optional[Dict] = None,
-        metadata: Optional[Dict] = None,
+        previous_state: dict | None = None,
+        new_state: dict | None = None,
+        metadata: dict | None = None,
     ) -> None:
         """Add an audit log entry.
 
@@ -476,7 +487,7 @@ class BudgetOverrideManager:
         )
         self._audit_logs.append(log)
 
-    def _request_to_dict(self, request: OverrideRequest) -> Dict:
+    def _request_to_dict(self, request: OverrideRequest) -> dict:
         """Convert override request to dictionary for logging.
 
         Args:
@@ -499,9 +510,7 @@ class BudgetOverrideManager:
             ),
             "created_at": request.created_at.isoformat(),
             "approved_by": request.approved_by,
-            "approved_at": (
-                request.approved_at.isoformat() if request.approved_at else None
-            ),
+            "approved_at": (request.approved_at.isoformat() if request.approved_at else None),
             "status": request.status.name,
             "metadata": request.metadata,
         }
@@ -512,7 +521,7 @@ class BudgetOverrideManager:
         title: str,
         description: str,
         severity: AlertSeverity,
-        metadata: Optional[Dict] = None,
+        metadata: dict | None = None,
     ) -> None:
         """Send an override-related alert.
 
@@ -566,5 +575,5 @@ class BudgetOverrideManager:
             request=request,
             title="Budget Override Approval Required",
             description=description,
-            severity=AlertSeverity.HIGH,
+            severity=AlertSeverity.ERROR,
         )

@@ -10,7 +10,6 @@ This module provides:
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, auto
-from typing import Dict, List, Optional, Set
 from uuid import UUID, uuid4
 
 from ..core.alert_types import Alert, AlertSeverity
@@ -56,7 +55,7 @@ class AuditLog:
     actor_id: str
     target: str
     status: str
-    details: Dict
+    details: dict
     log_id: UUID = field(default_factory=uuid4)
 
 
@@ -72,8 +71,8 @@ class SecurityManager:
         self.notification_manager = notification_manager
 
         # Role -> Permissions mapping
-        self._role_permissions: Dict[Role, Set[Permission]] = {
-            Role.ADMIN: {p for p in Permission},  # All permissions
+        self._role_permissions: dict[Role, set[Permission]] = {
+            Role.ADMIN: set(Permission),  # All permissions
             Role.OPERATOR: {
                 Permission.AGENT_CREATE,
                 Permission.AGENT_MODIFY,
@@ -94,12 +93,12 @@ class SecurityManager:
         }
 
         # Identity -> Roles mapping
-        self._identity_roles: Dict[str, Set[Role]] = {}
+        self._identity_roles: dict[str, set[Role]] = {}
 
         # Audit log storage
-        self._audit_logs: List[AuditLog] = []
+        self._audit_logs: list[AuditLog] = []
 
-    def register_identity(self, identity: str, roles: List[Role]) -> None:
+    def register_identity(self, identity: str, roles: list[Role]) -> None:
         """Register an identity with roles.
 
         Args:
@@ -110,7 +109,8 @@ class SecurityManager:
             ValueError: If identity already registered
         """
         if identity in self._identity_roles:
-            raise ValueError(f"Identity {identity} already registered")
+            msg = f"Identity {identity} already registered"
+            raise ValueError(msg)
 
         self._identity_roles[identity] = set(roles)
         self._log_audit(
@@ -141,7 +141,7 @@ class SecurityManager:
         self,
         identity: str,
         permission: Permission,
-        target: Optional[str] = None,
+        target: str | None = None,
     ) -> None:
         """Verify identity has permission or raise error.
 
@@ -161,8 +161,9 @@ class SecurityManager:
                 status="DENIED",
                 details={"target": target} if target else {},
             )
+            msg = f"Identity {identity} lacks permission {permission.name}"
             raise PermissionError(
-                f"Identity {identity} lacks permission {permission.name}"
+                msg,
             )
 
         self._log_audit(
@@ -173,7 +174,7 @@ class SecurityManager:
             details={"target": target} if target else {},
         )
 
-    def get_identity_roles(self, identity: str) -> Set[Role]:
+    def get_identity_roles(self, identity: str) -> set[Role]:
         """Get roles assigned to an identity.
 
         Args:
@@ -186,7 +187,8 @@ class SecurityManager:
             ValueError: If identity not found
         """
         if identity not in self._identity_roles:
-            raise ValueError(f"Identity {identity} not found")
+            msg = f"Identity {identity} not found"
+            raise ValueError(msg)
 
         return self._identity_roles[identity].copy()
 
@@ -201,7 +203,8 @@ class SecurityManager:
             ValueError: If identity not found
         """
         if identity not in self._identity_roles:
-            raise ValueError(f"Identity {identity} not found")
+            msg = f"Identity {identity} not found"
+            raise ValueError(msg)
 
         self._identity_roles[identity].add(role)
         self._log_audit(
@@ -223,11 +226,13 @@ class SecurityManager:
             ValueError: If identity not found or would have no roles
         """
         if identity not in self._identity_roles:
-            raise ValueError(f"Identity {identity} not found")
+            msg = f"Identity {identity} not found"
+            raise ValueError(msg)
 
         roles = self._identity_roles[identity]
         if len(roles) == 1 and role in roles:
-            raise ValueError(f"Cannot remove last role from {identity}")
+            msg = f"Cannot remove last role from {identity}"
+            raise ValueError(msg)
 
         roles.discard(role)
         self._log_audit(
@@ -244,7 +249,7 @@ class SecurityManager:
         actor_id: str,
         target: str,
         status: str,
-        details: Dict,
+        details: dict,
     ) -> None:
         """Create an audit log entry.
 
@@ -270,9 +275,7 @@ class SecurityManager:
             alert = Alert(
                 title=f"Security Event: {action}",
                 description=f"Actor: {actor_id}, Target: {target}, Status: {status}",
-                severity=(
-                    AlertSeverity.HIGH if status == "DENIED" else AlertSeverity.INFO
-                ),
+                severity=AlertSeverity.ERROR if status == "DENIED" else AlertSeverity.INFO,
                 metadata={
                     "log_id": str(log.log_id),
                     "action": action,

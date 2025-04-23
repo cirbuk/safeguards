@@ -1,14 +1,14 @@
 """Tests for the cost estimation module."""
 
-from datetime import datetime
 from decimal import Decimal
+
 import pytest
 
 from safeguards.base.budget import BudgetPeriod
-from safeguards.budget.cost_estimation import CostEstimator, CostEstimate
+from safeguards.budget.cost_estimation import CostEstimate, CostEstimator
 
 
-@pytest.fixture
+@pytest.fixture()
 def cost_estimator():
     """Create a cost estimator instance for testing."""
     llm_costs = {

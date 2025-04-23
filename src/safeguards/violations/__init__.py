@@ -3,9 +3,9 @@ Violations module for Agent Safety Framework.
 """
 
 from safeguards.monitoring.violation_reporter import (
+    Violation,
     ViolationReporter,
     ViolationType,
-    Violation,
 )
 
-__all__ = ["ViolationReporter", "ViolationType", "Violation"]
+__all__ = ["Violation", "ViolationReporter", "ViolationType"]

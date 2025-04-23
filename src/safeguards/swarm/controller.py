@@ -1,23 +1,15 @@
 """Swarm controller for managing budgets and safety across multiple coordinating agents."""
 
-from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Dict, List, Optional, Set, Type, Union
-from uuid import UUID, uuid4
+from uuid import uuid4
 
-from agents import Agent, Runner, Trace
-from agents.schema import RunContext
+from agents import Agent, Runner
 
-from ..types import (
-    AgentBudgetProfile,
-    BudgetAlert,
-    BudgetOverride,
-    ResourceAlert,
-    ResourceMetrics,
-    SwarmMetrics,
-)
 from ..budget import BudgetManager
 from ..monitoring import ResourceMonitor
+from ..types import (
+    SwarmMetrics,
+)
 from .config import SwarmConfig
 
 
@@ -71,15 +63,15 @@ class SwarmController:
         self.resource_monitor = ResourceMonitor()
 
         # Track agent types and instances
-        self._agent_types: Dict[str, Agent] = {}
-        self._type_configs: Dict[str, Dict] = {}
-        self._active_agents: Dict[str, Set[str]] = {}  # type -> instance_ids
-        self._agent_tasks: Dict[str, str] = {}  # agent_id -> task_id
+        self._agent_types: dict[str, Agent] = {}
+        self._type_configs: dict[str, dict] = {}
+        self._active_agents: dict[str, set[str]] = {}  # type -> instance_ids
+        self._agent_tasks: dict[str, str] = {}  # agent_id -> task_id
 
         # Track swarm state
-        self._task_agents: Dict[str, Set[str]] = {}  # task_id -> agent_ids
-        self._task_status: Dict[str, str] = {}
-        self._task_results: Dict[str, Dict] = {}
+        self._task_agents: dict[str, set[str]] = {}  # task_id -> agent_ids
+        self._task_status: dict[str, str] = {}
+        self._task_results: dict[str, dict] = {}
 
     def register_agent_type(
         self,
@@ -89,7 +81,7 @@ class SwarmController:
         min_instances: int = 1,
         max_instances: int = 5,
         priority: str = "MEDIUM",
-        metadata: Optional[Dict] = None,
+        metadata: dict | None = None,
     ) -> None:
         """Register an agent type that can be instantiated in the swarm.
 
@@ -103,7 +95,8 @@ class SwarmController:
             metadata: Additional metadata
         """
         if type_name in self._agent_types:
-            raise ValueError(f"Agent type {type_name} already registered")
+            msg = f"Agent type {type_name} already registered"
+            raise ValueError(msg)
 
         self._agent_types[type_name] = agent_template
         self._type_configs[type_name] = {
@@ -118,10 +111,10 @@ class SwarmController:
     def run_task(
         self,
         task: str,
-        agent_types: List[str],
+        agent_types: list[str],
         coordination_type: str = "SEQUENTIAL",
-        task_metadata: Optional[Dict] = None,
-    ) -> Dict:
+        task_metadata: dict | None = None,
+    ) -> dict:
         """Run a task using multiple coordinating agents.
 
         Args:
@@ -142,7 +135,8 @@ class SwarmController:
             # Ensure required agent types exist
             for agent_type in agent_types:
                 if agent_type not in self._agent_types:
-                    raise ValueError(f"Unknown agent type: {agent_type}")
+                    msg = f"Unknown agent type: {agent_type}"
+                    raise ValueError(msg)
 
             # Scale up agents as needed
             self._scale_agents(task_id, agent_types)
@@ -153,7 +147,8 @@ class SwarmController:
             elif coordination_type == "PARALLEL":
                 results = self._run_parallel(task_id, task, agent_types)
             else:
-                raise ValueError(f"Unsupported coordination type: {coordination_type}")
+                msg = f"Unsupported coordination type: {coordination_type}"
+                raise ValueError(msg)
 
             self._task_status[task_id] = "COMPLETED"
             self._task_results[task_id] = results
@@ -175,9 +170,7 @@ class SwarmController:
             SwarmMetrics containing budget and resource usage
         """
         total_metrics = {
-            "active_agents": sum(
-                len(agents) for agents in self._active_agents.values()
-            ),
+            "active_agents": sum(len(agents) for agents in self._active_agents.values()),
             "total_budget_used": self.budget_manager.get_total_usage(),
             "resource_usage": self.resource_monitor.get_metrics(),
             "agent_types": {
@@ -190,7 +183,7 @@ class SwarmController:
         }
         return SwarmMetrics(**total_metrics)
 
-    def _scale_agents(self, task_id: str, agent_types: List[str]) -> None:
+    def _scale_agents(self, task_id: str, agent_types: list[str]) -> None:
         """Scale agent instances based on task needs.
 
         Args:
@@ -223,7 +216,7 @@ class SwarmController:
         instance_id = f"{agent_type}_{len(self._active_agents[agent_type])}"
 
         # Clone template and customize
-        agent_instance = Agent(
+        Agent(
             name=instance_id,
             instructions=template.instructions,
             tools=template.tools,
@@ -248,8 +241,8 @@ class SwarmController:
         self,
         task_id: str,
         task: str,
-        agent_types: List[str],
-    ) -> Dict:
+        agent_types: list[str],
+    ) -> dict:
         """Run agents sequentially, passing outputs as inputs.
 
         Args:
@@ -282,8 +275,8 @@ class SwarmController:
         self,
         task_id: str,
         task: str,
-        agent_types: List[str],
-    ) -> Dict:
+        agent_types: list[str],
+    ) -> dict:
         """Run agents in parallel with shared context.
 
         Args:
@@ -322,7 +315,8 @@ class SwarmController:
         """
         active_agents = self._active_agents[agent_type]
         if not active_agents:
-            raise RuntimeError(f"No active agents of type {agent_type}")
+            msg = f"No active agents of type {agent_type}"
+            raise RuntimeError(msg)
 
         # Simple round-robin for now
         return next(iter(active_agents))

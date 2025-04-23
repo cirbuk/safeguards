@@ -1,13 +1,14 @@
 """Tests for the resource monitor module."""
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from safeguards.resource.monitor import ResourceMonitor
 from safeguards.types import ResourceConfig, ResourceMetrics
 
 
-@pytest.fixture
+@pytest.fixture()
 def resource_config() -> ResourceConfig:
     """Create a test resource configuration."""
     return ResourceConfig(
@@ -18,7 +19,7 @@ def resource_config() -> ResourceConfig:
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def resource_monitor(resource_config: ResourceConfig) -> ResourceMonitor:
     """Create a resource monitor instance for testing."""
     return ResourceMonitor(resource_config)

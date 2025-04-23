@@ -7,7 +7,6 @@ while enforcing budget constraints and providing usage metrics.
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, List, Optional
 
 from safeguards.base.budget import BudgetPeriod
 
@@ -28,7 +27,7 @@ class TokenTracker:
 
     def __init__(
         self,
-        model_costs: Dict[str, Dict[str, Decimal]],
+        model_costs: dict[str, dict[str, Decimal]],
         token_budget: int,
         cost_budget: Decimal,
         period: BudgetPeriod,
@@ -45,14 +44,14 @@ class TokenTracker:
         self.token_budget = token_budget
         self.cost_budget = cost_budget
         self.period = period
-        self.usage_history: List[TokenUsage] = []
+        self.usage_history: list[TokenUsage] = []
 
     def record_usage(
         self,
         model_id: str,
         input_tokens: int,
         output_tokens: int,
-        timestamp: Optional[datetime] = None,
+        timestamp: datetime | None = None,
     ) -> TokenUsage:
         """Record token usage.
 
@@ -69,7 +68,8 @@ class TokenTracker:
             ValueError: If model_id is not recognized
         """
         if model_id not in self.model_costs:
-            raise ValueError(f"Unknown model: {model_id}")
+            msg = f"Unknown model: {model_id}"
+            raise ValueError(msg)
 
         if timestamp is None:
             timestamp = datetime.now()
@@ -92,8 +92,10 @@ class TokenTracker:
         return usage
 
     def get_usage_in_period(
-        self, start_time: datetime, end_time: datetime
-    ) -> List[TokenUsage]:
+        self,
+        start_time: datetime,
+        end_time: datetime,
+    ) -> list[TokenUsage]:
         """Get usage records for a specific time period.
 
         Args:
@@ -103,13 +105,9 @@ class TokenTracker:
         Returns:
             List of TokenUsage records in the period
         """
-        return [
-            usage
-            for usage in self.usage_history
-            if start_time <= usage.timestamp < end_time
-        ]
+        return [usage for usage in self.usage_history if start_time <= usage.timestamp < end_time]
 
-    def get_total_tokens(self, model_id: Optional[str] = None) -> int:
+    def get_total_tokens(self, model_id: str | None = None) -> int:
         """Get total tokens used.
 
         Args:
@@ -125,7 +123,7 @@ class TokenTracker:
         )
         return sum(u.input_tokens + u.output_tokens for u in usages)
 
-    def get_total_cost(self, model_id: Optional[str] = None) -> Decimal:
+    def get_total_cost(self, model_id: str | None = None) -> Decimal:
         """Get total cost of usage.
 
         Args:
@@ -142,7 +140,10 @@ class TokenTracker:
         return sum(u.cost for u in usages)
 
     def check_budget_available(
-        self, input_tokens: int, output_tokens: int, model_id: str
+        self,
+        input_tokens: int,
+        output_tokens: int,
+        model_id: str,
     ) -> bool:
         """Check if the usage would be within budget.
 
@@ -161,7 +162,8 @@ class TokenTracker:
 
         # Calculate new cost
         if model_id not in self.model_costs:
-            raise ValueError(f"Unknown model: {model_id}")
+            msg = f"Unknown model: {model_id}"
+            raise ValueError(msg)
 
         costs = self.model_costs[model_id]
         input_cost = Decimal(str(input_tokens)) * costs["input"] / Decimal("1000")
@@ -171,13 +173,13 @@ class TokenTracker:
         # Check cost budget
         return self.get_total_cost() + new_cost <= self.cost_budget
 
-    def get_usage_stats(self) -> Dict[str, Dict[str, int]]:
+    def get_usage_stats(self) -> dict[str, dict[str, int]]:
         """Get usage statistics by model.
 
         Returns:
             Dictionary mapping model IDs to their usage statistics
         """
-        stats: Dict[str, Dict[str, int]] = {}
+        stats: dict[str, dict[str, int]] = {}
         for usage in self.usage_history:
             if usage.model_id not in stats:
                 stats[usage.model_id] = {
@@ -203,15 +205,13 @@ class TokenTracker:
         """
         return self.cost_budget - self.get_total_cost()
 
-    def clear_history(self, model_id: Optional[str] = None) -> None:
+    def clear_history(self, model_id: str | None = None) -> None:
         """Clear usage history.
 
         Args:
             model_id: Optional model ID to clear history for. If None, clears all history.
         """
         if model_id:
-            self.usage_history = [
-                u for u in self.usage_history if u.model_id != model_id
-            ]
+            self.usage_history = [u for u in self.usage_history if u.model_id != model_id]
         else:
             self.usage_history.clear()

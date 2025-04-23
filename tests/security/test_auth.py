@@ -1,13 +1,14 @@
 """Unit tests for authentication and authorization system."""
 
-import pytest
 from datetime import datetime
 from uuid import UUID
 
+import pytest
+
 from safeguards.security.auth import (
+    AuditLog,
     Permission,
     Role,
-    AuditLog,
     SecurityManager,
 )
 
@@ -49,7 +50,7 @@ def test_audit_log():
 class TestSecurityManager:
     """Test cases for SecurityManager."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def security_manager(self):
         """Create SecurityManager instance for testing."""
         return SecurityManager()

@@ -1,15 +1,13 @@
 """Core safety controller implementation."""
 
 from decimal import Decimal
-from typing import Dict, List, Optional, Type
-from datetime import datetime
 
-from ..types.agent import Agent
-from ..types import SafetyConfig, SafetyMetrics, SafetyAlert
 from ..base.budget import BudgetManager
-from ..base.monitoring import ResourceMonitor
 from ..base.guardrails import Guardrail, ValidationResult
+from ..base.monitoring import ResourceMonitor
 from ..core.notification_manager import NotificationManager
+from ..types import SafetyAlert, SafetyConfig, SafetyMetrics
+from ..types.agent import Agent
 
 
 class SafetyController:
@@ -38,14 +36,14 @@ class SafetyController:
         self.notification_manager = NotificationManager()
 
         # Track registered agents and their guardrails
-        self._agents: Dict[str, Agent] = {}
-        self._agent_guardrails: Dict[str, List[Guardrail]] = {}
+        self._agents: dict[str, Agent] = {}
+        self._agent_guardrails: dict[str, list[Guardrail]] = {}
 
     def register_agent(
         self,
         agent: Agent,
-        budget: Optional[Decimal] = None,
-        guardrails: Optional[List[Guardrail]] = None,
+        budget: Decimal | None = None,
+        guardrails: list[Guardrail] | None = None,
     ) -> None:
         """Register an agent for safety monitoring.
 
@@ -55,7 +53,8 @@ class SafetyController:
             guardrails: Safety guardrails to apply
         """
         if agent.id in self._agents:
-            raise ValueError(f"Agent {agent.id} already registered")
+            msg = f"Agent {agent.id} already registered"
+            raise ValueError(msg)
 
         self._agents[agent.id] = agent
         if guardrails:
@@ -74,7 +73,8 @@ class SafetyController:
             agent_id: ID of agent to unregister
         """
         if agent_id not in self._agents:
-            raise ValueError(f"Agent {agent_id} not registered")
+            msg = f"Agent {agent_id} not registered"
+            raise ValueError(msg)
 
         self.budget_manager.unregister_agent(agent_id)
         self.resource_monitor.stop_monitoring(agent_id)
@@ -93,17 +93,20 @@ class SafetyController:
             Combined safety metrics
         """
         if agent_id not in self._agents:
-            raise ValueError(f"Agent {agent_id} not registered")
+            msg = f"Agent {agent_id} not registered"
+            raise ValueError(msg)
 
         budget_metrics = self.budget_manager.get_metrics(agent_id)
         resource_metrics = self.resource_monitor.get_metrics(agent_id)
         alerts = self.notification_manager.get_alerts(agent_id)
 
         return SafetyMetrics(
-            budget=budget_metrics, resources=resource_metrics, alerts=alerts
+            budget=budget_metrics,
+            resources=resource_metrics,
+            alerts=alerts,
         )
 
-    def validate_action(self, agent_id: str, action_context: Dict) -> ValidationResult:
+    def validate_action(self, agent_id: str, action_context: dict) -> ValidationResult:
         """Validate an agent action against safety guardrails.
 
         Args:
@@ -114,7 +117,8 @@ class SafetyController:
             Validation result with any violations
         """
         if agent_id not in self._agents:
-            raise ValueError(f"Agent {agent_id} not registered")
+            msg = f"Agent {agent_id} not registered"
+            raise ValueError(msg)
 
         # Check budget availability
         if not self.budget_manager.check_budget(agent_id):
@@ -124,7 +128,7 @@ class SafetyController:
                     {
                         "type": "BUDGET_EXCEEDED",
                         "message": "Insufficient budget available",
-                    }
+                    },
                 ],
             )
 
@@ -137,7 +141,7 @@ class SafetyController:
                     {
                         "type": "RESOURCE_LIMIT_EXCEEDED",
                         "message": f"Resource limits exceeded: {resource_status.details}",
-                    }
+                    },
                 ],
             )
 
@@ -151,7 +155,10 @@ class SafetyController:
         return ValidationResult(valid=True)
 
     def record_action(
-        self, agent_id: str, action_cost: Decimal, action_context: Dict
+        self,
+        agent_id: str,
+        action_cost: Decimal,
+        action_context: dict,
     ) -> None:
         """Record an agent action for monitoring.
 
@@ -161,7 +168,8 @@ class SafetyController:
             action_context: Context of the action
         """
         if agent_id not in self._agents:
-            raise ValueError(f"Agent {agent_id} not registered")
+            msg = f"Agent {agent_id} not registered"
+            raise ValueError(msg)
 
         # Update budget usage
         self.budget_manager.record_usage(agent_id, action_cost)
@@ -175,7 +183,7 @@ class SafetyController:
                     description=f"Agent {agent_id} budget usage at {metrics.budget.usage_percent:.1f}%",
                     severity="WARNING",
                     metadata={"agent_id": agent_id},
-                )
+                ),
             )
 
         if metrics.resources.cpu_percent > self.config.cpu_threshold:
@@ -185,5 +193,5 @@ class SafetyController:
                     description=f"Agent {agent_id} CPU usage at {metrics.resources.cpu_percent:.1f}%",
                     severity="WARNING",
                     metadata={"agent_id": agent_id},
-                )
+                ),
             )

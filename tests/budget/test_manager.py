@@ -1,14 +1,14 @@
 """Tests for the budget manager module."""
 
 from decimal import Decimal
+
 import pytest
-from unittest.mock import MagicMock
 
 from safeguards.budget.manager import BudgetManager
 from safeguards.types import BudgetConfig
 
 
-@pytest.fixture
+@pytest.fixture()
 def budget_config() -> BudgetConfig:
     """Create a test budget configuration."""
     return BudgetConfig(
@@ -19,7 +19,7 @@ def budget_config() -> BudgetConfig:
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def budget_manager(budget_config: BudgetConfig) -> BudgetManager:
     """Create a budget manager instance for testing."""
     return BudgetManager(budget_config)

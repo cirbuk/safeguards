@@ -1,8 +1,6 @@
 """Notification manager for handling alerts and notifications."""
 
 from collections import defaultdict
-from datetime import datetime
-from typing import Dict, List, Optional
 
 from ..types import SafetyAlert
 
@@ -12,8 +10,8 @@ class NotificationManager:
 
     def __init__(self):
         """Initialize notification manager."""
-        self._alerts: Dict[str, List[SafetyAlert]] = defaultdict(list)
-        self._notifications: List[SafetyAlert] = []
+        self._alerts: dict[str, list[SafetyAlert]] = defaultdict(list)
+        self._notifications: list[SafetyAlert] = []
 
     def create_alert(self, alert: SafetyAlert) -> None:
         """Create a new safety alert.
@@ -28,7 +26,17 @@ class NotificationManager:
             agent_id = alert.metadata["agent_id"]
             self._alerts[agent_id].append(alert)
 
-    def get_alerts(self, agent_id: Optional[str] = None) -> List[SafetyAlert]:
+    def send_alert(self, alert: SafetyAlert) -> None:
+        """Send a safety alert.
+
+        This is an alias for create_alert to maintain compatibility with test mocks.
+
+        Args:
+            alert: Alert to send
+        """
+        self.create_alert(alert)
+
+    def get_alerts(self, agent_id: str | None = None) -> list[SafetyAlert]:
         """Get alerts for an agent or all alerts.
 
         Args:
@@ -41,7 +49,7 @@ class NotificationManager:
             return self._alerts[agent_id]
         return self._notifications
 
-    def get_notifications(self) -> List[SafetyAlert]:
+    def get_notifications(self) -> list[SafetyAlert]:
         """Get all notifications.
 
         Returns:
@@ -49,7 +57,7 @@ class NotificationManager:
         """
         return self._notifications
 
-    def clear_alerts(self, agent_id: Optional[str] = None) -> None:
+    def clear_alerts(self, agent_id: str | None = None) -> None:
         """Clear alerts for an agent or all alerts.
 
         Args:
@@ -62,8 +70,10 @@ class NotificationManager:
             self._notifications.clear()
 
     def get_active_alerts(
-        self, agent_id: Optional[str] = None, severity: Optional[str] = None
-    ) -> List[SafetyAlert]:
+        self,
+        agent_id: str | None = None,
+        severity: str | None = None,
+    ) -> list[SafetyAlert]:
         """Get active alerts filtered by agent and/or severity.
 
         Args:

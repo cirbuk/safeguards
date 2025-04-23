@@ -1,20 +1,17 @@
 """Factory for creating API instances."""
 
-from typing import Dict, Type, Union
-
+from ..config import Config
+from ..core.budget_coordination import BudgetCoordinator
+from ..exceptions import ErrorContext, InvalidConfigurationError
+from ..monitoring.metrics import MetricsAnalyzer
 from .base import (
+    AgentAPIContract,
     APIVersion,
     BudgetAPIContract,
-    MetricsAPIContract,
-    AgentAPIContract,
     ConfigAPIContract,
+    MetricsAPIContract,
 )
-from .v1 import BudgetAPIV1, MetricsAPIV1, AgentAPIV1, ConfigAPIV1
-from ..core.budget_coordination import BudgetCoordinator
-from ..monitoring.metrics import MetricsAnalyzer
-from ..core.agent import Agent
-from ..config import Config
-from ..exceptions import InvalidConfigurationError, ErrorContext
+from .v1 import AgentAPIV1, BudgetAPIV1, ConfigAPIV1, MetricsAPIV1
 
 
 class APIFactory:
@@ -22,20 +19,20 @@ class APIFactory:
 
     def __init__(self):
         """Initialize the API factory."""
-        self._budget_apis: Dict[APIVersion, Type[BudgetAPIContract]] = {
-            APIVersion.V1: BudgetAPIV1
+        self._budget_apis: dict[APIVersion, type[BudgetAPIContract]] = {
+            APIVersion.V1: BudgetAPIV1,
         }
-        self._metrics_apis: Dict[APIVersion, Type[MetricsAPIContract]] = {
-            APIVersion.V1: MetricsAPIV1
+        self._metrics_apis: dict[APIVersion, type[MetricsAPIContract]] = {
+            APIVersion.V1: MetricsAPIV1,
         }
-        self._agent_apis: Dict[APIVersion, Type[AgentAPIContract]] = {
-            APIVersion.V1: AgentAPIV1
+        self._agent_apis: dict[APIVersion, type[AgentAPIContract]] = {
+            APIVersion.V1: AgentAPIV1,
         }
-        self._config_apis: Dict[APIVersion, Type[ConfigAPIContract]] = {
-            APIVersion.V1: ConfigAPIV1
+        self._config_apis: dict[APIVersion, type[ConfigAPIContract]] = {
+            APIVersion.V1: ConfigAPIV1,
         }
 
-    def _resolve_version(self, version: Union[APIVersion, str]) -> APIVersion:
+    def _resolve_version(self, version: APIVersion | str) -> APIVersion:
         """Resolve API version from string or enum.
 
         Args:
@@ -52,8 +49,10 @@ class APIFactory:
                 version = APIVersion[version.upper()]
             except KeyError:
                 context = ErrorContext(details={"version": version})
+                msg = f"Invalid API version: {version}"
                 raise InvalidConfigurationError(
-                    f"Invalid API version: {version}", context=context
+                    msg,
+                    context=context,
                 )
 
         if version == APIVersion.LATEST:
@@ -62,7 +61,9 @@ class APIFactory:
         return version
 
     def create_budget_api(
-        self, version: Union[APIVersion, str], budget_coordinator: BudgetCoordinator
+        self,
+        version: APIVersion | str,
+        budget_coordinator: BudgetCoordinator,
     ) -> BudgetAPIContract:
         """Create a budget API instance.
 
@@ -82,12 +83,16 @@ class APIFactory:
             return api_class(budget_coordinator)
         except KeyError:
             context = ErrorContext(details={"version": str(version)})
+            msg = f"Unsupported API version: {version}"
             raise InvalidConfigurationError(
-                f"Unsupported API version: {version}", context=context
+                msg,
+                context=context,
             )
 
     def create_metrics_api(
-        self, version: Union[APIVersion, str], metrics_analyzer: MetricsAnalyzer
+        self,
+        version: APIVersion | str,
+        metrics_analyzer: MetricsAnalyzer,
     ) -> MetricsAPIContract:
         """Create a metrics API instance.
 
@@ -107,12 +112,16 @@ class APIFactory:
             return api_class(metrics_analyzer)
         except KeyError:
             context = ErrorContext(details={"version": str(version)})
+            msg = f"Unsupported API version: {version}"
             raise InvalidConfigurationError(
-                f"Unsupported API version: {version}", context=context
+                msg,
+                context=context,
             )
 
     def create_agent_api(
-        self, version: Union[APIVersion, str], coordinator: BudgetCoordinator
+        self,
+        version: APIVersion | str,
+        coordinator: BudgetCoordinator,
     ) -> AgentAPIContract:
         """Create an agent API instance.
 
@@ -132,12 +141,16 @@ class APIFactory:
             return api_class(coordinator)
         except KeyError:
             context = ErrorContext(details={"version": str(version)})
+            msg = f"Unsupported API version: {version}"
             raise InvalidConfigurationError(
-                f"Unsupported API version: {version}", context=context
+                msg,
+                context=context,
             )
 
     def create_config_api(
-        self, version: Union[APIVersion, str], config: Config
+        self,
+        version: APIVersion | str,
+        config: Config,
     ) -> ConfigAPIContract:
         """Create a config API instance.
 
@@ -157,6 +170,8 @@ class APIFactory:
             return api_class(config)
         except KeyError:
             context = ErrorContext(details={"version": str(version)})
+            msg = f"Unsupported API version: {version}"
             raise InvalidConfigurationError(
-                f"Unsupported API version: {version}", context=context
+                msg,
+                context=context,
             )

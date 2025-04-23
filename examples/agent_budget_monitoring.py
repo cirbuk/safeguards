@@ -12,23 +12,21 @@ This example shows how to:
 
 import asyncio
 import logging
+from datetime import datetime
 from decimal import Decimal
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from typing import Any
 
-from safeguards.types import AlertSeverity, BudgetConfig
-from safeguards.types.agent import Agent
-from safeguards.budget.manager import BudgetManager
-from safeguards.budget.token_tracker import TokenTracker, TokenUsage
-from safeguards.budget.api_tracker import APITracker, APIUsage
-from safeguards.notifications.manager import NotificationManager
-from safeguards.types import Alert, NotificationChannel
 from safeguards.base.budget import BudgetPeriod
-
+from safeguards.budget.api_tracker import APITracker
+from safeguards.budget.token_tracker import TokenTracker
+from safeguards.notifications.manager import NotificationManager
+from safeguards.types import Alert, AlertSeverity, NotificationChannel
+from safeguards.types.agent import Agent
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -95,8 +93,10 @@ class BudgetManagedAgent(Agent):
         return self.simulate_token_usage(query, complexity)
 
     def simulate_token_usage(
-        self, query: str, complexity: float = 1.0
-    ) -> Dict[str, Any]:
+        self,
+        query: str,
+        complexity: float = 1.0,
+    ) -> dict[str, Any]:
         """Simulate token usage and cost for demonstration purposes.
 
         In a real implementation, this would be replaced with actual token
@@ -120,7 +120,9 @@ class BudgetManagedAgent(Agent):
 
         # Check if budget available before "spending"
         if not self.token_tracker.check_budget_available(
-            input_tokens=input_tokens, output_tokens=output_tokens, model_id=self.model
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            model_id=self.model,
         ):
             # Send budget alert
             self._send_budget_alert(
@@ -142,13 +144,15 @@ class BudgetManagedAgent(Agent):
 
         # Record the token usage
         usage = self.token_tracker.record_usage(
-            model_id=self.model, input_tokens=input_tokens, output_tokens=output_tokens
+            model_id=self.model,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
         )
 
         # Simulate API usage if complex query
         if complexity > 1.0:
             # Simulate using the vision API for complex queries
-            api_usage = self.api_tracker.record_usage(
+            self.api_tracker.record_usage(
                 endpoint="vision",
                 data_transfer_mb=1.5
                 * complexity,  # Simulate data transfer proportional to complexity
@@ -175,7 +179,9 @@ class BudgetManagedAgent(Agent):
         self.successful_queries += 1
 
         # Generate simulated response
-        response = f"Processed query with {input_tokens} input tokens and {output_tokens} output tokens."
+        response = (
+            f"Processed query with {input_tokens} input tokens and {output_tokens} output tokens."
+        )
 
         return {
             "success": True,
@@ -188,7 +194,7 @@ class BudgetManagedAgent(Agent):
             },
         }
 
-    def get_usage_stats(self) -> Dict[str, Any]:
+    def get_usage_stats(self) -> dict[str, Any]:
         """Get detailed usage statistics for this agent."""
         end_time = datetime.now()
         session_duration = (end_time - self.session_start).total_seconds()
@@ -224,10 +230,7 @@ class BudgetManagedAgent(Agent):
                 "total_cost": self.token_tracker.get_total_cost()
                 + self.api_tracker.get_total_cost(),
                 "cost_remaining": self.token_tracker.cost_budget
-                - (
-                    self.token_tracker.get_total_cost()
-                    + self.api_tracker.get_total_cost()
-                ),
+                - (self.token_tracker.get_total_cost() + self.api_tracker.get_total_cost()),
             },
         }
 
@@ -247,8 +250,7 @@ class BudgetManagedAgent(Agent):
                 "token_cost": float(self.token_tracker.get_total_cost()),
                 "api_cost": float(self.api_tracker.get_total_cost()),
                 "total_cost": float(
-                    self.token_tracker.get_total_cost()
-                    + self.api_tracker.get_total_cost()
+                    self.token_tracker.get_total_cost() + self.api_tracker.get_total_cost(),
                 ),
                 "cost_budget": float(self.token_tracker.cost_budget),
             },
@@ -295,7 +297,7 @@ def print_usage_report(agent: BudgetManagedAgent):
     budget = stats["budget"]
     print(f"  Token budget: {budget['token_budget']}")
     print(
-        f"  Tokens used: {budget['tokens_used']} ({budget['tokens_used'] / budget['token_budget'] * 100:.1f}%)"
+        f"  Tokens used: {budget['tokens_used']} ({budget['tokens_used'] / budget['token_budget'] * 100:.1f}%)",
     )
     print(f"  Tokens remaining: {budget['tokens_remaining']}")
     print(f"  Cost budget: ${float(budget['cost_budget']):.4f}")
@@ -313,7 +315,7 @@ async def main():
 
     # Set up notification manager
     notification_manager = NotificationManager(
-        enabled_channels={NotificationChannel.CONSOLE}
+        enabled_channels={NotificationChannel.CONSOLE},
     )
 
     # Configure token and API trackers for GPT-4o
@@ -380,7 +382,7 @@ async def main():
         result = gpt4o_agent.simulate_token_usage(query, complexity)
         print(f"Response: {result['response']}")
         print(
-            f"Usage: {result['usage']['input_tokens']} input + {result['usage']['output_tokens']} output = {result['usage']['total_tokens']} tokens"
+            f"Usage: {result['usage']['input_tokens']} input + {result['usage']['output_tokens']} output = {result['usage']['total_tokens']} tokens",
         )
         print(f"Cost: ${float(result['usage']['cost']):.6f}")
 
@@ -391,7 +393,7 @@ async def main():
         result = claude_agent.simulate_token_usage(query, complexity)
         print(f"Response: {result['response']}")
         print(
-            f"Usage: {result['usage']['input_tokens']} input + {result['usage']['output_tokens']} output = {result['usage']['total_tokens']} tokens"
+            f"Usage: {result['usage']['input_tokens']} input + {result['usage']['output_tokens']} output = {result['usage']['total_tokens']} tokens",
         )
         print(f"Cost: ${float(result['usage']['cost']):.6f}")
 
@@ -403,7 +405,8 @@ async def main():
     print("\nTesting budget limit with a large query...")
     large_query = "Write a comprehensive thesis on artificial intelligence, its history, current state, applications, ethical considerations, and future directions. Include detailed analysis of machine learning algorithms, neural networks, and natural language processing techniques."
     result = gpt4o_agent.simulate_token_usage(
-        large_query, 10.0
+        large_query,
+        10.0,
     )  # Very high complexity to trigger budget limit
     print(f"Response: {result['response']}")
     if not result["success"]:

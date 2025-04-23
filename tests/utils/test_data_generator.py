@@ -1,13 +1,13 @@
 """Test data generator utilities for integration tests."""
 
-from decimal import Decimal
-from typing import List, Dict, Any
 import uuid
 from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import Any
 
-from safeguards.types.agent import Agent
 from safeguards.core.budget_coordination import BudgetPool
 from safeguards.monitoring.metrics import AgentMetrics, SystemMetrics
+from safeguards.types.agent import Agent
 
 
 class TestAgent(Agent):
@@ -18,7 +18,7 @@ class TestAgent(Agent):
         self.cost_per_action = cost_per_action
         self.action_count = 0
 
-    def run(self, **kwargs: Any) -> Dict[str, Any]:
+    def run(self, **kwargs: Any) -> dict[str, Any]:
         """Simulate agent execution with cost tracking."""
         self.action_count += 1
         return {
@@ -33,7 +33,8 @@ class TestDataGenerator:
 
     @staticmethod
     def generate_agent(
-        name_prefix: str = "test_agent", cost_per_action: Decimal = Decimal("0.1")
+        name_prefix: str = "test_agent",
+        cost_per_action: Decimal = Decimal("0.1"),
     ) -> TestAgent:
         """Generate a test agent.
 
@@ -73,7 +74,9 @@ class TestDataGenerator:
 
     @staticmethod
     def generate_agent_metrics(
-        agent_id: str, budget_used: Decimal = Decimal("0.0"), action_count: int = 0
+        agent_id: str,
+        budget_used: Decimal = Decimal("0.0"),
+        action_count: int = 0,
     ) -> AgentMetrics:
         """Generate test agent metrics.
 
@@ -129,7 +132,7 @@ class TestDataGenerator:
         num_agents: int = 3,
         num_pools: int = 2,
         base_budget: Decimal = Decimal("100.0"),
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate a complete multi-agent test scenario.
 
         Args:
@@ -146,12 +149,11 @@ class TestDataGenerator:
             for i in range(num_pools)
         ]
 
-        agent_metrics = {
-            agent.id: cls.generate_agent_metrics(agent.id) for agent in agents
-        }
+        agent_metrics = {agent.id: cls.generate_agent_metrics(agent.id) for agent in agents}
 
         system_metrics = cls.generate_system_metrics(
-            total_agents=len(agents), total_budget=sum(p.total_budget for p in pools)
+            total_agents=len(agents),
+            total_budget=sum(p.total_budget for p in pools),
         )
 
         return {
@@ -163,8 +165,11 @@ class TestDataGenerator:
 
     @classmethod
     def generate_usage_pattern(
-        cls, agent: TestAgent, duration_days: int = 7, actions_per_day: int = 10
-    ) -> List[Dict[str, Any]]:
+        cls,
+        agent: TestAgent,
+        duration_days: int = 7,
+        actions_per_day: int = 10,
+    ) -> list[dict[str, Any]]:
         """Generate historical usage pattern for an agent.
 
         Args:
@@ -188,7 +193,7 @@ class TestDataGenerator:
                         "timestamp": current_date.isoformat(),
                         "action_count": agent.action_count + 1,
                         "cost": agent.cost_per_action,
-                    }
+                    },
                 )
                 agent.action_count += 1
 

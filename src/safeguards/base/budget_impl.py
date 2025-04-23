@@ -2,7 +2,6 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 
 from safeguards.base.budget import (
     BudgetConfig,
@@ -18,7 +17,7 @@ class SimpleBudgetManager(BudgetManager):
     def __init__(
         self,
         config: BudgetConfig,
-        storage: Optional[BudgetStorage] = None,
+        storage: BudgetStorage | None = None,
     ):
         """Initialize budget manager.
 

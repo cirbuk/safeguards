@@ -1,8 +1,8 @@
 """Unit tests for base monitoring system."""
 
-import pytest
 from datetime import datetime
-from decimal import Decimal
+
+import pytest
 
 from safeguards.base.monitoring import ResourceMetrics, ResourceThresholds
 

@@ -11,7 +11,6 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum, auto
-from typing import Dict, List, Optional, Set
 
 from .alert_types import Alert, AlertSeverity
 from .notification_manager import NotificationManager
@@ -45,9 +44,9 @@ class AgentBudgetProfile:
     priority: AgentPriority
     base_allocation: Decimal
     min_allocation: Decimal
-    max_allocation: Optional[Decimal] = None
-    current_allocation: Optional[Decimal] = None
-    usage_history: List[Decimal] = field(default_factory=list)
+    max_allocation: Decimal | None = None
+    current_allocation: Decimal | None = None
+    usage_history: list[Decimal] = field(default_factory=list)
     last_adjustment: datetime = field(default_factory=datetime.now)
     adjustment_cooldown: timedelta = field(default=timedelta(hours=1))
 
@@ -61,16 +60,16 @@ class BudgetPool:
     priority: int = 0
     allocated_budget: Decimal = field(default=Decimal("0"))
     reserved_budget: Decimal = field(default=Decimal("0"))
-    agent_allocations: Dict[str, Decimal] = field(default_factory=dict)
-    agents: Set[str] = field(default_factory=set)
-    priority_weights: Dict[AgentPriority, float] = field(
+    agent_allocations: dict[str, Decimal] = field(default_factory=dict)
+    agents: set[str] = field(default_factory=set)
+    priority_weights: dict[AgentPriority, float] = field(
         default_factory=lambda: {
             AgentPriority.CRITICAL: 1.0,
             AgentPriority.HIGH: 0.8,
             AgentPriority.MEDIUM: 0.6,
             AgentPriority.LOW: 0.4,
             AgentPriority.MINIMAL: 0.2,
-        }
+        },
     )
     used_budget: Decimal = field(default=Decimal("0"))
     last_update: datetime = field(default_factory=datetime.now)
@@ -127,19 +126,19 @@ class DynamicBudgetManager:
         self.reserve_ratio = reserve_ratio
 
         # Initialize budget pools
-        self.budget_pools: Dict[str, BudgetPool] = {
+        self.budget_pools: dict[str, BudgetPool] = {
             "default": BudgetPool(
                 pool_id="default",
                 total_budget=default_pool_budget,
                 reserved_budget=default_pool_budget * Decimal(str(reserve_ratio)),
-            )
+            ),
         }
 
         # Track agent profiles
-        self.agent_profiles: Dict[str, AgentBudgetProfile] = {}
+        self.agent_profiles: dict[str, AgentBudgetProfile] = {}
 
         # Track pool memberships
-        self.agent_pool_mapping: Dict[str, str] = {}
+        self.agent_pool_mapping: dict[str, str] = {}
 
         # Last adjustment timestamp
         self.last_global_adjustment = datetime.now()
@@ -150,7 +149,7 @@ class DynamicBudgetManager:
         priority: AgentPriority,
         base_allocation: Decimal,
         min_allocation: Decimal,
-        max_allocation: Optional[Decimal] = None,
+        max_allocation: Decimal | None = None,
         pool_id: str = "default",
     ) -> None:
         """Register a new agent for budget management.
@@ -164,10 +163,12 @@ class DynamicBudgetManager:
             pool_id: Budget pool to assign agent to
         """
         if pool_id not in self.budget_pools:
-            raise ValueError(f"Budget pool {pool_id} does not exist")
+            msg = f"Budget pool {pool_id} does not exist"
+            raise ValueError(msg)
 
         if agent_id in self.agent_profiles:
-            raise ValueError(f"Agent {agent_id} is already registered")
+            msg = f"Agent {agent_id} is already registered"
+            raise ValueError(msg)
 
         # Create agent profile
         profile = AgentBudgetProfile(
@@ -200,19 +201,21 @@ class DynamicBudgetManager:
             usage: Current usage amount
         """
         if agent_id not in self.agent_profiles:
-            raise ValueError(f"Unknown agent {agent_id}")
+            msg = f"Unknown agent {agent_id}"
+            raise ValueError(msg)
 
         profile = self.agent_profiles[agent_id]
         profile.usage_history.append(usage)
 
         # Keep last 24 hours of history
-        cutoff = datetime.now() - timedelta(hours=24)
+        datetime.now() - timedelta(hours=24)
         profile.usage_history = profile.usage_history[-24:]
 
         # Check if adjustment is needed
         if self._should_adjust_budget(profile, usage):
             self._adjust_agent_budget(
-                agent_id, trigger=BudgetAdjustmentTrigger.USAGE_THRESHOLD
+                agent_id,
+                trigger=BudgetAdjustmentTrigger.USAGE_THRESHOLD,
             )
 
     def adjust_pool_budget(
@@ -229,7 +232,8 @@ class DynamicBudgetManager:
             trigger: Reason for adjustment
         """
         if pool_id not in self.budget_pools:
-            raise ValueError(f"Unknown pool {pool_id}")
+            msg = f"Unknown pool {pool_id}"
+            raise ValueError(msg)
 
         pool = self.budget_pools[pool_id]
         old_total = pool.total_budget
@@ -241,7 +245,9 @@ class DynamicBudgetManager:
             self._reallocate_pool_budget(pool, trigger)
 
     def _should_adjust_budget(
-        self, profile: AgentBudgetProfile, current_usage: Decimal
+        self,
+        profile: AgentBudgetProfile,
+        current_usage: Decimal,
     ) -> bool:
         """Check if an agent's budget should be adjusted.
 
@@ -258,19 +264,18 @@ class DynamicBudgetManager:
 
         # Check usage threshold
         if current_usage >= profile.current_allocation * Decimal(
-            str(self.usage_threshold)
+            str(self.usage_threshold),
         ):
             return True
 
         # Check if significantly under-utilizing
         avg_usage = sum(profile.usage_history) / len(profile.usage_history)
-        if avg_usage <= profile.current_allocation * Decimal("0.5"):
-            return True
-
-        return False
+        return avg_usage <= profile.current_allocation * Decimal("0.5")
 
     def _adjust_agent_budget(
-        self, agent_id: str, trigger: BudgetAdjustmentTrigger
+        self,
+        agent_id: str,
+        trigger: BudgetAdjustmentTrigger,
     ) -> None:
         """Adjust an individual agent's budget allocation.
 
@@ -284,7 +289,7 @@ class DynamicBudgetManager:
 
         # Calculate new allocation based on usage and priority
         avg_usage = sum(profile.usage_history) / len(profile.usage_history)
-        priority_weight = pool.priority_weights[profile.priority]
+        pool.priority_weights[profile.priority]
 
         # Adjust allocation up or down based on usage
         if avg_usage >= profile.current_allocation * Decimal(str(self.usage_threshold)):
@@ -328,7 +333,9 @@ class DynamicBudgetManager:
         )
 
     def _reallocate_pool_budget(
-        self, pool: BudgetPool, trigger: BudgetAdjustmentTrigger
+        self,
+        pool: BudgetPool,
+        trigger: BudgetAdjustmentTrigger,
     ) -> None:
         """Reallocate budget within a pool based on priorities.
 
@@ -394,7 +401,7 @@ class DynamicBudgetManager:
                 f"Reserved: {pool.reserved_budget}\n"
                 "Forcing reallocation..."
             ),
-            severity=AlertSeverity.HIGH,
+            severity=AlertSeverity.ERROR,
         )
 
         self._reallocate_pool_budget(pool, BudgetAdjustmentTrigger.EMERGENCY)
@@ -439,7 +446,7 @@ class DynamicBudgetManager:
         title: str,
         description: str,
         severity: AlertSeverity,
-        metadata: Optional[Dict] = None,
+        metadata: dict | None = None,
     ) -> None:
         """Send an alert via notification manager.
 

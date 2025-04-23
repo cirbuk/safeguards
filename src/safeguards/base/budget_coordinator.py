@@ -1,12 +1,10 @@
 """Budget coordination system for managing multi-agent budgets."""
 
-from datetime import datetime
 from decimal import Decimal
-from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
-from safeguards.base.budget import BudgetConfig, BudgetMetrics, BudgetPeriod
+from safeguards.base.budget import BudgetConfig, BudgetMetrics
 from safeguards.base.budget_impl import SimpleBudgetManager
 
 
@@ -23,11 +21,14 @@ class BudgetCoordinator:
 
     def __init__(self):
         """Initialize budget coordinator."""
-        self._allocations: Dict[str, AgentAllocation] = {}
-        self._managers: Dict[str, SimpleBudgetManager] = {}
+        self._allocations: dict[str, AgentAllocation] = {}
+        self._managers: dict[str, SimpleBudgetManager] = {}
 
     def register_agent(
-        self, agent_id: str, config: BudgetConfig, priority: int = 0
+        self,
+        agent_id: str,
+        config: BudgetConfig,
+        priority: int = 0,
     ) -> None:
         """Register an agent with the coordinator.
 
@@ -37,7 +38,9 @@ class BudgetCoordinator:
             priority: Agent priority (higher priority agents get preference)
         """
         allocation = AgentAllocation(
-            agent_id=agent_id, budget_config=config, priority=priority
+            agent_id=agent_id,
+            budget_config=config,
+            priority=priority,
         )
         self._allocations[agent_id] = allocation
         self._managers[agent_id] = SimpleBudgetManager(config)
@@ -53,7 +56,8 @@ class BudgetCoordinator:
             KeyError: If agent is not registered
         """
         if agent_id not in self._managers:
-            raise KeyError(f"Agent {agent_id} not registered")
+            msg = f"Agent {agent_id} not registered"
+            raise KeyError(msg)
 
         manager = self._managers[agent_id]
         manager.record_usage(Decimal(tokens_used))
@@ -71,7 +75,8 @@ class BudgetCoordinator:
             KeyError: If agent is not registered
         """
         if agent_id not in self._managers:
-            raise KeyError(f"Agent {agent_id} not registered")
+            msg = f"Agent {agent_id} not registered"
+            raise KeyError(msg)
 
         manager = self._managers[agent_id]
         metrics = manager.get_metrics()
@@ -90,7 +95,8 @@ class BudgetCoordinator:
             KeyError: If agent is not registered
         """
         if agent_id not in self._managers:
-            raise KeyError(f"Agent {agent_id} not registered")
+            msg = f"Agent {agent_id} not registered"
+            raise KeyError(msg)
 
         manager = self._managers[agent_id]
         return manager.get_metrics()
@@ -99,7 +105,9 @@ class BudgetCoordinator:
         """Reallocate budgets based on usage patterns and priorities."""
         # Get all agents sorted by priority
         agents = sorted(
-            self._allocations.values(), key=lambda x: x.priority, reverse=True
+            self._allocations.values(),
+            key=lambda x: x.priority,
+            reverse=True,
         )
 
         # For each agent, check usage and adjust if needed

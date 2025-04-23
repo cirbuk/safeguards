@@ -1,8 +1,6 @@
 """HTTP server for budget monitoring dashboard."""
 
-import os
 from pathlib import Path
-from typing import Optional
 
 from aiohttp import web
 from aiohttp.web import Application, Request, Response

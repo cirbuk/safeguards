@@ -1,11 +1,11 @@
 """Resource usage guardrail implementation."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
-from safeguards.base.guardrails import Guardrail, ValidationResult, GuardrailViolation
+from safeguards.base.guardrails import Guardrail, GuardrailViolation, ValidationResult
 from safeguards.base.monitoring import (
-    ResourceMonitor,
     ResourceMetrics,
+    ResourceMonitor,
     ResourceThresholds,
 )
 from safeguards.types import RunContext
@@ -17,10 +17,10 @@ class ResourceGuardrail(Guardrail[Any, Any]):
     def __init__(
         self,
         resource_monitor: ResourceMonitor,
-        thresholds: Optional[ResourceThresholds] = None,
-        cpu_threshold: Optional[float] = None,
-        memory_threshold: Optional[float] = None,
-        disk_threshold: Optional[float] = None,
+        thresholds: ResourceThresholds | None = None,
+        cpu_threshold: float | None = None,
+        memory_threshold: float | None = None,
+        disk_threshold: float | None = None,
     ):
         """Initialize resource guardrail.
 
@@ -36,11 +36,7 @@ class ResourceGuardrail(Guardrail[Any, Any]):
         self.resource_monitor = resource_monitor
 
         # Handle backward compatibility for thresholds
-        if (
-            cpu_threshold is not None
-            or memory_threshold is not None
-            or disk_threshold is not None
-        ):
+        if cpu_threshold is not None or memory_threshold is not None or disk_threshold is not None:
             custom_thresholds = ResourceThresholds(
                 cpu_percent=cpu_threshold or 80.0,
                 memory_percent=memory_threshold or 85.0,
@@ -78,7 +74,7 @@ class ResourceGuardrail(Guardrail[Any, Any]):
                             "current_value": metric_value,
                             "threshold": threshold_value,
                         },
-                    )
+                    ),
                 )
 
         return ValidationResult(
@@ -113,7 +109,7 @@ class ResourceGuardrail(Guardrail[Any, Any]):
 
     # Backward compatibility methods for tests
 
-    async def run(self, context: RunContext) -> Optional[str]:
+    async def run(self, context: RunContext) -> str | None:
         """Run resource checks before agent execution (backward compatibility).
 
         Args:
@@ -130,7 +126,7 @@ class ResourceGuardrail(Guardrail[Any, Any]):
 
         return None
 
-    async def validate(self, context: RunContext, result: Any) -> Optional[str]:
+    async def validate(self, context: RunContext, result: Any) -> str | None:
         """Validate resource usage after agent execution (backward compatibility).
 
         Args:

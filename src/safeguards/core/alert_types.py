@@ -3,7 +3,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, auto
-from typing import Dict, Optional
 
 
 class AlertSeverity(Enum):
@@ -23,9 +22,9 @@ class Alert:
     description: str
     severity: AlertSeverity
     timestamp: datetime = field(default_factory=datetime.now)
-    metadata: Dict = field(default_factory=dict)
-    alert_id: Optional[str] = None
-    source: Optional[str] = None
+    metadata: dict = field(default_factory=dict)
+    alert_id: str | None = None
+    source: str | None = None
     resolved: bool = False
-    resolution_time: Optional[datetime] = None
-    resolution_notes: Optional[str] = None
+    resolution_time: datetime | None = None
+    resolution_notes: str | None = None

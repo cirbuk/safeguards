@@ -1,14 +1,17 @@
 """Notification manager for handling alerts across different channels."""
 
 import logging
-from typing import Dict, List, Optional, Set
-from datetime import datetime, timedelta
-from enum import Enum, auto
+import smtplib
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from enum import Enum, auto
 
-from jinja2 import Environment, FileSystemLoader
 import requests
+from jinja2 import Environment, FileSystemLoader
 
+from safeguards.core.resilience import RetryHandler, RetryStrategy
 from safeguards.types import Alert, AlertSeverity, NotificationChannel
 
 
@@ -29,8 +32,8 @@ class Notification:
     level: NotificationLevel
     message: str
     timestamp: datetime = field(default_factory=datetime.now)
-    agent_id: Optional[str] = None
-    metadata: Dict = field(default_factory=dict)
+    agent_id: str | None = None
+    metadata: dict = field(default_factory=dict)
 
 
 logger = logging.getLogger(__name__)
@@ -41,8 +44,8 @@ class NotificationManager:
 
     def __init__(
         self,
-        enabled_channels: Optional[Set[NotificationChannel]] = None,
-        template_dir: Optional[str] = None,
+        enabled_channels: set[NotificationChannel] | None = None,
+        template_dir: str | None = None,
         cooldown_period: int = 300,
     ):
         """Initialize notification manager.
@@ -59,15 +62,52 @@ class NotificationManager:
             autoescape=True,  # Enable autoescaping for security
         )
         self.cooldown_period = cooldown_period
-        self.last_alerts: Dict[str, datetime] = {}
+        self.last_alerts: dict[str, datetime] = {}
 
         # Channel-specific configurations
-        self.email_config: Dict = {}
-        self.slack_config: Dict = {}
-        self.webhook_config: Dict = {}
+        self.email_config: dict = {}
+        self.slack_config: dict = {}
+        self.webhook_config: dict = {}
 
         # For backward compatibility
-        self.notifications: List[Notification] = []
+        self.notifications: list[Notification] = []
+
+        # Set default colors for different severity levels
+        self.severity_colors = {
+            AlertSeverity.INFO: "#0088cc",
+            AlertSeverity.WARNING: "#ffcc00",
+            AlertSeverity.ERROR: "#ffa500",
+            AlertSeverity.CRITICAL: "#ff0000",
+        }
+
+        # Create retry handlers for different channels
+        self.email_retry_handler = RetryHandler(
+            max_attempts=3,
+            strategy=RetryStrategy.EXPONENTIAL,
+            base_delay=2.0,
+            max_delay=30.0,
+            jitter=0.2,
+            retryable_exceptions=[
+                ConnectionError,
+                TimeoutError,
+                smtplib.SMTPException,
+                smtplib.SMTPServerDisconnected,
+                smtplib.SMTPResponseException,
+            ],
+        )
+
+        self.webhook_retry_handler = RetryHandler(
+            max_attempts=3,
+            strategy=RetryStrategy.EXPONENTIAL,
+            base_delay=1.0,
+            max_delay=15.0,
+            jitter=0.1,
+            retryable_exceptions=[
+                ConnectionError,
+                TimeoutError,
+                requests.exceptions.RequestException,
+            ],
+        )
 
     def configure_email(
         self,
@@ -76,7 +116,7 @@ class NotificationManager:
         username: str,
         password: str,
         from_addr: str,
-        to_addrs: List[str],
+        to_addrs: list[str],
     ):
         """Configure email notification settings."""
         self.email_config = {
@@ -92,7 +132,7 @@ class NotificationManager:
         """Configure Slack notification settings."""
         self.slack_config = {"webhook_url": webhook_url, "channel": channel}
 
-    def configure_webhook(self, url: str, headers: Optional[Dict] = None):
+    def configure_webhook(self, url: str, headers: dict | None = None):
         """Configure webhook notification settings."""
         self.webhook_config = {"url": url, "headers": headers or {}}
 
@@ -126,40 +166,85 @@ class NotificationManager:
                 elif channel == NotificationChannel.CONSOLE:
                     success |= self._send_console_alert(alert)
             except Exception as e:
-                logger.error(f"Failed to send alert through {channel}: {str(e)}")
+                logger.error(f"Failed to send alert through {channel}: {e!s}")
 
         if success:
             self.last_alerts[alert_key] = datetime.now()
 
         return success
 
+    @RetryHandler(
+        max_attempts=3,
+        strategy=RetryStrategy.EXPONENTIAL,
+        base_delay=2.0,
+        jitter=0.2,
+        retryable_exceptions=[
+            smtplib.SMTPException,
+            smtplib.SMTPServerDisconnected,
+            smtplib.SMTPResponseException,
+            ConnectionError,
+            TimeoutError,
+        ],
+    )
     def _send_email_alert(self, alert: Alert) -> bool:
-        """Send alert via email using configured SMTP settings."""
-        try:
-            template = self.template_env.get_template("email_alert.html")
-            html_content = template.render(
-                title=alert.title,
-                description=alert.description,
-                severity=alert.severity.name,
-                timestamp=alert.timestamp,
-                metadata=alert.metadata,
-            )
-            # TODO: Implement email sending logic
-            logger.info(f"Email alert sent: {alert.title}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to send email alert: {str(e)}")
-            return False
+        """Send alert via email using configured SMTP settings with automatic retry.
+
+        Args:
+            alert: Alert object to send
+
+        Returns:
+            bool: True if email was sent successfully
+
+        Raises:
+            Various SMTP exceptions that will trigger retries
+        """
+        # Render email template
+        template = self.template_env.get_template("email_alert.html")
+        html_content = template.render(
+            alert=alert,  # Pass the entire alert object to template
+            title=alert.title,
+            description=alert.description,
+            severity=alert.severity.name,
+            timestamp=alert.timestamp,
+            metadata=alert.metadata,
+        )
+
+        # Create email message
+        msg = MIMEMultipart()
+        msg["From"] = self.email_config["from_addr"]
+        msg["Subject"] = f"[{alert.severity.name}] {alert.title}"
+
+        # Add HTML content
+        msg.attach(MIMEText(html_content, "html"))
+
+        # Connect to SMTP server and send email
+        with smtplib.SMTP(
+            self.email_config["smtp_host"],
+            self.email_config["smtp_port"],
+        ) as server:
+            # Use TLS if port is 587
+            if self.email_config["smtp_port"] == 587:
+                server.starttls()
+
+            # Login if credentials are provided
+            if self.email_config["username"] and self.email_config["password"]:
+                server.login(
+                    self.email_config["username"],
+                    self.email_config["password"],
+                )
+
+            # Send email to all recipients
+            for recipient in self.email_config["to_addrs"]:
+                msg["To"] = recipient
+                server.send_message(msg)
+                logger.info(f"Email alert sent to {recipient}: {alert.title}")
+
+        return True
 
     def _send_slack_alert(self, alert: Alert) -> bool:
         """Send alert to Slack channel."""
         try:
-            color = {
-                AlertSeverity.INFO: "#36a64f",
-                AlertSeverity.WARNING: "#ffd700",
-                AlertSeverity.HIGH: "#ffa500",
-                AlertSeverity.CRITICAL: "#ff0000",
-            }.get(alert.severity, "#808080")
+            color = self.severity_colors.get(alert.severity, "#808080")
 
             payload = {
                 "channel": self.slack_config["channel"],
@@ -180,24 +265,29 @@ class NotificationManager:
                                 "short": True,
                             },
                         ],
-                    }
+                    },
                 ],
             }
 
-            response = requests.post(
-                self.slack_config["webhook_url"],
-                json=payload,
-                timeout=10,  # Add timeout for security
-            )
-            response.raise_for_status()
+            # Use webhook retry handler for Slack notifications
+            def send_slack_request():
+                response = requests.post(
+                    self.slack_config["webhook_url"],
+                    json=payload,
+                    timeout=10,  # Add timeout for security
+                )
+                response.raise_for_status()
+                return response
+
+            self.webhook_retry_handler(send_slack_request)()
             logger.info(f"Slack alert sent: {alert.title}")
             return True
         except Exception as e:
-            logger.error(f"Failed to send Slack alert: {str(e)}")
+            logger.error(f"Failed to send Slack alert: {e!s}")
             return False
 
     def _send_webhook_alert(self, alert: Alert) -> bool:
-        """Send alert to configured webhook endpoint."""
+        """Send alert to configured webhook endpoint with retry."""
         try:
             payload = {
                 "title": alert.title,
@@ -207,17 +297,22 @@ class NotificationManager:
                 "metadata": alert.metadata,
             }
 
-            response = requests.post(
-                self.webhook_config["url"],
-                json=payload,
-                headers=self.webhook_config["headers"],
-                timeout=10,  # Add timeout for security
-            )
-            response.raise_for_status()
+            # Use webhook retry handler
+            def send_webhook_request():
+                response = requests.post(
+                    self.webhook_config["url"],
+                    json=payload,
+                    headers=self.webhook_config["headers"],
+                    timeout=10,  # Add timeout for security
+                )
+                response.raise_for_status()
+                return response
+
+            self.webhook_retry_handler(send_webhook_request)()
             logger.info(f"Webhook alert sent: {alert.title}")
             return True
         except Exception as e:
-            logger.error(f"Failed to send webhook alert: {str(e)}")
+            logger.error(f"Failed to send webhook alert: {e!s}")
             return False
 
     def _send_console_alert(self, alert: Alert) -> bool:
@@ -225,12 +320,13 @@ class NotificationManager:
         log_level = {
             AlertSeverity.INFO: logging.INFO,
             AlertSeverity.WARNING: logging.WARNING,
-            AlertSeverity.HIGH: logging.ERROR,
+            AlertSeverity.ERROR: logging.ERROR,
             AlertSeverity.CRITICAL: logging.CRITICAL,
         }.get(alert.severity, logging.INFO)
 
         logger.log(
-            log_level, f"[{alert.severity.name}] {alert.title}: {alert.description}"
+            log_level,
+            f"[{alert.severity.name}] {alert.title}: {alert.description}",
         )
         return True
 
@@ -239,8 +335,8 @@ class NotificationManager:
         self,
         level: NotificationLevel,
         message: str,
-        agent_id: Optional[str] = None,
-        metadata: Optional[Dict] = None,
+        agent_id: str | None = None,
+        metadata: dict | None = None,
     ):
         """Create and store a notification (backward compatibility)."""
         notification = Notification(
@@ -255,8 +351,10 @@ class NotificationManager:
         print(f"{level.name}: {message}")
 
     def get_notifications(
-        self, level: Optional[NotificationLevel] = None, agent_id: Optional[str] = None
-    ) -> List[Notification]:
+        self,
+        level: NotificationLevel | None = None,
+        agent_id: str | None = None,
+    ) -> list[Notification]:
         """Get notifications with optional filtering (backward compatibility)."""
         result = self.notifications
 
@@ -269,7 +367,9 @@ class NotificationManager:
         return result
 
     def clear_notifications(
-        self, level: Optional[NotificationLevel] = None, agent_id: Optional[str] = None
+        self,
+        level: NotificationLevel | None = None,
+        agent_id: str | None = None,
     ) -> None:
         """Clear notifications with optional filtering (backward compatibility)."""
         if level is None and agent_id is None:

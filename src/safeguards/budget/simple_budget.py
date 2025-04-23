@@ -2,14 +2,13 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 
 from safeguards.base import (
-    BudgetManager,
     BudgetConfig,
+    BudgetManager,
     BudgetMetrics,
-    BudgetStorage,
     BudgetPeriod,
+    BudgetStorage,
 )
 
 
@@ -19,7 +18,7 @@ class SimpleBudgetManager(BudgetManager):
     def __init__(
         self,
         config: BudgetConfig,
-        storage: Optional[BudgetStorage] = None,
+        storage: BudgetStorage | None = None,
     ):
         """Initialize simple budget manager.
 
@@ -65,9 +64,12 @@ class SimpleBudgetManager(BudgetManager):
         elif self.config.period == BudgetPeriod.WEEKLY and self.config.weekly_limit:
             if current_usage + amount > self.config.weekly_limit:
                 return False
-        elif self.config.period == BudgetPeriod.MONTHLY and self.config.monthly_limit:
-            if current_usage + amount > self.config.monthly_limit:
-                return False
+        elif (
+            self.config.period == BudgetPeriod.MONTHLY
+            and self.config.monthly_limit
+            and current_usage + amount > self.config.monthly_limit
+        ):
+            return False
 
         return True
 
@@ -78,7 +80,8 @@ class SimpleBudgetManager(BudgetManager):
             amount: Amount to record
         """
         if amount < 0:
-            raise ValueError("Usage amount cannot be negative")
+            msg = "Usage amount cannot be negative"
+            raise ValueError(msg)
 
         self._current_usage += amount
         if self.storage:

@@ -8,20 +8,16 @@ This module provides functionality for:
 - Resource usage alerts
 """
 
-import time
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
-from decimal import Decimal
 import logging
-import os
-import platform
+from datetime import datetime, timedelta
 
 import psutil
 
 from safeguards.types import (
-    ResourceThresholds,
     ResourceMetrics as BaseResourceMetrics,
+)
+from safeguards.types import (
+    ResourceThresholds,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,19 +34,19 @@ class ResourceMetrics(BaseResourceMetrics):
         network_mbps: float = 0.0,
         process_count: int = 0,
         open_files: int = 0,
-        timestamp: datetime = None,
+        timestamp: datetime | None = None,
         # Additional fields
-        memory_used: Optional[int] = None,
-        memory_total: Optional[int] = None,
-        disk_used: Optional[int] = None,
-        disk_total: Optional[int] = None,
-        network_sent: Optional[int] = None,
-        network_received: Optional[int] = None,
-        network_speed: Optional[float] = None,
+        memory_used: int | None = None,
+        memory_total: int | None = None,
+        disk_used: int | None = None,
+        disk_total: int | None = None,
+        network_sent: int | None = None,
+        network_received: int | None = None,
+        network_speed: float | None = None,
         # Backward compatibility
-        cpu_usage: float = None,
-        memory_usage: float = None,
-        disk_usage: float = None,
+        cpu_usage: float | None = None,
+        memory_usage: float | None = None,
+        disk_usage: float | None = None,
     ):
         """Initialize resource metrics.
 
@@ -109,13 +105,13 @@ class ResourceMonitor:
 
     def __init__(
         self,
-        thresholds: Optional[ResourceThresholds] = None,
+        thresholds: ResourceThresholds | None = None,
         history_retention_days: int = 7,
         # Backward compatibility parameters
-        cpu_threshold: float = None,
-        memory_threshold: float = None,
-        disk_threshold: float = None,
-        check_interval: int = None,
+        cpu_threshold: float | None = None,
+        memory_threshold: float | None = None,
+        disk_threshold: float | None = None,
+        check_interval: int | None = None,
     ):
         """Initialize resource monitor.
 
@@ -146,7 +142,7 @@ class ResourceMonitor:
 
         self.thresholds = thresholds or ResourceThresholds()
         self.history_retention_days = history_retention_days
-        self.metrics_history: List[ResourceMetrics] = []
+        self.metrics_history: list[ResourceMetrics] = []
 
         # Initialize network I/O baseline
         net_io = psutil.net_io_counters()
@@ -210,9 +206,7 @@ class ResourceMonitor:
         # Calculate network speed in Mbps
         bytes_sent = current_net_io.bytes_sent - self._last_net_io[0]
         bytes_received = current_net_io.bytes_recv - self._last_net_io[1]
-        network_speed = ((bytes_sent + bytes_received) * 8) / (
-            time_diff * 1_000_000
-        )  # Mbps
+        network_speed = ((bytes_sent + bytes_received) * 8) / (time_diff * 1_000_000)  # Mbps
 
         # Update network tracking
         self._last_net_io = (current_net_io.bytes_sent, current_net_io.bytes_recv)
@@ -235,7 +229,7 @@ class ResourceMonitor:
         self._add_to_history(metrics)
         return metrics
 
-    def check_thresholds(self, metrics: ResourceMetrics) -> Dict[str, bool]:
+    def check_thresholds(self, metrics: ResourceMetrics) -> dict[str, bool]:
         """Check if metrics exceed thresholds.
 
         Args:
@@ -260,34 +254,24 @@ class ResourceMonitor:
             Average resource metrics
         """
         cutoff_time = datetime.now() - timedelta(hours=hours)
-        relevant_metrics = [
-            m for m in self.metrics_history if m.timestamp >= cutoff_time
-        ]
+        relevant_metrics = [m for m in self.metrics_history if m.timestamp >= cutoff_time]
 
         if not relevant_metrics:
             return self.get_current_metrics()
 
-        avg_metrics = ResourceMetrics(
+        return ResourceMetrics(
             timestamp=datetime.now(),
-            cpu_percent=sum(m.cpu_percent for m in relevant_metrics)
-            / len(relevant_metrics),
-            memory_used=sum(m.memory_used for m in relevant_metrics)
-            // len(relevant_metrics),
+            cpu_percent=sum(m.cpu_percent for m in relevant_metrics) / len(relevant_metrics),
+            memory_used=sum(m.memory_used for m in relevant_metrics) // len(relevant_metrics),
             memory_total=relevant_metrics[0].memory_total,
-            memory_percent=sum(m.memory_percent for m in relevant_metrics)
-            / len(relevant_metrics),
-            disk_used=sum(m.disk_used for m in relevant_metrics)
-            // len(relevant_metrics),
+            memory_percent=sum(m.memory_percent for m in relevant_metrics) / len(relevant_metrics),
+            disk_used=sum(m.disk_used for m in relevant_metrics) // len(relevant_metrics),
             disk_total=relevant_metrics[0].disk_total,
-            disk_percent=sum(m.disk_percent for m in relevant_metrics)
-            / len(relevant_metrics),
+            disk_percent=sum(m.disk_percent for m in relevant_metrics) / len(relevant_metrics),
             network_sent=sum(m.network_sent for m in relevant_metrics),
             network_received=sum(m.network_received for m in relevant_metrics),
-            network_speed=sum(m.network_speed for m in relevant_metrics)
-            / len(relevant_metrics),
+            network_speed=sum(m.network_speed for m in relevant_metrics) / len(relevant_metrics),
         )
-
-        return avg_metrics
 
     def _add_to_history(self, metrics: ResourceMetrics) -> None:
         """Add metrics to history and cleanup old entries.
@@ -299,6 +283,4 @@ class ResourceMonitor:
 
         # Cleanup old metrics
         cutoff_time = datetime.now() - timedelta(days=self.history_retention_days)
-        self.metrics_history = [
-            m for m in self.metrics_history if m.timestamp >= cutoff_time
-        ]
+        self.metrics_history = [m for m in self.metrics_history if m.timestamp >= cutoff_time]

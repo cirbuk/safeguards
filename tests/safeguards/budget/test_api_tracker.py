@@ -2,13 +2,14 @@
 
 from datetime import datetime, timedelta
 from decimal import Decimal
+
 import pytest
 
 from safeguards.base.budget import BudgetPeriod
 from safeguards.budget.api_tracker import APITracker, APIUsage
 
 
-@pytest.fixture
+@pytest.fixture()
 def api_tracker():
     """Create an API tracker instance for testing."""
     api_costs = {
@@ -135,7 +136,8 @@ def test_check_budget_available(api_tracker):
 
     # Test exceeding cost budget with large data transfer
     assert not api_tracker.check_budget_available(
-        "image-gen", data_transfer_mb=1000000
+        "image-gen",
+        data_transfer_mb=1000000,
     )  # 1TB
 
 

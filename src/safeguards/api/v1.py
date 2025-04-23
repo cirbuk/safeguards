@@ -1,25 +1,22 @@
 """V1 API implementations."""
 
 from decimal import Decimal
-from typing import Dict, List, Optional, Union
 
-from .base import (
-    APIVersion,
-    BudgetAPIContract,
-    MetricsAPIContract,
-    AgentAPIContract,
-    ConfigAPIContract,
-)
-from ..core.budget_coordination import BudgetCoordinator, BudgetPool
-from ..monitoring.metrics import MetricsAnalyzer, AgentMetrics, SystemMetrics
-from ..types.agent import Agent
 from ..config import Config
+from ..core.budget_coordination import BudgetCoordinator, BudgetPool
 from ..exceptions import (
     AgentSafetyError,
-    InvalidConfigurationError,
-    BudgetError,
-    ResourceError,
     ErrorContext,
+    InvalidConfigurationError,
+)
+from ..monitoring.metrics import AgentMetrics, MetricsAnalyzer, SystemMetrics
+from ..types.agent import Agent
+from .base import (
+    AgentAPIContract,
+    APIVersion,
+    BudgetAPIContract,
+    ConfigAPIContract,
+    MetricsAPIContract,
 )
 
 
@@ -33,14 +30,16 @@ class BudgetAPIV1(BudgetAPIContract):
             coordinator: Budget coordinator instance
         """
         if not isinstance(coordinator, BudgetCoordinator):
-            raise InvalidConfigurationError("Invalid budget coordinator instance")
+            msg = "Invalid budget coordinator instance"
+            raise InvalidConfigurationError(msg)
         self._coordinator = coordinator
         super().__init__(version=APIVersion.V1)
 
     def validate_contract(self) -> None:
         """Validate the contract implementation."""
         if not hasattr(self, "_coordinator"):
-            raise InvalidConfigurationError("Budget coordinator not initialized")
+            msg = "Budget coordinator not initialized"
+            raise InvalidConfigurationError(msg)
 
     def get_budget(self, agent_id: str) -> Decimal:
         """Get an agent's budget.
@@ -80,7 +79,7 @@ class BudgetAPIV1(BudgetAPIContract):
             context = ErrorContext(agent_id=agent_id, details={"amount": str(amount)})
             raise AgentSafetyError(str(e), "BUDGET_UPDATE_ERROR", context)
 
-    def get_budget_pools(self) -> List[BudgetPool]:
+    def get_budget_pools(self) -> list[BudgetPool]:
         """Get all budget pools.
 
         Returns:
@@ -97,7 +96,10 @@ class BudgetAPIV1(BudgetAPIContract):
             raise AgentSafetyError(str(e), "POOL_LIST_ERROR")
 
     def create_budget_pool(
-        self, name: str, initial_budget: Decimal, priority: int = 0
+        self,
+        name: str,
+        initial_budget: Decimal,
+        priority: int = 0,
     ) -> BudgetPool:
         """Create a new budget pool.
 
@@ -122,7 +124,7 @@ class BudgetAPIV1(BudgetAPIContract):
                     "name": name,
                     "initial_budget": str(initial_budget),
                     "priority": priority,
-                }
+                },
             )
             raise AgentSafetyError(str(e), "POOL_CREATE_ERROR", context)
 
@@ -137,14 +139,16 @@ class MetricsAPIV1(MetricsAPIContract):
             analyzer: Metrics analyzer instance
         """
         if not isinstance(analyzer, MetricsAnalyzer):
-            raise InvalidConfigurationError("Invalid metrics analyzer instance")
+            msg = "Invalid metrics analyzer instance"
+            raise InvalidConfigurationError(msg)
         self._analyzer = analyzer
         super().__init__(version=APIVersion.V1)
 
     def validate_contract(self) -> None:
         """Validate the contract implementation."""
         if not hasattr(self, "_analyzer"):
-            raise InvalidConfigurationError("Metrics analyzer not initialized")
+            msg = "Metrics analyzer not initialized"
+            raise InvalidConfigurationError(msg)
 
     def get_agent_metrics(self, agent_id: str) -> AgentMetrics:
         """Get metrics for an agent.
@@ -183,7 +187,9 @@ class MetricsAPIV1(MetricsAPIContract):
             raise AgentSafetyError(str(e), "SYSTEM_METRICS_ERROR")
 
     def create_metrics(
-        self, agent_id: str, metrics: Union[AgentMetrics, SystemMetrics]
+        self,
+        agent_id: str,
+        metrics: AgentMetrics | SystemMetrics,
     ) -> None:
         """Create new metrics.
 
@@ -213,14 +219,16 @@ class AgentAPIV1(AgentAPIContract):
             coordinator: Budget coordinator instance
         """
         if not isinstance(coordinator, BudgetCoordinator):
-            raise InvalidConfigurationError("Invalid budget coordinator instance")
+            msg = "Invalid budget coordinator instance"
+            raise InvalidConfigurationError(msg)
         self._coordinator = coordinator
         super().__init__(version=APIVersion.V1)
 
     def validate_contract(self) -> None:
         """Validate the contract implementation."""
         if not hasattr(self, "_coordinator"):
-            raise InvalidConfigurationError("Budget coordinator not initialized")
+            msg = "Budget coordinator not initialized"
+            raise InvalidConfigurationError(msg)
 
     def get_agent(self, agent_id: str) -> Agent:
         """Get an agent.
@@ -243,7 +251,10 @@ class AgentAPIV1(AgentAPIContract):
             raise AgentSafetyError(str(e), "AGENT_RETRIEVAL_ERROR", context)
 
     def create_agent(
-        self, name: str, initial_budget: Decimal, priority: int = 0
+        self,
+        name: str,
+        initial_budget: Decimal,
+        priority: int = 0,
     ) -> Agent:
         """Create a new agent.
 
@@ -268,7 +279,7 @@ class AgentAPIV1(AgentAPIContract):
                     "name": name,
                     "initial_budget": str(initial_budget),
                     "priority": priority,
-                }
+                },
             )
             raise AgentSafetyError(str(e), "AGENT_CREATE_ERROR", context)
 
@@ -318,13 +329,15 @@ class ConfigAPIV1(ConfigAPIContract):
         """
         super().__init__(version=APIVersion.V1)
         if not isinstance(config, Config):
-            raise InvalidConfigurationError("Invalid config instance")
+            msg = "Invalid config instance"
+            raise InvalidConfigurationError(msg)
         self._config = config
 
     def validate_contract(self) -> None:
         """Validate the contract implementation."""
         if not hasattr(self, "_config"):
-            raise InvalidConfigurationError("Config not initialized")
+            msg = "Config not initialized"
+            raise InvalidConfigurationError(msg)
 
     def get_config(self) -> Config:
         """Get current config.
@@ -351,7 +364,8 @@ class ConfigAPIV1(ConfigAPIContract):
         """
         try:
             if not self.validate_config(config):
-                raise InvalidConfigurationError("Invalid configuration")
+                msg = "Invalid configuration"
+                raise InvalidConfigurationError(msg)
             self._config = config
         except AgentSafetyError as e:
             raise e
@@ -399,10 +413,7 @@ class ConfigAPIV1(ConfigAPIContract):
                 return False
 
             # Validate alert thresholds
-            if not isinstance(config.alert_thresholds, dict):
-                return False
-
-            return True
+            return isinstance(config.alert_thresholds, dict)
 
         except Exception as e:
             raise AgentSafetyError(str(e), "CONFIG_VALIDATION_ERROR")
