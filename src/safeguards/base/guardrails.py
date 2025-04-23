@@ -1,10 +1,8 @@
 """Base interfaces and abstract classes for safety guardrails."""
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum, auto
-from typing import Any, Dict, List, Optional, Protocol, TypeVar, Generic
+from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")  # Input type
 U = TypeVar("U")  # Output type
@@ -15,12 +13,12 @@ class GuardrailViolation:
 
     def __init__(
         self,
-        guardrail_id: Optional[str] = None,
+        guardrail_id: str | None = None,
         severity: str = "ERROR",
         message: str = "",
-        context: Optional[Dict[str, Any]] = None,
-        timestamp: Optional[datetime] = None,
-        rule_id: Optional[str] = None,
+        context: dict[str, Any] | None = None,
+        timestamp: datetime | None = None,
+        rule_id: str | None = None,
         is_warning: bool = False,
     ):
         """Initialize guardrail violation.
@@ -50,7 +48,7 @@ class ValidationResult:
     def __init__(
         self,
         is_valid: bool,
-        violations: Optional[List[GuardrailViolation]] = None,
+        violations: list[GuardrailViolation] | None = None,
     ):
         """Initialize validation result.
 
@@ -115,7 +113,7 @@ class GuardrailRegistry:
 
     def __init__(self):
         """Initialize guardrail registry."""
-        self._guardrails: Dict[str, Guardrail] = {}
+        self._guardrails: dict[str, Guardrail] = {}
 
     def register(self, guardrail: Guardrail) -> None:
         """Register a guardrail.

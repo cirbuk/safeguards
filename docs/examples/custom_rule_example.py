@@ -1,9 +1,9 @@
 """Example of implementing a custom security rule."""
 
-from typing import Dict, List, Optional, Type, cast
+from typing import cast
 
-from safeguards.rules.base import RuleContext, RulePriority, SafetyRule, RuleChain
 from safeguards.base.guardrails import GuardrailViolation, ValidationResult
+from safeguards.rules.base import RuleChain, RuleContext, RulePriority, SafetyRule
 
 
 class DataPrivacyRule(SafetyRule):
@@ -11,10 +11,10 @@ class DataPrivacyRule(SafetyRule):
 
     def __init__(
         self,
-        allowed_data_types: List[str],
-        pii_fields: List[str],
+        allowed_data_types: list[str],
+        pii_fields: list[str],
         required_encryption: bool = True,
-        dependencies: Optional[List[Type[SafetyRule]]] = None,
+        dependencies: list[type[SafetyRule]] | None = None,
     ):
         """Initialize data privacy rule.
 
@@ -45,8 +45,8 @@ class DataPrivacyRule(SafetyRule):
         Returns:
             Validation result
         """
-        input_data = cast(Dict[str, any], context.input_data)
-        violations: List[GuardrailViolation] = []
+        input_data = cast(dict[str, any], context.input_data)
+        violations: list[GuardrailViolation] = []
 
         # Check data type
         data_type = input_data.get("data_type")
@@ -55,14 +55,14 @@ class DataPrivacyRule(SafetyRule):
                 GuardrailViolation(
                     rule_id=self.rule_id,
                     message="Data type not specified",
-                )
+                ),
             )
         elif data_type not in self.allowed_data_types:
             violations.append(
                 GuardrailViolation(
                     rule_id=self.rule_id,
                     message=f"Invalid data type: {data_type}. Allowed: {', '.join(sorted(self.allowed_data_types))}",
-                )
+                ),
             )
 
         # Check for PII fields
@@ -77,7 +77,7 @@ class DataPrivacyRule(SafetyRule):
                     GuardrailViolation(
                         rule_id=self.rule_id,
                         message=f"Encryption required for PII fields: {', '.join(sorted(pii_fields_present))}",
-                    )
+                    ),
                 )
 
         # Add privacy context to metadata
@@ -110,7 +110,7 @@ def example_usage():
             "data_type": "analytics",
             "fields": ["page_views", "session_duration"],
             "is_encrypted": False,
-        }
+        },
     )
     print("Example 1 (Valid non-PII):", result.is_valid)
     if not result.is_valid:
@@ -122,7 +122,7 @@ def example_usage():
             "data_type": "user_data",
             "fields": ["username", "email", "phone"],
             "is_encrypted": False,
-        }
+        },
     )
     print("\nExample 2 (Unencrypted PII):", result.is_valid)
     if not result.is_valid:
@@ -134,7 +134,7 @@ def example_usage():
             "data_type": "user_data",
             "fields": ["username", "email", "phone"],
             "is_encrypted": True,
-        }
+        },
     )
     print("\nExample 3 (Encrypted PII):", result.is_valid)
     if not result.is_valid:
@@ -146,7 +146,7 @@ def example_usage():
             "data_type": "financial",
             "fields": ["balance"],
             "is_encrypted": True,
-        }
+        },
     )
     print("\nExample 4 (Invalid Type):", result.is_valid)
     if not result.is_valid:

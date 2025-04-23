@@ -4,10 +4,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum, auto
-from typing import Dict, List, Optional, Set
 from uuid import UUID, uuid4
 
-from ..core.alert_types import Alert, AlertSeverity
+from ..core.alert_types import AlertSeverity
+from ..types import SafetyAlert
 
 
 class ViolationType(Enum):
@@ -36,9 +36,9 @@ class Violation:
 
     type: str
     message: str
-    agent_id: Optional[str] = None
+    agent_id: str | None = None
     timestamp: datetime = field(default_factory=datetime.now)
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
     severity: str = "HIGH"
 
 
@@ -47,11 +47,11 @@ class ViolationContext:
     """Context information for a budget violation."""
 
     agent_id: str
-    pool_id: Optional[str]
+    pool_id: str | None
     current_balance: Decimal
     violation_amount: Decimal
     timestamp: datetime = field(default_factory=datetime.now)
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -64,10 +64,10 @@ class ViolationReport:
     description: str
     report_id: UUID = field(default_factory=uuid4)
     created_at: datetime = field(default_factory=datetime.now)
-    resolved_at: Optional[datetime] = None
+    resolved_at: datetime | None = None
     resolution_notes: str = ""
     escalation_level: int = 0
-    related_reports: Set[UUID] = field(default_factory=set)
+    related_reports: set[UUID] = field(default_factory=set)
 
 
 class ViolationReporter:
@@ -80,10 +80,10 @@ class ViolationReporter:
             notification_manager: Optional notification manager for alerts
         """
         self.notification_manager = notification_manager
-        self._active_violations: Dict[UUID, ViolationReport] = {}
-        self._resolved_violations: Dict[UUID, ViolationReport] = {}
-        self._agent_violations: Dict[str, Set[UUID]] = {}
-        self._pool_violations: Dict[str, Set[UUID]] = {}
+        self._active_violations: dict[UUID, ViolationReport] = {}
+        self._resolved_violations: dict[UUID, ViolationReport] = {}
+        self._agent_violations: dict[str, set[UUID]] = {}
+        self._pool_violations: dict[str, set[UUID]] = {}
 
     def report_violation(
         self,
@@ -144,7 +144,8 @@ class ViolationReporter:
             ValueError: If violation not found
         """
         if report_id not in self._active_violations:
-            raise ValueError(f"Violation {report_id} not found")
+            msg = f"Violation {report_id} not found"
+            raise ValueError(msg)
 
         report = self._active_violations[report_id]
         report.resolved_at = datetime.now()
@@ -163,7 +164,7 @@ class ViolationReporter:
 
         # Send resolution notification
         if self.notification_manager:
-            alert = Alert(
+            alert = SafetyAlert(
                 title="Budget Violation Resolved",
                 description=f"Violation {report_id} has been resolved: {resolution_notes}",
                 severity=AlertSeverity.INFO,
@@ -186,19 +187,18 @@ class ViolationReporter:
             ValueError: If violation not found
         """
         if report_id not in self._active_violations:
-            raise ValueError(f"Violation {report_id} not found")
+            msg = f"Violation {report_id} not found"
+            raise ValueError(msg)
 
         report = self._active_violations[report_id]
         report.escalation_level += 1
 
         # Send escalation notification
         if self.notification_manager:
-            alert = Alert(
+            alert = SafetyAlert(
                 title="Budget Violation Escalated",
-                description=(
-                    f"Violation {report_id} escalated to level {report.escalation_level}"
-                ),
-                severity=AlertSeverity.HIGH,
+                description=(f"Violation {report_id} escalated to level {report.escalation_level}"),
+                severity=AlertSeverity.ERROR,
                 metadata={
                     "report_id": str(report_id),
                     "agent_id": report.context.agent_id,
@@ -208,7 +208,7 @@ class ViolationReporter:
             )
             self.notification_manager.send_alert(alert)
 
-    def link_violations(self, report_ids: List[UUID]) -> None:
+    def link_violations(self, report_ids: list[UUID]) -> None:
         """Link related violations together.
 
         Args:
@@ -225,20 +225,19 @@ class ViolationReporter:
             elif report_id in self._resolved_violations:
                 reports.append(self._resolved_violations[report_id])
             else:
-                raise ValueError(f"Violation {report_id} not found")
+                msg = f"Violation {report_id} not found"
+                raise ValueError(msg)
 
         # Link reports together
         for report in reports:
-            report.related_reports.update(
-                rid for rid in report_ids if rid != report.report_id
-            )
+            report.related_reports.update(rid for rid in report_ids if rid != report.report_id)
 
     def get_active_violations(
         self,
-        agent_id: Optional[str] = None,
-        pool_id: Optional[str] = None,
-        min_severity: Optional[ViolationSeverity] = None,
-    ) -> List[ViolationReport]:
+        agent_id: str | None = None,
+        pool_id: str | None = None,
+        min_severity: ViolationSeverity | None = None,
+    ) -> list[ViolationReport]:
         """Get active violations with optional filtering.
 
         Args:
@@ -258,19 +257,17 @@ class ViolationReporter:
             violations = [v for v in violations if v.context.pool_id == pool_id]
 
         if min_severity:
-            violations = [
-                v for v in violations if v.severity.value >= min_severity.value
-            ]
+            violations = [v for v in violations if v.severity.value >= min_severity.value]
 
         return sorted(violations, key=lambda v: v.created_at, reverse=True)
 
     def get_violation_history(
         self,
-        agent_id: Optional[str] = None,
-        pool_id: Optional[str] = None,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-    ) -> List[ViolationReport]:
+        agent_id: str | None = None,
+        pool_id: str | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+    ) -> list[ViolationReport]:
         """Get historical violation reports with optional filtering.
 
         Args:
@@ -300,9 +297,9 @@ class ViolationReporter:
 
     def get_violation_stats(
         self,
-        agent_id: Optional[str] = None,
-        pool_id: Optional[str] = None,
-    ) -> Dict:
+        agent_id: str | None = None,
+        pool_id: str | None = None,
+    ) -> dict:
         """Get violation statistics.
 
         Args:
@@ -313,7 +310,7 @@ class ViolationReporter:
             Dictionary of violation statistics
         """
         violations = list(self._active_violations.values()) + list(
-            self._resolved_violations.values()
+            self._resolved_violations.values(),
         )
 
         if agent_id:
@@ -326,7 +323,7 @@ class ViolationReporter:
             "total_violations": len(violations),
             "active_violations": len([v for v in violations if v.resolved_at is None]),
             "resolved_violations": len(
-                [v for v in violations if v.resolved_at is not None]
+                [v for v in violations if v.resolved_at is not None],
             ),
             "by_type": {},
             "by_severity": {},
@@ -339,16 +336,12 @@ class ViolationReporter:
             stats["by_type"][v.violation_type.name] = (
                 stats["by_type"].get(v.violation_type.name, 0) + 1
             )
-            stats["by_severity"][v.severity.name] = (
-                stats["by_severity"].get(v.severity.name, 0) + 1
-            )
+            stats["by_severity"][v.severity.name] = stats["by_severity"].get(v.severity.name, 0) + 1
 
         # Calculate average resolution time
         resolved = [v for v in violations if v.resolved_at is not None]
         if resolved:
-            total_time = sum(
-                (v.resolved_at - v.created_at).total_seconds() for v in resolved
-            )
+            total_time = sum((v.resolved_at - v.created_at).total_seconds() for v in resolved)
             stats["avg_resolution_time"] = total_time / len(resolved)
 
         # Calculate escalation rate
@@ -369,13 +362,13 @@ class ViolationReporter:
 
         # Map violation severity to alert severity
         severity_map = {
+            ViolationSeverity.LOW: AlertSeverity.INFO,
+            ViolationSeverity.MEDIUM: AlertSeverity.WARNING,
+            ViolationSeverity.HIGH: AlertSeverity.ERROR,
             ViolationSeverity.CRITICAL: AlertSeverity.CRITICAL,
-            ViolationSeverity.HIGH: AlertSeverity.HIGH,
-            ViolationSeverity.MEDIUM: AlertSeverity.MEDIUM,
-            ViolationSeverity.LOW: AlertSeverity.LOW,
         }
 
-        alert = Alert(
+        alert = SafetyAlert(
             title=f"Budget Violation: {report.violation_type.name}",
             description=report.description,
             severity=severity_map[report.severity],

@@ -1,16 +1,15 @@
 """System resource monitoring implementation using psutil."""
 
-import os
-import psutil
 import asyncio
 from datetime import datetime, timedelta
-from typing import Dict, Optional, List
+
+import psutil
 
 from safeguards.base.monitoring import (
+    MetricsStorage,
     ResourceMetrics,
     ResourceMonitor,
     ResourceThresholds,
-    MetricsStorage,
 )
 
 
@@ -19,10 +18,10 @@ class SystemResourceMonitor(ResourceMonitor):
 
     def __init__(
         self,
-        thresholds: Optional[ResourceThresholds] = None,
+        thresholds: ResourceThresholds | None = None,
         history_retention_days: int = 7,
-        metrics_storage: Optional[MetricsStorage] = None,
-        process_filter: Optional[str] = None,
+        metrics_storage: MetricsStorage | None = None,
+        process_filter: str | None = None,
     ):
         """Initialize system resource monitor.
 
@@ -38,7 +37,7 @@ class SystemResourceMonitor(ResourceMonitor):
             metrics_storage=metrics_storage,
         )
         self.process_filter = process_filter
-        self.metrics_history: List[ResourceMetrics] = []
+        self.metrics_history: list[ResourceMetrics] = []
         self.history_retention_days = history_retention_days
 
     def collect_metrics(self) -> ResourceMetrics:
@@ -60,17 +59,13 @@ class SystemResourceMonitor(ResourceMonitor):
 
         # Get network I/O
         net_io = psutil.net_io_counters()
-        network_mbps = (net_io.bytes_sent + net_io.bytes_recv) / (
-            1024 * 1024
-        )  # Convert to MB
+        network_mbps = (net_io.bytes_sent + net_io.bytes_recv) / (1024 * 1024)  # Convert to MB
 
         # Get process info
         processes = list(psutil.process_iter(["name", "open_files"]))
         if self.process_filter:
             processes = [
-                p
-                for p in processes
-                if self.process_filter.lower() in p.info["name"].lower()
+                p for p in processes if self.process_filter.lower() in p.info["name"].lower()
             ]
         process_count = len(processes)
 
@@ -93,9 +88,7 @@ class SystemResourceMonitor(ResourceMonitor):
         # Add to history and remove old entries
         self.metrics_history.append(metrics)
         cutoff_time = datetime.now() - timedelta(days=self.history_retention_days)
-        self.metrics_history = [
-            m for m in self.metrics_history if m.timestamp >= cutoff_time
-        ]
+        self.metrics_history = [m for m in self.metrics_history if m.timestamp >= cutoff_time]
 
         return metrics
 
@@ -109,7 +102,7 @@ class SystemResourceMonitor(ResourceMonitor):
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self.collect_metrics)
 
-    def check_thresholds(self, metrics: ResourceMetrics) -> Dict[str, bool]:
+    def check_thresholds(self, metrics: ResourceMetrics) -> dict[str, bool]:
         """Check if metrics exceed configured thresholds.
 
         Args:

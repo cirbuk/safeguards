@@ -7,41 +7,22 @@ This module provides functionality for:
 - Alert severity levels
 """
 
-import smtplib
 from dataclasses import dataclass, field
 from datetime import datetime
-from email.mime.text import MIMEText
-from enum import Enum, auto
-from typing import Dict, List, Optional, Union, Literal, Set
 from decimal import Decimal
+from typing import Literal
 
-import requests
-from jinja2 import Environment, PackageLoader, select_autoescape
-
-from founderx.core.cost_management import CostType
 from founderx.config.settings import notification_settings
 from founderx.core.alert_types import AlertSeverity, NotificationChannel
-
+from founderx.core.cost_management import CostType
 from pydantic import BaseModel, Field, validator
 
 from safeguards.notifications import NotificationManager as BaseNotificationManager
 from safeguards.types import (
-    Alert,
-    AlertSeverity,
-    NotificationChannel,
     CostAlert,
     ResourceAlert,
     UsageReport,
 )
-
-
-class AlertSeverity(Enum):
-    """Alert severity levels."""
-
-    INFO = auto()
-    WARNING = auto()
-    ERROR = auto()
-    CRITICAL = auto()
 
 
 @dataclass
@@ -49,17 +30,17 @@ class NotificationConfig:
     """Configuration for notifications."""
 
     # Slack settings
-    slack_webhook_url: Optional[str] = None
-    slack_channel: Optional[str] = None
+    slack_webhook_url: str | None = None
+    slack_channel: str | None = None
 
     # Email settings (Resend)
-    resend_api_key: Optional[str] = None
-    email_from: Optional[str] = None
-    email_to: List[str] = field(default_factory=list)
+    resend_api_key: str | None = None
+    email_from: str | None = None
+    email_to: list[str] = field(default_factory=list)
 
     # Global settings
     min_severity: AlertSeverity = AlertSeverity.WARNING
-    enabled_channels: List[str] = field(default_factory=lambda: ["slack", "email"])
+    enabled_channels: list[str] = field(default_factory=lambda: ["slack", "email"])
 
     @classmethod
     def from_settings(cls) -> "NotificationConfig":
@@ -80,8 +61,8 @@ class NotificationManager(BaseNotificationManager):
 
     def __init__(
         self,
-        enabled_channels: Optional[Set[NotificationChannel]] = None,
-        template_dir: Optional[str] = None,
+        enabled_channels: set[NotificationChannel] | None = None,
+        template_dir: str | None = None,
         cooldown_period: int = 300,
     ):
         """Initialize FounderX notification manager.
@@ -132,8 +113,8 @@ class NotificationManager(BaseNotificationManager):
 
     def send_alert(
         self,
-        alert: Union[CostAlert, ResourceAlert],
-        channels: Optional[List[str]] = None,
+        alert: CostAlert | ResourceAlert,
+        channels: list[str] | None = None,
     ) -> bool:
         """Send an alert through configured channels.
 
@@ -150,7 +131,9 @@ class NotificationManager(BaseNotificationManager):
         return super().send_alert(alert, channels=channels)
 
     def send_report(
-        self, report: UsageReport, channels: Optional[List[str]] = None
+        self,
+        report: UsageReport,
+        channels: list[str] | None = None,
     ) -> bool:
         """Send a usage report through configured channels.
 
@@ -182,7 +165,8 @@ class CostAlert(BaseModel):
     def validate_percentage(self, v: float) -> float:
         """Validate that usage percentage is between 0 and 1."""
         if not 0 <= v <= 1:
-            raise ValueError("Usage percentage must be between 0 and 1")
+            msg = "Usage percentage must be between 0 and 1"
+            raise ValueError(msg)
         return v
 
 
@@ -190,7 +174,7 @@ class ResourceAlert(BaseModel):
     """Model representing a resource utilization alert."""
 
     timestamp: datetime = Field(default_factory=datetime.now)
-    agent_id: Optional[str]
+    agent_id: str | None
     severity: AlertSeverity
     title: str
     message: str
@@ -200,10 +184,11 @@ class ResourceAlert(BaseModel):
     unit: str
 
     @validator("current_value", "threshold")
-    def validate_positive(cls, v: float) -> float:
+    def validate_positive(self, v: float) -> float:
         """Validate that values are positive."""
         if v < 0:
-            raise ValueError("Value must be positive")
+            msg = "Value must be positive"
+            raise ValueError(msg)
         return v
 
 
@@ -213,7 +198,7 @@ class UsageReport(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now)
     period: Literal["daily", "weekly", "monthly"]
     agent_id: str
-    cost_breakdown: Dict[str, Decimal]
+    cost_breakdown: dict[str, Decimal]
     total_cost: Decimal
     budget_limit: Decimal
     usage_percentage: float
@@ -222,16 +207,18 @@ class UsageReport(BaseModel):
     def validate_percentage(self, v: float) -> float:
         """Validate that usage percentage is between 0 and 1."""
         if not 0 <= v <= 1:
-            raise ValueError("Usage percentage must be between 0 and 1")
+            msg = "Usage percentage must be between 0 and 1"
+            raise ValueError(msg)
         return v
 
     @validator("total_cost")
-    def validate_total_cost(self, v: Decimal, values: Dict) -> Decimal:
+    def validate_total_cost(self, v: Decimal, values: dict) -> Decimal:
         """Validate that total cost matches the sum of cost breakdown."""
         if "cost_breakdown" in values:
             total = sum(values["cost_breakdown"].values())
             if total != v:
+                msg = f"Total cost ({v}) does not match sum of cost breakdown ({total})"
                 raise ValueError(
-                    f"Total cost ({v}) does not match sum of cost breakdown ({total})"
+                    msg,
                 )
         return v

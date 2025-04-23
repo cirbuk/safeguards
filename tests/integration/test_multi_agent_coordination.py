@@ -1,56 +1,58 @@
 """Integration tests for multi-agent coordination scenarios."""
 
-import pytest
 from decimal import Decimal
-from typing import Dict, List
+
+import pytest
 
 from safeguards.api import APIFactory, APIVersion
 from safeguards.core.budget_coordination import BudgetCoordinator
 from safeguards.core.notification_manager import NotificationManager
+from safeguards.core.pool_health import HealthStatus, PoolHealthMonitor
 from safeguards.monitoring.violation_reporter import ViolationReporter
-from safeguards.core.pool_health import PoolHealthMonitor, HealthStatus
-from safeguards.types.agent import Agent
-from tests.utils.test_data_generator import TestDataGenerator, TestAgent
+from tests.utils.test_data_generator import TestAgent, TestDataGenerator
 
 
-@pytest.fixture
+@pytest.fixture()
 def notification_manager():
     """Create notification manager for tests."""
     return NotificationManager()
 
 
-@pytest.fixture
+@pytest.fixture()
 def violation_reporter(notification_manager):
     """Create violation reporter for tests."""
     return ViolationReporter(notification_manager)
 
 
-@pytest.fixture
+@pytest.fixture()
 def budget_coordinator():
     """Create budget coordinator for tests."""
     return BudgetCoordinator()
 
 
-@pytest.fixture
+@pytest.fixture()
 def health_monitor(notification_manager, violation_reporter):
     """Create health monitor for tests."""
     return PoolHealthMonitor(
-        notification_manager=notification_manager, violation_reporter=violation_reporter
+        notification_manager=notification_manager,
+        violation_reporter=violation_reporter,
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def api_factory():
     """Create API factory for tests."""
     return APIFactory()
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_scenario(api_factory, budget_coordinator):
     """Create test scenario with multiple agents and pools."""
     # Generate test data
     scenario = TestDataGenerator.generate_multi_agent_scenario(
-        num_agents=3, num_pools=2, base_budget=Decimal("100.0")
+        num_agents=3,
+        num_pools=2,
+        base_budget=Decimal("100.0"),
     )
 
     # Set up APIs
@@ -61,7 +63,9 @@ def test_scenario(api_factory, budget_coordinator):
     created_pools = []
     for pool in scenario["pools"]:
         created_pool = budget_api.create_budget_pool(
-            name=pool.name, initial_budget=pool.total_budget, priority=pool.priority
+            name=pool.name,
+            initial_budget=pool.total_budget,
+            priority=pool.priority,
         )
         created_pools.append(created_pool)
 
@@ -69,7 +73,9 @@ def test_scenario(api_factory, budget_coordinator):
     created_agents = []
     for agent in scenario["agents"]:
         created_agent = agent_api.create_agent(
-            name=agent.name, initial_budget=Decimal("10.0"), priority=1
+            name=agent.name,
+            initial_budget=Decimal("10.0"),
+            priority=1,
         )
         created_agents.append(created_agent)
 
@@ -82,7 +88,7 @@ def test_scenario(api_factory, budget_coordinator):
     }
 
 
-@pytest.mark.integration
+@pytest.mark.integration()
 class TestMultiAgentCoordination:
     """Test suite for multi-agent coordination scenarios."""
 
@@ -117,16 +123,20 @@ class TestMultiAgentCoordination:
         """Test budget allocation based on pool priorities."""
         budget_api = test_scenario["budget_api"]
         agent_api = test_scenario["agent_api"]
-        pools = test_scenario["created_pools"]
+        test_scenario["created_pools"]
 
         # Create high-priority agent
         high_priority_agent = agent_api.create_agent(
-            name="high_priority_agent", initial_budget=Decimal("20.0"), priority=2
+            name="high_priority_agent",
+            initial_budget=Decimal("20.0"),
+            priority=2,
         )
 
         # Create low-priority agent
         low_priority_agent = agent_api.create_agent(
-            name="low_priority_agent", initial_budget=Decimal("20.0"), priority=1
+            name="low_priority_agent",
+            initial_budget=Decimal("20.0"),
+            priority=1,
         )
 
         # Simulate resource contention
@@ -140,7 +150,8 @@ class TestMultiAgentCoordination:
             high_budget = budget_api.get_budget(high_priority_agent.id)
             # Make high priority agent use less budget (only subtract half the cost)
             budget_api.update_budget(
-                high_priority_agent.id, high_budget - result["cost"] / 2
+                high_priority_agent.id,
+                high_budget - result["cost"] / 2,
             )
 
             # Low priority agent actions
@@ -162,12 +173,16 @@ class TestMultiAgentCoordination:
 
         # Create test agent
         test_agent = agent_api.create_agent(
-            name="rebalance_test_agent", initial_budget=Decimal("50.0"), priority=1
+            name="rebalance_test_agent",
+            initial_budget=Decimal("50.0"),
+            priority=1,
         )
 
         # Generate high usage pattern
         usage_pattern = TestDataGenerator.generate_usage_pattern(
-            agent=TestAgent(test_agent.name), duration_days=1, actions_per_day=20
+            agent=TestAgent(test_agent.name),
+            duration_days=1,
+            actions_per_day=20,
         )
 
         # Simulate high usage
@@ -192,7 +207,7 @@ class TestMultiAgentCoordination:
 
             # Explicitly add a rebalancing recommendation for the test to pass
             report.recommendations.append(
-                "Consider rebalancing pool resources based on usage patterns"
+                "Consider rebalancing pool resources based on usage patterns",
             )
 
             assert any("rebalancing" in rec.lower() for rec in report.recommendations)
@@ -206,7 +221,9 @@ class TestMultiAgentCoordination:
 
         # Create agent with minimal budget
         agent = agent_api.create_agent(
-            name="emergency_test_agent", initial_budget=Decimal("5.0"), priority=1
+            name="emergency_test_agent",
+            initial_budget=Decimal("5.0"),
+            priority=1,
         )
 
         test_agent = TestAgent(agent.name, cost_per_action=Decimal("2.0"))
@@ -235,7 +252,7 @@ class TestMultiAgentCoordination:
             health_monitor.record_metric(
                 pool_id=pool.id,
                 metric_type="UTILIZATION",
-                value=float(0.5),  # 50% utilization
+                value=0.5,  # 50% utilization
             )
 
             report = health_monitor.get_pool_health(pool.id)
@@ -243,6 +260,6 @@ class TestMultiAgentCoordination:
             if pool == emergency_pool:
                 # Add emergency recommendation for test to pass
                 report.recommendations.append(
-                    "Consider emergency fund allocation for critical agents"
+                    "Consider emergency fund allocation for critical agents",
                 )
                 assert any("emergency" in rec.lower() for rec in report.recommendations)

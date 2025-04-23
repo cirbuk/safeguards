@@ -1,7 +1,5 @@
 """FounderX-specific resource monitoring extensions."""
 
-from typing import Optional
-
 from safeguards.monitoring import ResourceMonitor as BaseResourceMonitor
 from safeguards.types import ResourceThresholds
 
@@ -13,7 +11,7 @@ class ResourceMonitor(BaseResourceMonitor):
 
     def __init__(
         self,
-        thresholds: Optional[ResourceThresholds] = None,
+        thresholds: ResourceThresholds | None = None,
         history_retention_days: int = 7,
     ):
         """Initialize FounderX resource monitor.
@@ -33,5 +31,6 @@ class ResourceMonitor(BaseResourceMonitor):
             )
 
         super().__init__(
-            thresholds=thresholds, history_retention_days=history_retention_days
+            thresholds=thresholds,
+            history_retention_days=history_retention_days,
         )

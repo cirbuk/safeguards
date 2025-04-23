@@ -1,6 +1,62 @@
 # Safeguards Documentation
 
-Welcome to the Safeguards documentation. This documentation provides comprehensive information about installing, configuring, and using the framework to implement safety measures in multi-agent systems.
+Welcome to the Safeguards documentation. This library provides a comprehensive framework for implementing safety measures in multi-agent systems.
+
+## Core Concepts
+
+- [Core Concepts](concepts.md) - Essential concepts and terminology
+- [Installation Guide](installation.md) - Detailed installation instructions
+- [Quick Start Guide](quickstart.md) - Get started with the framework
+- [Component Status](../COMPONENT_STATUS.md) - Current status of framework components
+
+## Usage Guides
+
+### Budget Management
+- [Budget Management](guides/budget_management.md) - How to manage agent budgets
+
+### Safety Features
+- [Safety Policies](guides/safety_policies.md) - Implementing and enforcing safety policies
+- [Safeguards](guides/safeguards.md) - Safety features and guardrails
+- [Plugins](guides/plugins.md) - Plugin framework and custom safeguards
+- [Industry-Specific Safeguards](guides/plugins.md#industry-specific-safeguards) - Pre-built and custom industry safeguards
+
+### Monitoring and Alerting
+- [Monitoring](guides/monitoring.md) - Metrics, visualization, and alerts
+- [Human-in-the-Loop](guides/human_in_loop.md) - Human review and approval workflows
+- [Notification Channels](guides/human_in_loop.md#available-notification-channels) - Configuring notification channels
+
+### Coordination
+- [Agent Coordination](guides/agent_coordination.md) - Multi-agent coordination
+
+## API Reference
+
+- [Core API](api/core.md) - Core API reference
+- [Budget API](api/budget.md) - Budget management API
+- [Monitoring API](api/monitoring.md) - Monitoring API
+- [Notifications API](api/notifications.md) - Notifications API
+
+## Development
+
+- [Architecture Overview](development/architecture.md) - System design
+- [Contributing](../CONTRIBUTING.md) - How to contribute to the project
+- [Publishing](../PUBLISHING.md) - How to publish new versions
+
+## Examples
+
+The `examples/` directory contains several example scripts demonstrating different features:
+
+- `single_agent.py` - Basic example with a single agent
+- `budget_control_example.py` - Budget management example
+- `multi_agent.py` - Coordinating multiple agents
+- `notification_setup.py` - Setting up notifications
+- `guardrails_example.py` - Using guardrails
+- `budget_monitoring.py` - Monitoring agent budgets
+- `human_in_loop_example.py` - Human-in-the-loop approval workflows
+
+## FAQ and Troubleshooting
+
+- [Frequently Asked Questions](faq.md) - Common questions and answers
+- [Troubleshooting](troubleshooting.md) - Solutions to common problems
 
 ## Documentation Structure
 

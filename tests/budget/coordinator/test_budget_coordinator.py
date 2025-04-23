@@ -1,7 +1,8 @@
 """Tests for the budget coordination system."""
 
-import pytest
 from decimal import Decimal
+
+import pytest
 
 from safeguards.base.budget import BudgetConfig, BudgetPeriod
 from safeguards.base.budget_coordinator import BudgetCoordinator

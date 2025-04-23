@@ -1,11 +1,11 @@
 """Memory management and optimization for the Agent Safety Framework."""
 
-from typing import Dict, Any, Optional, TypeVar, Generic
-from collections import defaultdict
 import gc
-import weakref
 import threading
+import weakref
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -42,19 +42,19 @@ class ObjectPool(Generic[T]):
 class MemoryManager:
     """Manages memory optimization and resource cleanup."""
 
-    def __init__(self, gc_threshold: Optional[tuple[int, int, int]] = None):
+    def __init__(self, gc_threshold: tuple[int, int, int] | None = None):
         """Initialize the memory manager.
 
         Args:
             gc_threshold: Optional tuple of (threshold0, threshold1, threshold2) for
                          garbage collection thresholds
         """
-        self._pools: Dict[str, ObjectPool] = {}
+        self._pools: dict[str, ObjectPool] = {}
         self._resource_refs = weakref.WeakSet()
         self._executor = ThreadPoolExecutor(max_workers=2)
-        self._cache: Dict[str, Dict[Any, Any]] = defaultdict(dict)
-        self._cache_stats: Dict[str, Dict[str, int]] = defaultdict(
-            lambda: {"hits": 0, "misses": 0}
+        self._cache: dict[str, dict[Any, Any]] = defaultdict(dict)
+        self._cache_stats: dict[str, dict[str, int]] = defaultdict(
+            lambda: {"hits": 0, "misses": 0},
         )
 
         if gc_threshold:
@@ -75,7 +75,7 @@ class MemoryManager:
         self._pools[name] = pool
         return pool
 
-    def get_pool(self, name: str) -> Optional[ObjectPool]:
+    def get_pool(self, name: str) -> ObjectPool | None:
         """Get an existing object pool by name."""
         return self._pools.get(name)
 
@@ -95,7 +95,7 @@ class MemoryManager:
         # Run garbage collection
         gc.collect()
 
-    def cache_get(self, namespace: str, key: Any) -> Optional[Any]:
+    def cache_get(self, namespace: str, key: Any) -> Any | None:
         """Get a value from the cache.
 
         Args:
@@ -121,11 +121,11 @@ class MemoryManager:
         """
         self._cache[namespace][key] = value
 
-    def get_cache_stats(self, namespace: str) -> Dict[str, int]:
+    def get_cache_stats(self, namespace: str) -> dict[str, int]:
         """Get cache hit/miss statistics for a namespace."""
         return dict(self._cache_stats[namespace])
 
-    def clear_cache(self, namespace: Optional[str] = None) -> None:
+    def clear_cache(self, namespace: str | None = None) -> None:
         """Clear the cache for a namespace or all caches.
 
         Args:

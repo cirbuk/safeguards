@@ -8,23 +8,23 @@ This example demonstrates:
 5. Security best practices
 """
 
-import os
 import logging
+import os
+from datetime import datetime
 from decimal import Decimal
-from typing import Dict, Any
-from datetime import datetime, timedelta
+from typing import Any
 
+from safeguards.api import APIFactory, APIVersion
+from safeguards.core.budget_coordination import BudgetCoordinator
+from safeguards.monitoring.violation_reporter import ViolationReporter, ViolationType
+from safeguards.notifications.manager import NotificationManager
 from safeguards.types import Alert, AlertSeverity, NotificationChannel
 from safeguards.types.agent import Agent
-from safeguards.notifications.manager import NotificationManager
-from safeguards.monitoring.violation_reporter import ViolationReporter, ViolationType
-from safeguards.core.budget_coordination import BudgetCoordinator
-from safeguards.api import APIFactory, APIVersion
-
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class SimpleAgent(Agent):
         self.model = model
         self.cost_per_token = Decimal("0.0001")
 
-    def run(self, **kwargs: Any) -> Dict[str, Any]:
+    def run(self, **kwargs: Any) -> dict[str, Any]:
         """Run the agent with the given input."""
         # Simple implementation for the example
         input_text = kwargs.get("input", "")
@@ -51,7 +51,7 @@ class SimpleAgent(Agent):
         }
 
 
-def load_env_var(name: str, default: str = None) -> str:
+def load_env_var(name: str, default: str | None = None) -> str:
     """Safely load environment variable with optional default."""
     value = os.environ.get(name, default)
     if value is None:
@@ -75,19 +75,21 @@ def setup_slack_notification_manager() -> NotificationManager:
         enabled_channels={
             NotificationChannel.SLACK,
             NotificationChannel.CONSOLE,  # Always keep console for logging
-        }
+        },
     )
 
     # Configure Slack
     # In a real application, get these from environment variables or secure configuration
     slack_webhook_url = load_env_var(
-        "SLACK_WEBHOOK_URL", "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+        "SLACK_WEBHOOK_URL",
+        "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
     )
     slack_channel = load_env_var("SLACK_CHANNEL", "#agent-safety-alerts")
 
     # Configure the Slack channel
     notification_manager.configure_slack(
-        webhook_url=slack_webhook_url, channel=slack_channel
+        webhook_url=slack_webhook_url,
+        channel=slack_channel,
     )
 
     logger.info("Notification manager configured with Slack channel")
@@ -101,7 +103,7 @@ def setup_email_notification_manager() -> NotificationManager:
         enabled_channels={
             NotificationChannel.EMAIL,
             NotificationChannel.CONSOLE,  # Always keep console for logging
-        }
+        },
     )
 
     # Configure Email
@@ -143,12 +145,14 @@ def setup_comprehensive_notification_manager() -> NotificationManager:
 
     # Configure Slack (using environment variables or defaults)
     slack_webhook_url = load_env_var(
-        "SLACK_WEBHOOK_URL", "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+        "SLACK_WEBHOOK_URL",
+        "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
     )
     slack_channel = load_env_var("SLACK_CHANNEL", "#agent-safety-alerts")
 
     notification_manager.configure_slack(
-        webhook_url=slack_webhook_url, channel=slack_channel
+        webhook_url=slack_webhook_url,
+        channel=slack_channel,
     )
 
     # Configure Email
@@ -271,13 +275,18 @@ def setup_with_budget_coordinator():
 
     # Create a budget pool
     pool = budget_api.create_budget_pool(
-        name="example_pool", initial_budget=Decimal("1000.0"), priority=5
+        name="example_pool",
+        initial_budget=Decimal("1000.0"),
+        priority=5,
     )
 
     # Create an agent
     agent = SimpleAgent("example_agent")
     registered_agent = agent_api.create_agent(
-        name=agent.name, initial_budget=Decimal("100.0"), priority=5, pool_id=pool.id
+        name=agent.name,
+        initial_budget=Decimal("100.0"),
+        priority=5,
+        pool_id=pool.id,
     )
 
     # Simulate a budget update that would trigger a notification
@@ -323,7 +332,7 @@ def main():
         )
         slack_manager.send_alert(info_alert)
     except Exception as e:
-        logger.error(f"Error setting up Slack notifications: {str(e)}")
+        logger.error(f"Error setting up Slack notifications: {e!s}")
 
     # Example 3: Email Notification Manager
     logger.info("\n3. Email Notification Manager:")
@@ -338,7 +347,7 @@ def main():
         )
         email_manager.send_alert(warning_alert)
     except Exception as e:
-        logger.error(f"Error setting up Email notifications: {str(e)}")
+        logger.error(f"Error setting up Email notifications: {e!s}")
 
     # Example 4: Integration with Budget Coordinator
     logger.info("\n4. Integration with Budget Coordinator:")
@@ -346,7 +355,7 @@ def main():
         budget_coordinator, agent, agent_id = setup_with_budget_coordinator()
         logger.info(f"Budget coordinator set up with agent {agent_id}")
     except Exception as e:
-        logger.error(f"Error setting up budget coordinator: {str(e)}")
+        logger.error(f"Error setting up budget coordinator: {e!s}")
 
     logger.info("\n=== Notification Examples Complete ===")
     logger.info("Set these environment variables to use real notification channels:")

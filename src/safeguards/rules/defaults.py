@@ -1,6 +1,6 @@
 """Default safety rule implementations."""
 
-from typing import Any, Dict, List, Optional, Set, Type, cast
+from typing import Any, cast
 
 from ..base.guardrails import GuardrailViolation, ValidationResult
 from ..types.guardrail import ResourceUsage
@@ -14,7 +14,7 @@ class ResourceLimitRule(SafetyRule):
         self,
         max_memory_mb: float,
         max_cpu_percent: float,
-        dependencies: Optional[List[Type[SafetyRule]]] = None,
+        dependencies: list[type[SafetyRule]] | None = None,
     ):
         """Initialize resource limit rule.
 
@@ -42,14 +42,14 @@ class ResourceLimitRule(SafetyRule):
             Validation result
         """
         resource_usage = cast(ResourceUsage, context.input_data)
-        violations: List[GuardrailViolation] = []
+        violations: list[GuardrailViolation] = []
 
         if resource_usage.memory_mb > self.max_memory_mb:
             violations.append(
                 GuardrailViolation(
                     rule_id=self.rule_id,
                     message=f"Memory usage {resource_usage.memory_mb}MB exceeds limit of {self.max_memory_mb}MB",
-                )
+                ),
             )
 
         if resource_usage.cpu_percent > self.max_cpu_percent:
@@ -57,7 +57,7 @@ class ResourceLimitRule(SafetyRule):
                 GuardrailViolation(
                     rule_id=self.rule_id,
                     message=f"CPU usage {resource_usage.cpu_percent}% exceeds limit of {self.max_cpu_percent}%",
-                )
+                ),
             )
 
         return ValidationResult(is_valid=len(violations) == 0, violations=violations)
@@ -70,7 +70,7 @@ class BudgetLimitRule(SafetyRule):
         self,
         max_budget: float,
         warn_threshold: float = 0.8,
-        dependencies: Optional[List[Type[SafetyRule]]] = None,
+        dependencies: list[type[SafetyRule]] | None = None,
     ):
         """Initialize budget limit rule.
 
@@ -98,14 +98,14 @@ class BudgetLimitRule(SafetyRule):
             Validation result
         """
         budget_usage = float(context.input_data)
-        violations: List[GuardrailViolation] = []
+        violations: list[GuardrailViolation] = []
 
         if budget_usage > self.max_budget:
             violations.append(
                 GuardrailViolation(
                     rule_id=self.rule_id,
                     message=f"Budget usage {budget_usage} exceeds limit of {self.max_budget}",
-                )
+                ),
             )
         elif budget_usage > (self.max_budget * self.warn_threshold):
             violations.append(
@@ -113,7 +113,7 @@ class BudgetLimitRule(SafetyRule):
                     rule_id=self.rule_id,
                     message=f"Budget usage {budget_usage} approaching limit of {self.max_budget}",
                     is_warning=True,
-                )
+                ),
             )
 
         return ValidationResult(is_valid=len(violations) == 0, violations=violations)
@@ -124,9 +124,9 @@ class InputValidationRule(SafetyRule):
 
     def __init__(
         self,
-        required_fields: List[str],
-        field_types: Dict[str, Type],
-        dependencies: Optional[List[Type[SafetyRule]]] = None,
+        required_fields: list[str],
+        field_types: dict[str, type],
+        dependencies: list[type[SafetyRule]] | None = None,
     ):
         """Initialize input validation rule.
 
@@ -153,16 +153,17 @@ class InputValidationRule(SafetyRule):
         Returns:
             Validation result
         """
-        input_data = cast(Dict[str, Any], context.input_data)
-        violations: List[GuardrailViolation] = []
+        input_data = cast(dict[str, Any], context.input_data)
+        violations: list[GuardrailViolation] = []
 
         # Check required fields
         for field in self.required_fields:
             if field not in input_data:
                 violations.append(
                     GuardrailViolation(
-                        rule_id=self.rule_id, message=f"Missing required field: {field}"
-                    )
+                        rule_id=self.rule_id,
+                        message=f"Missing required field: {field}",
+                    ),
                 )
 
         # Check field types
@@ -172,7 +173,7 @@ class InputValidationRule(SafetyRule):
                     GuardrailViolation(
                         rule_id=self.rule_id,
                         message=f"Invalid type for field {field}: expected {expected_type.__name__}, got {type(input_data[field]).__name__}",
-                    )
+                    ),
                 )
 
         return ValidationResult(is_valid=len(violations) == 0, violations=violations)
@@ -185,7 +186,7 @@ class RateLimitRule(SafetyRule):
         self,
         max_requests: int,
         time_window_seconds: float,
-        dependencies: Optional[List[Type[SafetyRule]]] = None,
+        dependencies: list[type[SafetyRule]] | None = None,
     ):
         """Initialize rate limit rule.
 
@@ -213,14 +214,14 @@ class RateLimitRule(SafetyRule):
             Validation result
         """
         request_count = cast(int, context.input_data)
-        violations: List[GuardrailViolation] = []
+        violations: list[GuardrailViolation] = []
 
         if request_count > self.max_requests:
             violations.append(
                 GuardrailViolation(
                     rule_id=self.rule_id,
                     message=f"Request count {request_count} exceeds limit of {self.max_requests} per {self.time_window_seconds} seconds",
-                )
+                ),
             )
 
         return ValidationResult(is_valid=len(violations) == 0, violations=violations)
@@ -231,9 +232,9 @@ class PermissionGuardrail(SafetyRule):
 
     def __init__(
         self,
-        required_permissions: Set[str],
-        role_permissions: Dict[str, Set[str]],
-        dependencies: Optional[List[Type[SafetyRule]]] = None,
+        required_permissions: set[str],
+        role_permissions: dict[str, set[str]],
+        dependencies: list[type[SafetyRule]] | None = None,
     ):
         """Initialize permission guardrail.
 
@@ -260,15 +261,15 @@ class PermissionGuardrail(SafetyRule):
         Returns:
             Validation result
         """
-        input_data = cast(Dict[str, Any], context.input_data)
-        violations: List[GuardrailViolation] = []
+        input_data = cast(dict[str, Any], context.input_data)
+        violations: list[GuardrailViolation] = []
 
         # Extract user roles
         user_roles = input_data.get("user_roles", [])
         operation = input_data.get("operation", "unknown")
-        granted_permissions: Set[str] = set()
-        valid_roles: List[str] = []
-        invalid_roles: List[str] = []
+        granted_permissions: set[str] = set()
+        valid_roles: list[str] = []
+        invalid_roles: list[str] = []
 
         # Collect permissions from all roles
         for role in user_roles:
@@ -286,7 +287,7 @@ class PermissionGuardrail(SafetyRule):
                     guardrail_id=self.rule_id,
                     rule_id=self.rule_id,  # Use both for backward compatibility
                     message=f"Insufficient permissions for operation '{operation}'. Missing permissions: {', '.join(missing_permissions)}",
-                )
+                ),
             )
 
         # Check for invalid roles second (violation[1])
@@ -296,7 +297,7 @@ class PermissionGuardrail(SafetyRule):
                     guardrail_id=self.rule_id,
                     rule_id=self.rule_id,  # Use both for backward compatibility
                     message=f"Invalid roles: {', '.join(invalid_roles)}",
-                )
+                ),
             )
 
         # Store permission details in context metadata
@@ -315,8 +316,8 @@ class SecurityContextRule(SafetyRule):
     def __init__(
         self,
         required_security_level: str,
-        allowed_environments: Set[str],
-        dependencies: Optional[List[Type[SafetyRule]]] = None,
+        allowed_environments: set[str],
+        dependencies: list[type[SafetyRule]] | None = None,
     ):
         """Initialize security context rule.
 
@@ -346,8 +347,8 @@ class SecurityContextRule(SafetyRule):
         Returns:
             Validation result
         """
-        input_data = cast(Dict[str, Any], context.input_data)
-        violations: List[GuardrailViolation] = []
+        input_data = cast(dict[str, Any], context.input_data)
+        violations: list[GuardrailViolation] = []
 
         # Check security level
         current_level = input_data.get("security_level", "").lower()
@@ -356,14 +357,14 @@ class SecurityContextRule(SafetyRule):
                 GuardrailViolation(
                     rule_id=self.rule_id,
                     message="Security level not specified",
-                )
+                ),
             )
         elif current_level not in self._security_levels:
             violations.append(
                 GuardrailViolation(
                     rule_id=self.rule_id,
                     message=f"Invalid security level: {current_level}",
-                )
+                ),
             )
         elif (
             self._security_levels[current_level]
@@ -373,7 +374,7 @@ class SecurityContextRule(SafetyRule):
                 GuardrailViolation(
                     rule_id=self.rule_id,
                     message=f"Insufficient security level: {current_level} (required: {self.required_security_level})",
-                )
+                ),
             )
 
         # Check environment
@@ -383,14 +384,14 @@ class SecurityContextRule(SafetyRule):
                 GuardrailViolation(
                     rule_id=self.rule_id,
                     message="Execution environment not specified",
-                )
+                ),
             )
         elif current_env not in self.allowed_environments:
             violations.append(
                 GuardrailViolation(
                     rule_id=self.rule_id,
                     message=f"Invalid execution environment: {current_env}. Allowed: {', '.join(sorted(self.allowed_environments))}",
-                )
+                ),
             )
 
         # Add security context to metadata

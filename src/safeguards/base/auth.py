@@ -1,7 +1,5 @@
 """Authentication and authorization module for agent safety framework."""
 
-from typing import Dict, List, Optional
-
 from pydantic import BaseModel
 
 from safeguards.base.security import Permission, Role, SecurityContext
@@ -10,7 +8,7 @@ from safeguards.base.security import Permission, Role, SecurityContext
 class AuthConfig(BaseModel):
     """Authentication configuration."""
 
-    api_key: Optional[str] = None
+    api_key: str | None = None
     token_expiry_seconds: int = 3600
 
 
@@ -31,8 +29,8 @@ class AuthManager:
             config: Authentication configuration
         """
         self._config = config
-        self._roles: Dict[str, Role] = {}
-        self._agent_roles: Dict[str, List[str]] = {}
+        self._roles: dict[str, Role] = {}
+        self._agent_roles: dict[str, list[str]] = {}
 
     def register_role(self, role: Role) -> None:
         """Register a new role.
@@ -53,7 +51,8 @@ class AuthManager:
             KeyError: If role doesn't exist
         """
         if role_name not in self._roles:
-            raise KeyError(f"Role {role_name} does not exist")
+            msg = f"Role {role_name} does not exist"
+            raise KeyError(msg)
 
         if agent_id not in self._agent_roles:
             self._agent_roles[agent_id] = []
@@ -70,9 +69,7 @@ class AuthManager:
         Returns:
             SecurityContext: Security context for the agent
         """
-        roles = [
-            self._roles[role_name] for role_name in self._agent_roles.get(agent_id, [])
-        ]
+        roles = [self._roles[role_name] for role_name in self._agent_roles.get(agent_id, [])]
         return SecurityContext(agent_id=agent_id, roles=roles)
 
     def has_permission(self, agent_id: str, permission: Permission) -> bool:

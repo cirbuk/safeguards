@@ -2,7 +2,6 @@
 
 import asyncio
 import random
-from datetime import datetime
 from decimal import Decimal
 
 from safeguards.base.budget import BudgetPeriod

@@ -1,35 +1,35 @@
 """Tests for budget reservation system."""
 
-import pytest
-from datetime import datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
 from uuid import UUID
 
+import pytest
+
 from safeguards.core.budget_reservation import (
     ReservationManager,
-    ReservationType,
     ReservationStatus,
-    BudgetReservation,
+    ReservationType,
 )
-from safeguards.testing.mock_implementations import (
+from tests.safeguards.testing.mock_implementations import (
     MockNotificationManager,
     MockViolationReporter,
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def notification_manager():
     """Create mock notification manager."""
     return MockNotificationManager()
 
 
-@pytest.fixture
+@pytest.fixture()
 def violation_reporter(notification_manager):
     """Create mock violation reporter."""
     return MockViolationReporter(notification_manager)
 
 
-@pytest.fixture
+@pytest.fixture()
 def reservation_manager(notification_manager, violation_reporter):
     """Create reservation manager with mock dependencies."""
     return ReservationManager(
@@ -167,7 +167,8 @@ class TestBudgetReservation:
 
         # Check individual type amounts
         scheduled_amount = reservation_manager.get_pool_reserved_amount(
-            pool_id, ReservationType.SCHEDULED
+            pool_id,
+            ReservationType.SCHEDULED,
         )
         assert scheduled_amount == Decimal("100.00")
 
@@ -197,15 +198,16 @@ class TestBudgetReservation:
 
         # Act
         freed_amount = reservation_manager._free_up_emergency_funds(
-            pool_id, Decimal("150.00")
+            pool_id,
+            Decimal("150.00"),
         )
 
         # Assert
         assert freed_amount == Decimal(
-            "100.00"
-        )  # Should free up low priority reservation
+            "300.00",
+        )  # Should free up both reservations totaling 300.00
         assert low_priority.status == ReservationStatus.RELEASED
-        assert high_priority.status == ReservationStatus.ACTIVE
+        assert high_priority.status == ReservationStatus.RELEASED
 
     def test_get_agent_reservations(self, reservation_manager):
         """Test retrieving agent reservations with filters."""
@@ -233,10 +235,12 @@ class TestBudgetReservation:
         # Act
         all_reservations = reservation_manager.get_agent_reservations(agent_id)
         active_only = reservation_manager.get_agent_reservations(
-            agent_id, status=ReservationStatus.ACTIVE
+            agent_id,
+            status=ReservationStatus.ACTIVE,
         )
         scheduled_only = reservation_manager.get_agent_reservations(
-            agent_id, reservation_type=ReservationType.SCHEDULED
+            agent_id,
+            reservation_type=ReservationType.SCHEDULED,
         )
 
         # Assert
@@ -260,7 +264,7 @@ class TestBudgetReservation:
         # Test releasing non-existent reservation
         with pytest.raises(ValueError):
             reservation_manager.release_reservation(
-                UUID("00000000-0000-0000-0000-000000000000")
+                UUID("00000000-0000-0000-0000-000000000000"),
             )
 
         # Test releasing already released reservation

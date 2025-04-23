@@ -1,9 +1,8 @@
 """API package for the Agent Safety Framework."""
 
 from enum import Enum, auto
-from typing import Optional
 
-from .v1 import BudgetAPIV1, AgentAPIV1, MetricsAPIV1
+from .v1 import AgentAPIV1, BudgetAPIV1, MetricsAPIV1
 
 
 class APIVersion(Enum):
@@ -27,7 +26,8 @@ class APIFactory:
         """
         if version == APIVersion.V1:
             return BudgetAPIV1(coordinator)
-        raise ValueError(f"Unsupported API version: {version}")
+        msg = f"Unsupported API version: {version}"
+        raise ValueError(msg)
 
     def create_agent_api(self, version: APIVersion, coordinator):
         """Create agent API instance.
@@ -41,7 +41,8 @@ class APIFactory:
         """
         if version == APIVersion.V1:
             return AgentAPIV1(coordinator)
-        raise ValueError(f"Unsupported API version: {version}")
+        msg = f"Unsupported API version: {version}"
+        raise ValueError(msg)
 
     def create_metrics_api(self, version: APIVersion, metrics_analyzer):
         """Create metrics API instance.
@@ -55,7 +56,8 @@ class APIFactory:
         """
         if version == APIVersion.V1:
             return MetricsAPIV1(metrics_analyzer)
-        raise ValueError(f"Unsupported API version: {version}")
+        msg = f"Unsupported API version: {version}"
+        raise ValueError(msg)
 
 
-__all__ = ["APIVersion", "APIFactory"]
+__all__ = ["APIFactory", "APIVersion"]

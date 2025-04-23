@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any, Dict, List, Optional, Set, Type
+from typing import Any
 
 from ..base.guardrails import GuardrailViolation, ValidationResult
 
@@ -22,8 +22,8 @@ class RuleContext:
     """Context for rule execution."""
 
     input_data: Any
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    parent_rules: Set[str] = field(default_factory=set)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    parent_rules: set[str] = field(default_factory=set)
 
 
 class SafetyRule(ABC):
@@ -34,7 +34,7 @@ class SafetyRule(ABC):
         rule_id: str,
         priority: RulePriority,
         description: str,
-        dependencies: Optional[List[Type["SafetyRule"]]] = None,
+        dependencies: list[type["SafetyRule"]] | None = None,
     ):
         """Initialize safety rule.
 
@@ -61,7 +61,7 @@ class SafetyRule(ABC):
         """
         pass
 
-    def get_dependency_ids(self) -> Set[str]:
+    def get_dependency_ids(self) -> set[str]:
         """Get IDs of all dependency rules.
 
         Returns:
@@ -75,8 +75,8 @@ class RuleChain:
 
     def __init__(self):
         """Initialize rule chain."""
-        self._rules: Dict[str, SafetyRule] = {}
-        self._sorted_rules: Optional[List[SafetyRule]] = None
+        self._rules: dict[str, SafetyRule] = {}
+        self._sorted_rules: list[SafetyRule] | None = None
 
     def add_rule(self, rule: SafetyRule) -> None:
         """Add a rule to the chain.
@@ -96,7 +96,7 @@ class RuleChain:
         self._rules.pop(rule_id, None)
         self._sorted_rules = None
 
-    def _sort_rules(self) -> List[SafetyRule]:
+    def _sort_rules(self) -> list[SafetyRule]:
         """Sort rules by priority and dependencies.
 
         Returns:
@@ -106,19 +106,20 @@ class RuleChain:
             return self._sorted_rules
 
         # Build dependency graph
-        graph: Dict[str, Set[str]] = {}
+        graph: dict[str, set[str]] = {}
         for rule in self._rules.values():
             graph[rule.rule_id] = rule.get_dependency_ids()
 
         # Topological sort
-        sorted_ids: List[str] = []
-        visited: Set[str] = set()
-        temp_visited: Set[str] = set()
+        sorted_ids: list[str] = []
+        visited: set[str] = set()
+        temp_visited: set[str] = set()
 
         def visit(rule_id: str) -> None:
             if rule_id in temp_visited:
+                msg = f"Circular dependency detected involving rule {rule_id}"
                 raise ValueError(
-                    f"Circular dependency detected involving rule {rule_id}"
+                    msg,
                 )
             if rule_id in visited:
                 return
@@ -126,7 +127,8 @@ class RuleChain:
             temp_visited.add(rule_id)
             for dep_id in graph[rule_id]:
                 if dep_id not in self._rules:
-                    raise ValueError(f"Missing dependency {dep_id} for rule {rule_id}")
+                    msg = f"Missing dependency {dep_id} for rule {rule_id}"
+                    raise ValueError(msg)
                 visit(dep_id)
             temp_visited.remove(rule_id)
             visited.add(rule_id)
@@ -145,7 +147,9 @@ class RuleChain:
         return self._sorted_rules
 
     def evaluate(
-        self, input_data: Any, metadata: Optional[Dict[str, Any]] = None
+        self,
+        input_data: Any,
+        metadata: dict[str, Any] | None = None,
     ) -> ValidationResult:
         """Evaluate all rules in chain.
 
@@ -157,8 +161,8 @@ class RuleChain:
             Combined validation result
         """
         sorted_rules = self._sort_rules()
-        all_violations: List[GuardrailViolation] = []
-        executed_rules: Set[str] = set()
+        all_violations: list[GuardrailViolation] = []
+        executed_rules: set[str] = set()
 
         for rule in sorted_rules:
             context = RuleContext(
@@ -177,5 +181,6 @@ class RuleChain:
                     break
 
         return ValidationResult(
-            is_valid=len(all_violations) == 0, violations=all_violations
+            is_valid=len(all_violations) == 0,
+            violations=all_violations,
         )

@@ -1,10 +1,10 @@
 """Budget manager module for tracking and controlling agent spending."""
 
-from decimal import Decimal
-from typing import Optional, Dict, Any
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-import uuid
+from decimal import Decimal
+from typing import Any
 
 from safeguards.types import BudgetConfig
 
@@ -18,12 +18,10 @@ class BudgetOverride:
     override_id: str = None
     agent_id: str = None
     created_at: datetime = field(default_factory=datetime.now)
-    expires_at: Optional[datetime] = None
-    created_by: Optional[str] = None
-    metadata: Dict[str, Any] = None
-    status: str = (
-        "PENDING"  # Status for backward compatibility: PENDING, APPROVED, REJECTED
-    )
+    expires_at: datetime | None = None
+    created_by: str | None = None
+    metadata: dict[str, Any] = None
+    status: str = "PENDING"  # Status for backward compatibility: PENDING, APPROVED, REJECTED
 
     def __post_init__(self):
         """Set defaults after initialization."""
@@ -113,7 +111,7 @@ class BudgetManager:
         """Reset the budget tracking to initial state."""
         self.total_spent = Decimal("0")
 
-    def get_minimum_required(self, agent_id: Optional[str] = None) -> Decimal:
+    def get_minimum_required(self, agent_id: str | None = None) -> Decimal:
         """Get minimum required budget for an agent.
 
         Added for backward compatibility with tests.

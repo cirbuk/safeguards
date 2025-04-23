@@ -1,10 +1,10 @@
 """Cache management and optimization for the Agent Safety Framework."""
 
-from typing import Dict, Any, Optional, Callable, TypeVar, Generic
-from datetime import datetime, timedelta
 import threading
-from collections import OrderedDict
 import time
+from collections import OrderedDict
+from collections.abc import Callable
+from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")
 KT = TypeVar("KT")
@@ -24,7 +24,7 @@ class LRUCache(Generic[KT, VT]):
         self._capacity = capacity
         self._lock = threading.Lock()
 
-    def get(self, key: KT) -> Optional[VT]:
+    def get(self, key: KT) -> VT | None:
         """Get value from cache and update access order."""
         with self._lock:
             if key not in self._cache:
@@ -51,11 +51,11 @@ class TimedCache(Generic[KT, VT]):
         Args:
             ttl_seconds: Time to live in seconds for cache entries
         """
-        self._cache: Dict[KT, tuple[VT, float]] = {}
+        self._cache: dict[KT, tuple[VT, float]] = {}
         self._ttl = ttl_seconds
         self._lock = threading.Lock()
 
-    def get(self, key: KT) -> Optional[VT]:
+    def get(self, key: KT) -> VT | None:
         """Get value from cache if not expired."""
         with self._lock:
             if key not in self._cache:
@@ -75,9 +75,7 @@ class TimedCache(Generic[KT, VT]):
         """Remove expired entries."""
         with self._lock:
             current_time = time.time()
-            expired = [
-                k for k, (_, t) in self._cache.items() if current_time - t > self._ttl
-            ]
+            expired = [k for k, (_, t) in self._cache.items() if current_time - t > self._ttl]
             for key in expired:
                 del self._cache[key]
 
@@ -87,10 +85,10 @@ class CacheManager:
 
     def __init__(self):
         """Initialize cache manager."""
-        self._lru_caches: Dict[str, LRUCache] = {}
-        self._timed_caches: Dict[str, TimedCache] = {}
-        self._function_cache: Dict[str, Any] = {}
-        self._stats: Dict[str, Dict[str, int]] = {}
+        self._lru_caches: dict[str, LRUCache] = {}
+        self._timed_caches: dict[str, TimedCache] = {}
+        self._function_cache: dict[str, Any] = {}
+        self._stats: dict[str, dict[str, int]] = {}
         self._lock = threading.Lock()
 
     def create_lru_cache(self, name: str, capacity: int) -> None:
@@ -115,7 +113,7 @@ class CacheManager:
             self._timed_caches[name] = TimedCache(ttl_seconds)
             self._stats[name] = {"hits": 0, "misses": 0}
 
-    def get_from_cache(self, cache_type: str, name: str, key: Any) -> Optional[Any]:
+    def get_from_cache(self, cache_type: str, name: str, key: Any) -> Any | None:
         """Get value from specified cache.
 
         Args:
@@ -127,7 +125,7 @@ class CacheManager:
             Cached value if found, None otherwise
         """
         cache = (self._lru_caches if cache_type == "lru" else self._timed_caches).get(
-            name
+            name,
         )
         if not cache:
             return None
@@ -150,12 +148,12 @@ class CacheManager:
             value: Value to cache
         """
         cache = (self._lru_caches if cache_type == "lru" else self._timed_caches).get(
-            name
+            name,
         )
         if cache:
             cache.put(key, value)
 
-    def memoize(self, ttl_seconds: Optional[int] = None) -> Callable:
+    def memoize(self, ttl_seconds: int | None = None) -> Callable:
         """Decorator for function memoization.
 
         Args:
@@ -176,33 +174,52 @@ class CacheManager:
                     if cache_key not in self._timed_caches:
                         self.create_timed_cache(cache_key, ttl_seconds)
                     return self.get_from_cache(
-                        "timed", cache_key, key
+                        "timed",
+                        cache_key,
+                        key,
                     ) or self._cache_and_return(
-                        "timed", cache_key, key, func, *args, **kwargs
+                        "timed",
+                        cache_key,
+                        key,
+                        func,
+                        *args,
+                        **kwargs,
                     )
-                else:
-                    # Use LRU cache
-                    if cache_key not in self._lru_caches:
-                        self.create_lru_cache(cache_key, 100)  # Default capacity
-                    return self.get_from_cache(
-                        "lru", cache_key, key
-                    ) or self._cache_and_return(
-                        "lru", cache_key, key, func, *args, **kwargs
-                    )
+                # Use LRU cache
+                if cache_key not in self._lru_caches:
+                    self.create_lru_cache(cache_key, 100)  # Default capacity
+                return self.get_from_cache(
+                    "lru",
+                    cache_key,
+                    key,
+                ) or self._cache_and_return(
+                    "lru",
+                    cache_key,
+                    key,
+                    func,
+                    *args,
+                    **kwargs,
+                )
 
             return wrapper
 
         return decorator
 
     def _cache_and_return(
-        self, cache_type: str, name: str, key: Any, func: Callable, *args, **kwargs
+        self,
+        cache_type: str,
+        name: str,
+        key: Any,
+        func: Callable,
+        *args,
+        **kwargs,
     ) -> Any:
         """Helper to compute, cache and return function results."""
         result = func(*args, **kwargs)
         self.put_in_cache(cache_type, name, key, result)
         return result
 
-    def get_stats(self, name: str) -> Dict[str, int]:
+    def get_stats(self, name: str) -> dict[str, int]:
         """Get cache statistics.
 
         Args:

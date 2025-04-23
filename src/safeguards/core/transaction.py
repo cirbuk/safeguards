@@ -3,9 +3,8 @@
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
-from decimal import Decimal
 from enum import Enum, auto
-from typing import Any, Callable, Dict, List, Optional, Protocol, Set, TypeVar
+from typing import Any, Protocol, TypeVar
 from uuid import UUID, uuid4
 
 T = TypeVar("T")
@@ -45,7 +44,7 @@ class TransactionLog:
 
     operation: str
     timestamp: datetime
-    data: Dict[str, Any]
+    data: dict[str, Any]
     status: str
 
 
@@ -56,9 +55,9 @@ class TransactionContext:
     transaction_id: UUID = field(default_factory=uuid4)
     start_time: datetime = field(default_factory=datetime.now)
     status: TransactionStatus = TransactionStatus.PENDING
-    logs: List[TransactionLog] = field(default_factory=list)
-    locks: Set[str] = field(default_factory=set)
-    changes: Dict[str, Any] = field(default_factory=dict)
+    logs: list[TransactionLog] = field(default_factory=list)
+    locks: set[str] = field(default_factory=set)
+    changes: dict[str, Any] = field(default_factory=dict)
 
 
 class Transactional(Protocol[T]):
@@ -95,8 +94,8 @@ class TransactionManager:
             lock_timeout: Timeout in seconds for acquiring locks
         """
         self.lock_timeout = lock_timeout
-        self._active_transactions: Dict[UUID, TransactionContext] = {}
-        self._resource_locks: Dict[str, UUID] = {}
+        self._active_transactions: dict[UUID, TransactionContext] = {}
+        self._resource_locks: dict[str, UUID] = {}
         self._lock = asyncio.Lock()
 
     async def begin(self) -> TransactionContext:
@@ -123,7 +122,8 @@ class TransactionManager:
             TransactionError: If commit fails
         """
         if ctx.transaction_id not in self._active_transactions:
-            raise TransactionError("Transaction not found")
+            msg = "Transaction not found"
+            raise TransactionError(msg)
 
         try:
             # Release all locks
@@ -137,7 +137,8 @@ class TransactionManager:
 
         except Exception as e:
             ctx.status = TransactionStatus.FAILED
-            raise TransactionError(f"Commit failed: {str(e)}")
+            msg = f"Commit failed: {e!s}"
+            raise TransactionError(msg)
 
     async def rollback(self, ctx: TransactionContext) -> None:
         """Rollback a transaction.
@@ -149,7 +150,8 @@ class TransactionManager:
             TransactionError: If rollback fails
         """
         if ctx.transaction_id not in self._active_transactions:
-            raise TransactionError("Transaction not found")
+            msg = "Transaction not found"
+            raise TransactionError(msg)
 
         try:
             # Release all locks
@@ -163,7 +165,8 @@ class TransactionManager:
 
         except Exception as e:
             ctx.status = TransactionStatus.FAILED
-            raise TransactionError(f"Rollback failed: {str(e)}")
+            msg = f"Rollback failed: {e!s}"
+            raise TransactionError(msg)
 
     async def acquire_lock(self, ctx: TransactionContext, resource_id: str) -> None:
         """Acquire a lock on a resource.
@@ -191,8 +194,9 @@ class TransactionManager:
 
             # Check timeout
             if (datetime.now() - start_time).total_seconds() > self.lock_timeout:
+                msg = f"Timeout acquiring lock for resource {resource_id}"
                 raise TransactionTimeoutError(
-                    f"Timeout acquiring lock for resource {resource_id}"
+                    msg,
                 )
 
             # Wait before retrying
@@ -217,7 +221,10 @@ class TransactionManager:
                 ctx.locks.remove(resource_id)
 
     def add_log(
-        self, ctx: TransactionContext, operation: str, data: Dict[str, Any]
+        self,
+        ctx: TransactionContext,
+        operation: str,
+        data: dict[str, Any],
     ) -> None:
         """Add a log entry to a transaction.
 
@@ -235,7 +242,7 @@ class TransactionManager:
         ctx.logs.append(log)
 
     @property
-    def active_transactions(self) -> Dict[UUID, TransactionContext]:
+    def active_transactions(self) -> dict[UUID, TransactionContext]:
         """Get all active transactions.
 
         Returns:
@@ -244,7 +251,7 @@ class TransactionManager:
         return self._active_transactions.copy()
 
     @property
-    def locked_resources(self) -> Dict[str, UUID]:
+    def locked_resources(self) -> dict[str, UUID]:
         """Get all locked resources.
 
         Returns:

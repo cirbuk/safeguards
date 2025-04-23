@@ -1,23 +1,67 @@
-# Python-generated files
+# Python
 __pycache__/
 *.py[oc]
+*$py.class
+*.so
+.Python
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
 wheels/
-*.egg-info
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Virtual environments
+# Virtual Environments
+.env
 .venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# Editor files
-.cursorrules
-.vscode/
+# Editor & IDE files
 .idea/
+.vscode/
 *.swp
-*~
+*.swo
 
-.DS_Store
-
-# PyPI configuration
+# PyPI upload configuration
 .pypirc
-site/
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# Pytest
+.pytest_cache/
+
+# MyPy
+.mypy_cache/
+
+# Ruff
+.ruff_cache/
+
+# uv
+.uv/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+*.bak
+.cursor

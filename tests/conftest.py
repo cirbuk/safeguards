@@ -1,18 +1,18 @@
 """Common test fixtures for agent safety tests."""
 
 from decimal import Decimal
-from typing import Generator
-import pytest
 from unittest.mock import MagicMock
 
-from safeguards.types.agent import Agent
+import pytest
+
 from safeguards import (
-    SafetyController,
-    SafetyConfig,
     BudgetManager,
-    ResourceMonitor,
     NotificationManager,
+    ResourceMonitor,
+    SafetyConfig,
+    SafetyController,
 )
+from safeguards.types.agent import Agent
 
 
 class TestAgent(Agent):
@@ -23,13 +23,13 @@ class TestAgent(Agent):
         return {"status": "success", "output": "test output"}
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_agent() -> Agent:
     """Create a mock agent for testing."""
     return TestAgent(name="test_agent", instructions="Test agent for unit tests.")
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_budget_manager() -> BudgetManager:
     """Create a mock budget manager."""
     manager = MagicMock(spec=BudgetManager)
@@ -39,7 +39,7 @@ def mock_budget_manager() -> BudgetManager:
     return manager
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_resource_monitor() -> ResourceMonitor:
     """Create a mock resource monitor."""
     monitor = MagicMock(spec=ResourceMonitor)
@@ -51,13 +51,13 @@ def mock_resource_monitor() -> ResourceMonitor:
     return monitor
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_notification_manager() -> NotificationManager:
     """Create a mock notification manager."""
     return MagicMock(spec=NotificationManager)
 
 
-@pytest.fixture
+@pytest.fixture()
 def safety_config() -> SafetyConfig:
     """Create a test safety configuration."""
     return SafetyConfig(
@@ -70,16 +70,16 @@ def safety_config() -> SafetyConfig:
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def safety_controller(
     safety_config: SafetyConfig,
     mock_budget_manager: BudgetManager,
     mock_resource_monitor: ResourceMonitor,
     mock_notification_manager: NotificationManager,
-) -> Generator[SafetyController, None, None]:
+) -> SafetyController:
     """Create a safety controller with mock components."""
     controller = SafetyController(safety_config)
     controller.budget_manager = mock_budget_manager
     controller.resource_monitor = mock_resource_monitor
     controller.notification_manager = mock_notification_manager
-    yield controller
+    return controller

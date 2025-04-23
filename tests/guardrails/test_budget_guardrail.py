@@ -1,8 +1,9 @@
 """Tests for budget guardrail."""
 
 from decimal import Decimal
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from safeguards.budget.manager import BudgetManager, BudgetOverride
 from safeguards.guardrails.budget import BudgetGuardrail
@@ -17,13 +18,13 @@ class TestAgent(Agent):
         return {"status": "success"}
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_agent() -> Agent:
     """Create a test agent."""
     return TestAgent(name="test_agent")
 
 
-@pytest.fixture
+@pytest.fixture()
 def budget_manager() -> BudgetManager:
     """Create a mock budget manager."""
     manager = MagicMock(spec=BudgetManager)
@@ -33,13 +34,13 @@ def budget_manager() -> BudgetManager:
     return manager
 
 
-@pytest.fixture
+@pytest.fixture()
 def budget_guardrail(budget_manager: BudgetManager) -> BudgetGuardrail:
     """Create a budget guardrail instance."""
     return BudgetGuardrail(budget_manager)
 
 
-@pytest.fixture
+@pytest.fixture()
 def run_context(test_agent: Agent) -> RunContext:
     """Create a test run context."""
     return RunContext(
@@ -49,7 +50,7 @@ def run_context(test_agent: Agent) -> RunContext:
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_run_sufficient_budget(
     budget_guardrail: BudgetGuardrail,
     run_context: RunContext,
@@ -59,7 +60,7 @@ async def test_run_sufficient_budget(
     assert result is None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_run_insufficient_budget(
     budget_guardrail: BudgetGuardrail,
     budget_manager: BudgetManager,
@@ -78,7 +79,7 @@ async def test_run_insufficient_budget(
     assert "Override request rejected" in result
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_run_override_pending(
     budget_guardrail: BudgetGuardrail,
     budget_manager: BudgetManager,
@@ -97,7 +98,7 @@ async def test_run_override_pending(
     assert "Override request pending" in result
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_validate_within_budget(
     budget_guardrail: BudgetGuardrail,
     run_context: RunContext,
@@ -107,7 +108,7 @@ async def test_validate_within_budget(
     assert result is None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_validate_exceeded_budget(
     budget_guardrail: BudgetGuardrail,
     budget_manager: BudgetManager,

@@ -11,15 +11,13 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum, auto
-from typing import Dict, List, Optional, Set
 from uuid import UUID, uuid4
 
-from safeguards.core.alert_types import Alert, AlertSeverity
 from safeguards.core.notification_manager import NotificationManager
 from safeguards.monitoring.violation_reporter import (
     ViolationReporter,
-    ViolationType,
     ViolationSeverity,
+    ViolationType,
 )
 
 
@@ -47,16 +45,16 @@ class ReservationStatus(Enum):
 class BudgetReservation:
     """Represents a budget reservation."""
 
-    id: UUID = field(default_factory=uuid4)
     pool_id: str
     agent_id: str
     amount: Decimal
     reservation_type: ReservationType
+    id: UUID = field(default_factory=uuid4)
     status: ReservationStatus = ReservationStatus.PENDING
     created_at: datetime = field(default_factory=datetime.now)
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None
     priority: int = 0
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
 
 class ReservationManager:
@@ -86,12 +84,12 @@ class ReservationManager:
         self.default_expiry = default_expiry
 
         # Track reservations
-        self._reservations: Dict[UUID, BudgetReservation] = {}
-        self._pool_reservations: Dict[str, Set[UUID]] = {}
-        self._agent_reservations: Dict[str, Set[UUID]] = {}
+        self._reservations: dict[UUID, BudgetReservation] = {}
+        self._pool_reservations: dict[str, set[UUID]] = {}
+        self._agent_reservations: dict[str, set[UUID]] = {}
 
         # Track reserved amounts by pool and type
-        self._pool_reserved: Dict[str, Dict[ReservationType, Decimal]] = {}
+        self._pool_reserved: dict[str, dict[ReservationType, Decimal]] = {}
 
     def create_reservation(
         self,
@@ -100,8 +98,8 @@ class ReservationManager:
         amount: Decimal,
         reservation_type: ReservationType,
         priority: int = 0,
-        expires_in: Optional[timedelta] = None,
-        metadata: Optional[Dict] = None,
+        expires_in: timedelta | None = None,
+        metadata: dict | None = None,
     ) -> BudgetReservation:
         """Create a new budget reservation.
 
@@ -122,7 +120,8 @@ class ReservationManager:
         """
         # Validate reservation amount
         if amount <= 0:
-            raise ValueError("Reservation amount must be positive")
+            msg = "Reservation amount must be positive"
+            raise ValueError(msg)
 
         # Create reservation
         reservation = BudgetReservation(
@@ -142,13 +141,11 @@ class ReservationManager:
 
         # Update pool reserved amounts
         pool_reserved = self._pool_reserved.setdefault(pool_id, {})
-        pool_reserved[reservation_type] = (
-            pool_reserved.get(reservation_type, Decimal(0)) + amount
-        )
+        pool_reserved[reservation_type] = pool_reserved.get(reservation_type, Decimal(0)) + amount
 
         return reservation
 
-    def get_reservation(self, reservation_id: UUID) -> Optional[BudgetReservation]:
+    def get_reservation(self, reservation_id: UUID) -> BudgetReservation | None:
         """Get a reservation by ID.
 
         Args:
@@ -170,10 +167,12 @@ class ReservationManager:
         """
         reservation = self._reservations.get(reservation_id)
         if not reservation:
-            raise ValueError(f"Reservation {reservation_id} not found")
+            msg = f"Reservation {reservation_id} not found"
+            raise ValueError(msg)
 
         if reservation.status != ReservationStatus.ACTIVE:
-            raise ValueError(f"Reservation {reservation_id} is not active")
+            msg = f"Reservation {reservation_id} is not active"
+            raise ValueError(msg)
 
         # Update status
         reservation.status = ReservationStatus.RELEASED
@@ -200,10 +199,12 @@ class ReservationManager:
         """
         reservation = self._reservations.get(reservation_id)
         if not reservation:
-            raise ValueError(f"Reservation {reservation_id} not found")
+            msg = f"Reservation {reservation_id} not found"
+            raise ValueError(msg)
 
         if reservation.status != ReservationStatus.ACTIVE:
-            raise ValueError(f"Reservation {reservation_id} is not active")
+            msg = f"Reservation {reservation_id} is not active"
+            raise ValueError(msg)
 
         # Update status
         reservation.status = ReservationStatus.CONSUMED
@@ -213,7 +214,9 @@ class ReservationManager:
         pool_reserved[reservation.reservation_type] -= reservation.amount
 
     def get_pool_reserved_amount(
-        self, pool_id: str, reservation_type: Optional[ReservationType] = None
+        self,
+        pool_id: str,
+        reservation_type: ReservationType | None = None,
     ) -> Decimal:
         """Get total reserved amount for a pool.
 
@@ -232,9 +235,9 @@ class ReservationManager:
     def get_agent_reservations(
         self,
         agent_id: str,
-        status: Optional[ReservationStatus] = None,
-        reservation_type: Optional[ReservationType] = None,
-    ) -> List[BudgetReservation]:
+        status: ReservationStatus | None = None,
+        reservation_type: ReservationType | None = None,
+    ) -> list[BudgetReservation]:
         """Get reservations for an agent.
 
         Args:
@@ -248,16 +251,12 @@ class ReservationManager:
         if agent_id not in self._agent_reservations:
             return []
 
-        reservations = [
-            self._reservations[rid] for rid in self._agent_reservations[agent_id]
-        ]
+        reservations = [self._reservations[rid] for rid in self._agent_reservations[agent_id]]
 
         if status:
             reservations = [r for r in reservations if r.status == status]
         if reservation_type:
-            reservations = [
-                r for r in reservations if r.reservation_type == reservation_type
-            ]
+            reservations = [r for r in reservations if r.reservation_type == reservation_type]
 
         return reservations
 
@@ -290,7 +289,7 @@ class ReservationManager:
         agent_id: str,
         amount: Decimal,
         reason: str,
-    ) -> Optional[BudgetReservation]:
+    ) -> BudgetReservation | None:
         """Handle an emergency budget request.
 
         This method will:
@@ -334,11 +333,16 @@ class ReservationManager:
             # Try to free up funds
             freed_amount = self._free_up_emergency_funds(pool_id, amount)
             if freed_amount >= amount:
-                return self.handle_emergency_request(pool_id, agent_id, amount, reason)
+                return self.handle_emergency_request(
+                    pool_id=pool_id,
+                    agent_id=agent_id,
+                    amount=amount,
+                    reason=reason,
+                )
 
             # Report violation if cannot satisfy
             self.violation_reporter.report_violation(
-                type=ViolationType.BUDGET_VIOLATION,
+                type=ViolationType.OVERSPEND,
                 severity=ViolationSeverity.HIGH,
                 agent_id=agent_id,
                 description=f"Could not satisfy emergency request for {amount}",

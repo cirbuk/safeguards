@@ -10,6 +10,7 @@ recursive-include src/safeguards *.py
 recursive-include src/safeguards/templates *.html *.txt
 recursive-include src/safeguards/static *.js *.css
 recursive-exclude src/safeguards/tests *
+recursive-exclude src/safeguards/testing *
 recursive-exclude tests *
 recursive-exclude docs *
 recursive-exclude examples *

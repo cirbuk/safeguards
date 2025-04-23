@@ -3,7 +3,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Dict, List, Optional, Union
 
 from ..base.budget import BudgetPeriod
 from .api_tracker import APITracker
@@ -14,8 +13,8 @@ from .token_tracker import TokenTracker
 class CostBreakdown:
     """Detailed breakdown of costs by category."""
 
-    llm_costs: Dict[str, Decimal]  # model_id -> cost
-    api_costs: Dict[str, Decimal]  # endpoint -> cost
+    llm_costs: dict[str, Decimal]  # model_id -> cost
+    api_costs: dict[str, Decimal]  # endpoint -> cost
     storage_costs: Decimal
     compute_costs: Decimal
     total_cost: Decimal
@@ -32,7 +31,7 @@ class CostTracker:
         api_tracker: APITracker,
         storage_cost_per_gb: Decimal,
         compute_cost_per_hour: Decimal,
-        total_budget: Optional[Decimal] = None,
+        total_budget: Decimal | None = None,
         period: BudgetPeriod = BudgetPeriod.DAILY,
         alert_threshold: float = 0.8,
     ):
@@ -58,7 +57,7 @@ class CostTracker:
         self._storage_usage_gb = Decimal("0")
         self._compute_hours = Decimal("0")
 
-    def record_storage_usage(self, size_gb: Union[float, Decimal]) -> None:
+    def record_storage_usage(self, size_gb: float | Decimal) -> None:
         """Record storage usage.
 
         Args:
@@ -66,7 +65,7 @@ class CostTracker:
         """
         self._storage_usage_gb = Decimal(str(size_gb))
 
-    def record_compute_usage(self, hours: Union[float, Decimal]) -> None:
+    def record_compute_usage(self, hours: float | Decimal) -> None:
         """Record compute usage.
 
         Args:
@@ -105,8 +104,8 @@ class CostTracker:
 
     def get_cost_breakdown(
         self,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
     ) -> CostBreakdown:
         """Get detailed cost breakdown.
 
@@ -181,7 +180,7 @@ class CostTracker:
         usage_percent = self.get_total_cost() / self.total_budget
         return usage_percent >= self.alert_threshold
 
-    def get_budget_status(self) -> Dict[str, Union[Decimal, float]]:
+    def get_budget_status(self) -> dict[str, Decimal | float]:
         """Get current budget status.
 
         Returns:
@@ -221,19 +220,28 @@ class CostTracker:
             start = now.replace(hour=0, minute=0, second=0, microsecond=0)
             start = start - timedelta(days=start.weekday())
             end = start + timedelta(
-                days=6, hours=23, minutes=59, seconds=59, microseconds=999999
+                days=6,
+                hours=23,
+                minutes=59,
+                seconds=59,
+                microseconds=999999,
             )
         elif self.period == BudgetPeriod.MONTHLY:
             start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             if now.month == 12:
                 end = start.replace(year=now.year + 1, month=1) - timedelta(
-                    microseconds=1
+                    microseconds=1,
                 )
             else:
                 end = start.replace(month=now.month + 1) - timedelta(microseconds=1)
         else:  # YEARLY
             start = now.replace(
-                month=1, day=1, hour=0, minute=0, second=0, microsecond=0
+                month=1,
+                day=1,
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0,
             )
             end = start.replace(year=now.year + 1) - timedelta(microseconds=1)
 

@@ -1,20 +1,20 @@
 """Exception handling for the Agent Safety Framework."""
 
-from typing import Optional, Dict, Any
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 
 @dataclass
 class ErrorContext:
     """Context information for errors."""
 
-    agent_id: Optional[str] = None
-    pool_id: Optional[str] = None
-    resource_type: Optional[str] = None
-    threshold: Optional[float] = None
-    current_value: Optional[float] = None
-    details: Optional[Dict[str, Any]] = None
+    agent_id: str | None = None
+    pool_id: str | None = None
+    resource_type: str | None = None
+    threshold: float | None = None
+    current_value: float | None = None
+    details: dict[str, Any] | None = None
 
 
 class AgentSafetyError(Exception):
@@ -23,10 +23,10 @@ class AgentSafetyError(Exception):
     def __init__(
         self,
         message: str,
-        agent_id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        error_code: Optional[str] = None,
+        agent_id: str | None = None,
+        timestamp: datetime | None = None,
+        metadata: dict[str, Any] | None = None,
+        error_code: str | None = None,
         **kwargs,
     ):
         """Initialize the exception.
@@ -46,7 +46,7 @@ class AgentSafetyError(Exception):
         self.error_code = error_code
         super().__init__(message)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert error to dictionary format."""
         return {
             "error": {
@@ -57,7 +57,7 @@ class AgentSafetyError(Exception):
                     "timestamp": self.timestamp.isoformat(),
                     "metadata": self.metadata,
                 },
-            }
+            },
         }
 
 
@@ -92,7 +92,7 @@ class BudgetExceededError(BudgetError):
     def __init__(
         self,
         message: str = "Budget limit exceeded",
-        context: Optional[ErrorContext] = None,
+        context: ErrorContext | None = None,
     ):
         super().__init__(
             message=message,
@@ -108,7 +108,7 @@ class InsufficientBudgetError(BudgetError):
     def __init__(
         self,
         message: str = "Insufficient budget",
-        context: Optional[ErrorContext] = None,
+        context: ErrorContext | None = None,
     ):
         super().__init__(
             message=message,
@@ -124,7 +124,7 @@ class BudgetPoolNotFoundError(BudgetError):
     def __init__(
         self,
         message: str = "Budget pool not found",
-        context: Optional[ErrorContext] = None,
+        context: ErrorContext | None = None,
     ):
         super().__init__(
             message=message,
@@ -141,7 +141,7 @@ class ResourceLimitError(ResourceError):
     def __init__(
         self,
         message: str = "Resource limit exceeded",
-        context: Optional[ErrorContext] = None,
+        context: ErrorContext | None = None,
     ):
         super().__init__(
             message=message,
@@ -157,7 +157,7 @@ class ResourceNotAvailableError(ResourceError):
     def __init__(
         self,
         message: str = "Resource not available",
-        context: Optional[ErrorContext] = None,
+        context: ErrorContext | None = None,
     ):
         super().__init__(
             message=message,
@@ -174,7 +174,7 @@ class InvalidConfigurationError(ConfigurationError):
     def __init__(
         self,
         message: str = "Invalid configuration",
-        context: Optional[ErrorContext] = None,
+        context: ErrorContext | None = None,
     ):
         super().__init__(
             message=message,
@@ -190,7 +190,7 @@ class MissingConfigurationError(ConfigurationError):
     def __init__(
         self,
         message: str = "Missing configuration",
-        context: Optional[ErrorContext] = None,
+        context: ErrorContext | None = None,
     ):
         super().__init__(
             message=message,
@@ -205,7 +205,9 @@ class InvalidAPIKeyError(AuthenticationError):
     """Raised when API key is invalid."""
 
     def __init__(
-        self, message: str = "Invalid API key", context: Optional[ErrorContext] = None
+        self,
+        message: str = "Invalid API key",
+        context: ErrorContext | None = None,
     ):
         super().__init__(
             message=message,
@@ -221,14 +223,17 @@ class UnauthorizedError(AuthenticationError):
     def __init__(
         self,
         message: str = "Unauthorized operation",
-        context: Optional[ErrorContext] = None,
+        context: ErrorContext | None = None,
     ):
         super().__init__(
-            message=message, error_code="UNAUTHORIZED", context=context, http_status=403
+            message=message,
+            error_code="UNAUTHORIZED",
+            context=context,
+            http_status=403,
         )
 
 
-def handle_error(error: Exception) -> Dict[str, Any]:
+def handle_error(error: Exception) -> dict[str, Any]:
     """Convert any error to a standardized format."""
     if isinstance(error, AgentSafetyError):
         return error.to_dict()
@@ -239,5 +244,5 @@ def handle_error(error: Exception) -> Dict[str, Any]:
             "code": "INTERNAL_ERROR",
             "message": str(error),
             "context": {"type": type(error).__name__},
-        }
+        },
     }

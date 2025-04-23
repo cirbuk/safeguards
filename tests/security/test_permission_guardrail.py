@@ -2,12 +2,11 @@
 
 import pytest
 
-from safeguards.rules.defaults import PermissionGuardrail
 from safeguards.rules.base import RuleContext
-from safeguards.base.guardrails import ValidationResult
+from safeguards.rules.defaults import PermissionGuardrail
 
 
-@pytest.fixture
+@pytest.fixture()
 def role_permissions():
     """Test role-permission mappings."""
     return {
@@ -17,7 +16,7 @@ def role_permissions():
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def permission_guardrail(role_permissions):
     """Test permission guardrail instance."""
     return PermissionGuardrail(
@@ -32,7 +31,7 @@ def test_permission_check_success(permission_guardrail):
         input_data={
             "user_roles": ["editor"],
             "operation": "edit_document",
-        }
+        },
     )
 
     result = permission_guardrail.evaluate(context)
@@ -46,7 +45,7 @@ def test_permission_check_admin_success(permission_guardrail):
         input_data={
             "user_roles": ["admin"],
             "operation": "edit_document",
-        }
+        },
     )
 
     result = permission_guardrail.evaluate(context)
@@ -60,7 +59,7 @@ def test_permission_check_insufficient_permissions(permission_guardrail):
         input_data={
             "user_roles": ["viewer"],
             "operation": "edit_document",
-        }
+        },
     )
 
     result = permission_guardrail.evaluate(context)
@@ -75,7 +74,7 @@ def test_permission_check_invalid_role(permission_guardrail):
         input_data={
             "user_roles": ["invalid_role"],
             "operation": "edit_document",
-        }
+        },
     )
 
     result = permission_guardrail.evaluate(context)
@@ -90,7 +89,7 @@ def test_permission_check_multiple_roles(permission_guardrail):
         input_data={
             "user_roles": ["viewer", "editor"],
             "operation": "edit_document",
-        }
+        },
     )
 
     result = permission_guardrail.evaluate(context)
@@ -104,7 +103,7 @@ def test_permission_check_metadata(permission_guardrail):
         input_data={
             "user_roles": ["editor"],
             "operation": "edit_document",
-        }
+        },
     )
 
     permission_guardrail.evaluate(context)

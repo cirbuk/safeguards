@@ -14,12 +14,11 @@ This example demonstrates how to:
 4. Implement basic notification for budget alerts
 """
 
-import os
 import asyncio
 import logging
-from dataclasses import dataclass
-from typing import Dict, Any, Optional, List
+import os
 from decimal import Decimal
+from typing import Any
 
 # Import OpenAI Agents SDK components
 try:
@@ -30,20 +29,20 @@ except ImportError:
     Runner = object
 
 # Import Agent Safety Framework components
-from safeguards.core.notification_manager import NotificationManager
-from safeguards.monitoring.violation_reporter import (
-    ViolationReporter,
-    ViolationType,
-    ViolationSeverity,
-    ViolationContext,
-)
 from safeguards.core.budget_coordination import BudgetCoordinator
+from safeguards.core.notification_manager import NotificationManager
 from safeguards.monitoring.metrics import MetricsAnalyzer
-from safeguards.types import NotificationChannel, Alert
+from safeguards.monitoring.violation_reporter import (
+    ViolationContext,
+    ViolationReporter,
+    ViolationSeverity,
+    ViolationType,
+)
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -65,8 +64,8 @@ class OpenAIAgentWrapper:
         name: str,
         description: str,
         model: str = DEFAULT_MODEL,
-        budget_coordinator: Optional[BudgetCoordinator] = None,
-        violation_reporter: Optional[ViolationReporter] = None,
+        budget_coordinator: BudgetCoordinator | None = None,
+        violation_reporter: ViolationReporter | None = None,
     ):
         self.name = name
         self.description = description
@@ -82,7 +81,7 @@ class OpenAIAgentWrapper:
         self.total_input_tokens = 0
         self.total_output_tokens = 0
 
-    async def run(self, query: str) -> Dict[str, Any]:
+    async def run(self, query: str) -> dict[str, Any]:
         """
         Run the agent with the provided query and track resource usage.
         """
@@ -106,10 +105,10 @@ class OpenAIAgentWrapper:
                     description=f"Agent {self.name} has no remaining budget",
                 )
                 return {
-                    "response": "Unable to process request due to budget limitations."
+                    "response": "Unable to process request due to budget limitations.",
                 }
         except Exception as e:
-            logger.error(f"Error checking budget: {str(e)}")
+            logger.error(f"Error checking budget: {e!s}")
 
         try:
             # Run the agent
@@ -118,7 +117,7 @@ class OpenAIAgentWrapper:
             # Debug logging to understand response structure
             logger.debug(f"Response type: {type(response)}")
             logger.debug(
-                f"Response attributes: {dir(response) if hasattr(response, '__dir__') else 'No attributes'}"
+                f"Response attributes: {dir(response) if hasattr(response, '__dir__') else 'No attributes'}",
             )
 
             # Extract content safely
@@ -155,7 +154,7 @@ class OpenAIAgentWrapper:
                     # Log budget information
                     metrics = self.budget_coordinator.get_agent_metrics(self.id)
                     logger.info(
-                        f"Agent {self.name} used ${cost:.6f}, remaining budget: ${metrics.get('remaining_budget', 0):.6f}"
+                        f"Agent {self.name} used ${cost:.6f}, remaining budget: ${metrics.get('remaining_budget', 0):.6f}",
                     )
 
             # Return the result
@@ -168,9 +167,9 @@ class OpenAIAgentWrapper:
                 "model": self.model,
             }
         except Exception as e:
-            logger.error(f"Error running agent: {str(e)}")
+            logger.error(f"Error running agent: {e!s}")
             return {
-                "response": f"Error: {str(e)}",
+                "response": f"Error: {e!s}",
                 "tokens": {"input": 0, "output": 0},
                 "model": self.model,
             }
@@ -207,7 +206,7 @@ def setup_safety_framework():
             # For newer version that might have this method
             notification_manager.configure_slack(webhook_url=slack_webhook_url)
         except Exception as e:
-            logger.warning(f"Could not configure Slack notifications: {str(e)}")
+            logger.warning(f"Could not configure Slack notifications: {e!s}")
 
     # Create violation reporter
     violation_reporter = ViolationReporter(notification_manager=notification_manager)
@@ -233,12 +232,12 @@ async def main_async():
     # Check if OpenAI API key is set
     if not os.environ.get("OPENAI_API_KEY"):
         logger.warning(
-            "OPENAI_API_KEY environment variable not set. This script may not work properly."
+            "OPENAI_API_KEY environment variable not set. This script may not work properly.",
         )
 
     # Set up safety framework
     framework = setup_safety_framework()
-    notification_manager = framework["notification_manager"]
+    framework["notification_manager"]
     violation_reporter = framework["violation_reporter"]
     budget_coordinator = framework["budget_coordinator"]
 
@@ -269,11 +268,13 @@ async def main_async():
         )
         agent.id = registered_agent.id
     except Exception as e:
-        logger.warning(f"Could not use create_agent method: {str(e)}")
+        logger.warning(f"Could not use create_agent method: {e!s}")
         # Fall back to manual management
         budget_coordinator._agent_budgets[agent.id] = Decimal("0.5")
         budget_coordinator._initial_budgets = getattr(
-            budget_coordinator, "_initial_budgets", {}
+            budget_coordinator,
+            "_initial_budgets",
+            {},
         )
         budget_coordinator._initial_budgets[agent.id] = Decimal("0.5")
         budget_coordinator._agent_pools[agent.id] = pool_id
@@ -282,13 +283,13 @@ async def main_async():
     logger.info("Running agent with a sample query...")
     try:
         result = await agent.run(
-            "What are the key components of the Agent Safety Framework?"
+            "What are the key components of the Agent Safety Framework?",
         )
 
         # Display the result
         logger.info(f"Agent response: {result['response']}")
         logger.info(
-            f"Token usage: {result['tokens']} (Note: Token counts may be inaccurate with the current SDK version)"
+            f"Token usage: {result['tokens']} (Note: Token counts may be inaccurate with the current SDK version)",
         )
 
         # Get and display budget metrics
@@ -320,13 +321,13 @@ async def main_async():
         # Run another query (to demonstrate continued usage)
         logger.info("\nRunning agent with another query...")
         result = await agent.run(
-            "Explain how to implement budget tracking for an AI system"
+            "Explain how to implement budget tracking for an AI system",
         )
 
         # Display the result
         logger.info(f"Agent response: {result['response']}")
         logger.info(
-            f"Token usage: {result['tokens']} (Note: Token counts may be inaccurate with the current SDK version)"
+            f"Token usage: {result['tokens']} (Note: Token counts may be inaccurate with the current SDK version)",
         )
 
         # Get and display updated budget metrics
@@ -334,7 +335,7 @@ async def main_async():
         logger.info(f"Remaining budget: ${metrics.get('remaining_budget', 0):.2f}")
 
     except Exception as e:
-        logger.error(f"Error in main execution: {str(e)}")
+        logger.error(f"Error in main execution: {e!s}")
 
 
 def main():

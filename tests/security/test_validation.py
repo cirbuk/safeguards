@@ -1,13 +1,13 @@
 """Unit tests for security validation system."""
 
-import pytest
-import re
 from decimal import Decimal
 
+import pytest
+
 from safeguards.security.validation import (
-    SecurityPolicy,
     InputValidator,
     OutputEncoder,
+    SecurityPolicy,
     SecurityValidator,
 )
 
@@ -38,7 +38,7 @@ def test_security_policy():
 class TestInputValidator:
     """Test cases for InputValidator."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def validator(self):
         """Create InputValidator instance for testing."""
         return InputValidator(SecurityPolicy())
@@ -95,10 +95,7 @@ class TestInputValidator:
         """Test URL validation."""
         # Valid URLs
         assert validator.validate_url("https://example.com") == "https://example.com"
-        assert (
-            validator.validate_url("http://test.com/path?q=1")
-            == "http://test.com/path?q=1"
-        )
+        assert validator.validate_url("http://test.com/path?q=1") == "http://test.com/path?q=1"
 
         # Invalid URLs
         with pytest.raises(ValueError):
@@ -141,7 +138,7 @@ class TestInputValidator:
 class TestOutputEncoder:
     """Test cases for OutputEncoder."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def encoder(self):
         """Create OutputEncoder instance for testing."""
         return OutputEncoder()
@@ -176,10 +173,7 @@ class TestOutputEncoder:
 
     def test_encode_path(self, encoder):
         """Test path encoding."""
-        assert (
-            encoder.encode_path("/test/path with spaces/")
-            == "/test/path%20with%20spaces/"
-        )
+        assert encoder.encode_path("/test/path with spaces/") == "/test/path%20with%20spaces/"
 
         assert encoder.encode_path("/test/special#chars?") == "/test/special%23chars%3F"
 
@@ -187,7 +181,7 @@ class TestOutputEncoder:
 class TestSecurityValidator:
     """Test cases for SecurityValidator."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def validator(self):
         """Create SecurityValidator instance for testing."""
         return SecurityValidator()

@@ -1,13 +1,12 @@
 """Advanced metrics analysis for resource and budget monitoring."""
 
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
-import numpy as np
-from decimal import Decimal
+from datetime import datetime
 
-from safeguards.base.monitoring import ResourceMetrics
+import numpy as np
+
 from safeguards.base.budget import BudgetMetrics
+from safeguards.base.monitoring import ResourceMetrics
 
 
 @dataclass
@@ -26,11 +25,11 @@ class TrendAnalysis:
 class ResourceUsagePattern:
     """Resource usage pattern analysis."""
 
-    peak_hours: List[int]  # 0-23 hours
-    low_usage_hours: List[int]  # 0-23 hours
-    weekly_pattern: Dict[str, float]  # day -> average usage
-    periodic_spikes: List[datetime]
-    correlation_matrix: Dict[str, Dict[str, float]]
+    peak_hours: list[int]  # 0-23 hours
+    low_usage_hours: list[int]  # 0-23 hours
+    weekly_pattern: dict[str, float]  # day -> average usage
+    periodic_spikes: list[datetime]
+    correlation_matrix: dict[str, dict[str, float]]
 
 
 class MetricsAnalyzer:
@@ -45,7 +44,9 @@ class MetricsAnalyzer:
         self.lookback_days = lookback_days
 
     def analyze_resource_trends(
-        self, metrics_history: List[ResourceMetrics], metric_name: str
+        self,
+        metrics_history: list[ResourceMetrics],
+        metric_name: str,
     ) -> TrendAnalysis:
         """Analyze trends for a specific resource metric.
 
@@ -57,7 +58,8 @@ class MetricsAnalyzer:
             Trend analysis results
         """
         if not metrics_history:
-            raise ValueError("No metrics history provided")
+            msg = "No metrics history provided"
+            raise ValueError(msg)
 
         # Extract values and timestamps
         values = [float(getattr(m, metric_name)) for m in metrics_history]
@@ -72,16 +74,10 @@ class MetricsAnalyzer:
         volatility = np.std(values) if len(values) > 1 else 0
 
         # Simple linear regression for forecasting
-        hours_from_start = [
-            (t - timestamps[0]).total_seconds() / 3600 for t in timestamps
-        ]
+        hours_from_start = [(t - timestamps[0]).total_seconds() / 3600 for t in timestamps]
         coefficients = np.polyfit(hours_from_start, values, 1)
-        forecast_next_hour = (
-            coefficients[0] * (hours_from_start[-1] + 1) + coefficients[1]
-        )
-        forecast_next_day = (
-            coefficients[0] * (hours_from_start[-1] + 24) + coefficients[1]
-        )
+        forecast_next_hour = coefficients[0] * (hours_from_start[-1] + 1) + coefficients[1]
+        forecast_next_day = coefficients[0] * (hours_from_start[-1] + 24) + coefficients[1]
 
         # Determine trend direction
         if abs(rate_of_change) < 0.1:  # Threshold for stability
@@ -105,7 +101,8 @@ class MetricsAnalyzer:
         )
 
     def analyze_usage_patterns(
-        self, metrics_history: List[ResourceMetrics]
+        self,
+        metrics_history: list[ResourceMetrics],
     ) -> ResourceUsagePattern:
         """Analyze resource usage patterns.
 
@@ -116,7 +113,8 @@ class MetricsAnalyzer:
             Usage pattern analysis
         """
         if not metrics_history:
-            raise ValueError("No metrics history provided")
+            msg = "No metrics history provided"
+            raise ValueError(msg)
 
         # Group metrics by hour
         hourly_usage = {i: [] for i in range(24)}
@@ -132,9 +130,7 @@ class MetricsAnalyzer:
         }
 
         mean_usage = np.mean(list(hourly_averages.values()))
-        peak_hours = [
-            hour for hour, usage in hourly_averages.items() if usage > mean_usage * 1.2
-        ]
+        peak_hours = [hour for hour, usage in hourly_averages.items() if usage > mean_usage * 1.2]
         low_usage_hours = [
             hour for hour, usage in hourly_averages.items() if usage < mean_usage * 0.8
         ]
@@ -149,8 +145,8 @@ class MetricsAnalyzer:
             "Saturday",
             "Sunday",
         ]
-        weekly_pattern = {day: 0.0 for day in days}
-        day_counts = {day: 0 for day in days}
+        weekly_pattern = dict.fromkeys(days, 0.0)
+        day_counts = dict.fromkeys(days, 0)
 
         for metric in metrics_history:
             day = metric.timestamp.strftime("%A")
@@ -166,10 +162,7 @@ class MetricsAnalyzer:
         for i in range(1, len(metrics_history)):
             prev = metrics_history[i - 1]
             curr = metrics_history[i]
-            if (
-                curr.cpu_percent > prev.cpu_percent * 1.5
-                and curr.cpu_percent > mean_usage * 1.3
-            ):
+            if curr.cpu_percent > prev.cpu_percent * 1.5 and curr.cpu_percent > mean_usage * 1.3:
                 periodic_spikes.append(curr.timestamp)
 
         # Calculate correlation matrix
@@ -200,9 +193,9 @@ class MetricsAnalyzer:
 
     def analyze_budget_efficiency(
         self,
-        budget_metrics: List[BudgetMetrics],
-        resource_metrics: List[ResourceMetrics],
-    ) -> Dict[str, float]:
+        budget_metrics: list[BudgetMetrics],
+        resource_metrics: list[ResourceMetrics],
+    ) -> dict[str, float]:
         """Analyze budget efficiency relative to resource usage.
 
         Args:
@@ -213,7 +206,8 @@ class MetricsAnalyzer:
             Dictionary of efficiency metrics
         """
         if not budget_metrics or not resource_metrics:
-            raise ValueError("Both budget and resource metrics are required")
+            msg = "Both budget and resource metrics are required"
+            raise ValueError(msg)
 
         # Align timestamps
         budget_times = [m.timestamp for m in budget_metrics]
@@ -223,12 +217,8 @@ class MetricsAnalyzer:
         end_time = min(max(budget_times), max(resource_times))
 
         # Filter metrics within time range
-        budget_metrics = [
-            m for m in budget_metrics if start_time <= m.timestamp <= end_time
-        ]
-        resource_metrics = [
-            m for m in resource_metrics if start_time <= m.timestamp <= end_time
-        ]
+        budget_metrics = [m for m in budget_metrics if start_time <= m.timestamp <= end_time]
+        resource_metrics = [m for m in resource_metrics if start_time <= m.timestamp <= end_time]
 
         # Calculate efficiency metrics
         budget_usage = [float(m.usage_percentage) for m in budget_metrics]
@@ -242,9 +232,7 @@ class MetricsAnalyzer:
 
         # Calculate efficiency scores
         cpu_efficiency = avg_cpu_usage / avg_budget_usage if avg_budget_usage > 0 else 0
-        memory_efficiency = (
-            avg_memory_usage / avg_budget_usage if avg_budget_usage > 0 else 0
-        )
+        memory_efficiency = avg_memory_usage / avg_budget_usage if avg_budget_usage > 0 else 0
 
         # Calculate budget predictability
         budget_volatility = np.std(budget_usage) if len(budget_usage) > 1 else 0

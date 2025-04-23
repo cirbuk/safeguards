@@ -1,17 +1,15 @@
 """Slack interaction handlers for budget override approvals."""
 
-import hmac
 import hashlib
+import hmac
 import json
 import os
-from typing import Dict, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 
 from ..core.budget_override import BudgetOverrideManager
-from ..utils.auth import check_admin_role
 
 router = APIRouter(prefix="/api/v1/slack", tags=["slack"])
 
@@ -24,7 +22,7 @@ class SlackInteraction(BaseModel):
 
     type: str
     actions: list
-    user: Dict[str, str]
+    user: dict[str, str]
     response_url: str
     trigger_id: str
     token: str
@@ -50,7 +48,9 @@ def verify_slack_signature(request: Request) -> bool:
     expected_signature = (
         "v0="
         + hmac.new(
-            SLACK_SIGNING_SECRET.encode(), base_string.encode(), hashlib.sha256
+            SLACK_SIGNING_SECRET.encode(),
+            base_string.encode(),
+            hashlib.sha256,
         ).hexdigest()
     )
 
@@ -61,7 +61,7 @@ def verify_slack_signature(request: Request) -> bool:
 async def handle_slack_interaction(
     request: Request,
     override_manager: BudgetOverrideManager = Depends(),
-) -> Dict:
+) -> dict:
     """Handle Slack interaction callbacks.
 
     Args:
@@ -106,19 +106,19 @@ async def handle_slack_interaction(
                 "text": f"Override request {override_id} approved successfully",
                 "replace_original": True,
             }
-        else:  # reject_override
-            override_manager.reject_override(
-                override_id=override_id,
-                rejector=user,
-                reason="Rejected via Slack",
-            )
-            return {
-                "text": f"Override request {override_id} rejected",
-                "replace_original": True,
-            }
+        # reject_override
+        override_manager.reject_override(
+            override_id=override_id,
+            rejector=user,
+            reason="Rejected via Slack",
+        )
+        return {
+            "text": f"Override request {override_id} rejected",
+            "replace_original": True,
+        }
 
     except ValueError as e:
         return {
-            "text": f"Error processing override: {str(e)}",
+            "text": f"Error processing override: {e!s}",
             "replace_original": False,
         }

@@ -1,17 +1,18 @@
 """Unit tests for system monitor implementation."""
 
-import pytest
 from datetime import datetime, timedelta
-import psutil
 
-from safeguards.monitoring.system_monitor import SystemResourceMonitor
+import psutil
+import pytest
+
 from safeguards.base.monitoring import ResourceThresholds
+from safeguards.monitoring.system_monitor import SystemResourceMonitor
 
 
 class TestSystemResourceMonitor:
     """Test cases for SystemResourceMonitor."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def monitor(self):
         """Create SystemResourceMonitor instance for testing."""
         return SystemResourceMonitor(
@@ -48,11 +49,7 @@ class TestSystemResourceMonitor:
 
         # Get actual Python process count
         python_count = len(
-            [
-                p
-                for p in psutil.process_iter(["name"])
-                if "python" in p.info["name"].lower()
-            ]
+            [p for p in psutil.process_iter(["name"]) if "python" in p.info["name"].lower()],
         )
 
         assert metrics.process_count == python_count
@@ -71,7 +68,7 @@ class TestSystemResourceMonitor:
         assert "open_files" in exceeded
 
         # Verify boolean results
-        for metric, is_exceeded in exceeded.items():
+        for _metric, is_exceeded in exceeded.items():
             assert isinstance(is_exceeded, bool)
 
         # Test with custom thresholds
@@ -99,12 +96,9 @@ class TestSystemResourceMonitor:
 
         # Verify history ordering
         for i in range(1, len(monitor.metrics_history)):
-            assert (
-                monitor.metrics_history[i].timestamp
-                > monitor.metrics_history[i - 1].timestamp
-            )
+            assert monitor.metrics_history[i].timestamp > monitor.metrics_history[i - 1].timestamp
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_async_collection(self, monitor):
         """Test asynchronous metrics collection."""
         metrics = await monitor.collect_metrics_async()

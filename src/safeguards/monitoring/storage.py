@@ -2,8 +2,6 @@
 
 import sqlite3
 from datetime import datetime
-from typing import List
-import json
 
 from safeguards.base.monitoring import MetricsStorage, ResourceMetrics
 
@@ -34,10 +32,10 @@ class SQLiteMetricsStorage(MetricsStorage):
                     process_count INTEGER NOT NULL,
                     open_files INTEGER NOT NULL
                 )
-            """
+            """,
             )
             conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_timestamp ON metrics(timestamp)"
+                "CREATE INDEX IF NOT EXISTS idx_timestamp ON metrics(timestamp)",
             )
 
     def store_metrics(self, metrics: ResourceMetrics) -> None:
@@ -74,7 +72,7 @@ class SQLiteMetricsStorage(MetricsStorage):
         self,
         start_time: datetime,
         end_time: datetime,
-    ) -> List[ResourceMetrics]:
+    ) -> list[ResourceMetrics]:
         """Retrieve metrics for a time range.
 
         Args:
