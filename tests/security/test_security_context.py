@@ -2,11 +2,11 @@
 
 import pytest
 
-from safeguards.rules.defaults import SecurityContextRule
 from safeguards.rules.base import RuleContext
+from safeguards.rules.defaults import SecurityContextRule
 
 
-@pytest.fixture
+@pytest.fixture()
 def security_context_rule():
     """Test security context rule instance."""
     return SecurityContextRule(
@@ -21,7 +21,7 @@ def test_security_level_sufficient(security_context_rule):
         input_data={
             "security_level": "high",
             "environment": "prod",
-        }
+        },
     )
 
     result = security_context_rule.evaluate(context)
@@ -35,7 +35,7 @@ def test_security_level_exact_match(security_context_rule):
         input_data={
             "security_level": "medium",
             "environment": "prod",
-        }
+        },
     )
 
     result = security_context_rule.evaluate(context)
@@ -49,7 +49,7 @@ def test_security_level_insufficient(security_context_rule):
         input_data={
             "security_level": "low",
             "environment": "prod",
-        }
+        },
     )
 
     result = security_context_rule.evaluate(context)
@@ -64,7 +64,7 @@ def test_security_level_invalid(security_context_rule):
         input_data={
             "security_level": "ultra",
             "environment": "prod",
-        }
+        },
     )
 
     result = security_context_rule.evaluate(context)
@@ -80,7 +80,7 @@ def test_environment_valid(security_context_rule):
             input_data={
                 "security_level": "high",
                 "environment": env,
-            }
+            },
         )
 
         result = security_context_rule.evaluate(context)
@@ -94,7 +94,7 @@ def test_environment_invalid(security_context_rule):
         input_data={
             "security_level": "high",
             "environment": "test",
-        }
+        },
     )
 
     result = security_context_rule.evaluate(context)
@@ -108,7 +108,7 @@ def test_missing_security_level(security_context_rule):
     context = RuleContext(
         input_data={
             "environment": "prod",
-        }
+        },
     )
 
     result = security_context_rule.evaluate(context)
@@ -122,7 +122,7 @@ def test_missing_environment(security_context_rule):
     context = RuleContext(
         input_data={
             "security_level": "high",
-        }
+        },
     )
 
     result = security_context_rule.evaluate(context)
@@ -137,7 +137,7 @@ def test_security_context_metadata(security_context_rule):
         input_data={
             "security_level": "high",
             "environment": "prod",
-        }
+        },
     )
 
     security_context_rule.evaluate(context)

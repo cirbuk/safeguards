@@ -1,10 +1,11 @@
 """Tests for resource guardrail."""
 
-import pytest
 from unittest.mock import MagicMock
 
-from safeguards.monitoring.resource_monitor import ResourceMonitor, ResourceMetrics
+import pytest
+
 from safeguards.guardrails.resource import ResourceGuardrail
+from safeguards.monitoring.resource_monitor import ResourceMetrics, ResourceMonitor
 from safeguards.types import Agent, RunContext
 
 
@@ -16,13 +17,13 @@ class TestAgent(Agent):
         return {"status": "success"}
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_agent() -> Agent:
     """Create a test agent."""
     return TestAgent(name="test_agent")
 
 
-@pytest.fixture
+@pytest.fixture()
 def resource_monitor() -> ResourceMonitor:
     """Create a mock resource monitor."""
     monitor = MagicMock(spec=ResourceMonitor)
@@ -65,7 +66,7 @@ def resource_monitor() -> ResourceMonitor:
     return monitor
 
 
-@pytest.fixture
+@pytest.fixture()
 def resource_guardrail(resource_monitor: ResourceMonitor) -> ResourceGuardrail:
     """Create a resource guardrail instance."""
     return ResourceGuardrail(
@@ -76,7 +77,7 @@ def resource_guardrail(resource_monitor: ResourceMonitor) -> ResourceGuardrail:
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def run_context(test_agent: Agent) -> RunContext:
     """Create a test run context."""
     return RunContext(
@@ -86,7 +87,7 @@ def run_context(test_agent: Agent) -> RunContext:
     )
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_run_within_limits(
     resource_guardrail: ResourceGuardrail,
     run_context: RunContext,
@@ -96,7 +97,7 @@ async def test_run_within_limits(
     assert result is None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_run_cpu_exceeded(
     resource_guardrail: ResourceGuardrail,
     resource_monitor: ResourceMonitor,
@@ -117,7 +118,7 @@ async def test_run_cpu_exceeded(
     assert "exceeded threshold" in result
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_run_memory_exceeded(
     resource_guardrail: ResourceGuardrail,
     resource_monitor: ResourceMonitor,
@@ -138,7 +139,7 @@ async def test_run_memory_exceeded(
     assert "exceeded threshold" in result
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_run_disk_exceeded(
     resource_guardrail: ResourceGuardrail,
     resource_monitor: ResourceMonitor,
@@ -159,7 +160,7 @@ async def test_run_disk_exceeded(
     assert "exceeded threshold" in result
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_validate_within_limits(
     resource_guardrail: ResourceGuardrail,
     run_context: RunContext,
@@ -169,7 +170,7 @@ async def test_validate_within_limits(
     assert result is None
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_validate_resource_spike(
     resource_guardrail: ResourceGuardrail,
     resource_monitor: ResourceMonitor,

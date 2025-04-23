@@ -1,13 +1,14 @@
 """Tests for the metrics analyzer module."""
 
-import pytest
 from datetime import datetime, timedelta
-import numpy as np
 from decimal import Decimal
 
-from safeguards.monitoring.metrics_analyzer import MetricsAnalyzer
-from safeguards.base.monitoring import ResourceMetrics
+import numpy as np
+import pytest
+
 from safeguards.base.budget import BudgetMetrics
+from safeguards.base.monitoring import ResourceMetrics
+from safeguards.monitoring.metrics_analyzer import MetricsAnalyzer
 
 
 def create_test_resource_metrics(
@@ -41,13 +42,15 @@ def create_test_resource_metrics(
                 network_mbps=5.0,
                 process_count=10,
                 open_files=20,
-            )
+            ),
         )
     return metrics
 
 
 def create_test_budget_metrics(
-    start_time: datetime, count: int, interval_minutes: int = 60
+    start_time: datetime,
+    count: int,
+    interval_minutes: int = 60,
 ) -> list[BudgetMetrics]:
     """Create test budget metrics."""
     metrics = []
@@ -65,7 +68,7 @@ def create_test_budget_metrics(
                 period_start=period_start,
                 period_end=period_end,
                 usage_percentage=float(usage / total),
-            )
+            ),
         )
     return metrics
 
@@ -74,7 +77,9 @@ def test_analyze_resource_trends_increasing():
     """Test trend analysis with increasing pattern."""
     start_time = datetime.now()
     metrics = create_test_resource_metrics(
-        start_time, count=24, cpu_pattern="increasing"
+        start_time,
+        count=24,
+        cpu_pattern="increasing",
     )
 
     analyzer = MetricsAnalyzer()
@@ -108,7 +113,7 @@ def test_analyze_resource_trends_stable():
                 network_mbps=5.0,
                 process_count=10,
                 open_files=20,
-            )
+            ),
         )
 
     analyzer = MetricsAnalyzer()
@@ -145,7 +150,7 @@ def test_analyze_usage_patterns():
                     network_mbps=5.0,
                     process_count=10,
                     open_files=20,
-                )
+                ),
             )
 
     analyzer = MetricsAnalyzer()
@@ -162,10 +167,10 @@ def test_analyze_usage_patterns():
         [
             patterns.weekly_pattern[day]
             for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-        ]
+        ],
     )
     weekend_avg = np.mean(
-        [patterns.weekly_pattern[day] for day in ["Saturday", "Sunday"]]
+        [patterns.weekly_pattern[day] for day in ["Saturday", "Sunday"]],
     )
     assert weekday_avg > weekend_avg
 
@@ -192,7 +197,7 @@ def test_analyze_budget_efficiency():
                 network_mbps=5.0,
                 process_count=10,
                 open_files=20,
-            )
+            ),
         )
 
     # Create budget metrics with variation that somewhat correlates with CPU
@@ -211,7 +216,7 @@ def test_analyze_budget_efficiency():
                 period_start=period_start,
                 period_end=period_end,
                 usage_percentage=float(usage / total),
-            )
+            ),
         )
 
     analyzer = MetricsAnalyzer()

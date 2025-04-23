@@ -1,6 +1,6 @@
 """Budget guardrail implementation."""
 
-from typing import Any, Optional
+from typing import Any
 
 from ..budget import BudgetManager
 from ..types.guardrail import Guardrail, RunContext
@@ -37,7 +37,7 @@ class BudgetGuardrail(Guardrail):
         """
         self.budget_manager = budget_manager
 
-    async def run(self, context: RunContext) -> Optional[str]:
+    async def run(self, context: RunContext) -> str | None:
         """Run budget checks before agent execution.
 
         Args:
@@ -58,16 +58,14 @@ class BudgetGuardrail(Guardrail):
             )
 
             if override.status == "REJECTED":
-                return (
-                    f"Budget exceeded for agent {agent_id}. Override request rejected."
-                )
+                return f"Budget exceeded for agent {agent_id}. Override request rejected."
 
             if override.status == "PENDING":
                 return f"Budget exceeded for agent {agent_id}. Override request pending approval."
 
         return None
 
-    async def validate(self, context: RunContext, result: Any) -> Optional[str]:
+    async def validate(self, context: RunContext, result: Any) -> str | None:
         """Validate budget usage after agent execution.
 
         Args:

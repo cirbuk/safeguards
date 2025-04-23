@@ -2,8 +2,8 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
 from datetime import datetime
+from typing import Any
 
 from .agent import Agent
 
@@ -13,8 +13,8 @@ class RunContext:
     """Context for a single agent run."""
 
     agent: Agent
-    inputs: Dict[str, Any]
-    metadata: Dict[str, Any]
+    inputs: dict[str, Any]
+    metadata: dict[str, Any]
 
 
 @dataclass
@@ -26,15 +26,15 @@ class ResourceUsage:
     disk_usage: float
     network_usage: float
     timestamp: datetime = field(default_factory=datetime.now)
-    agent_id: Optional[str] = None
-    duration: Optional[float] = None
+    agent_id: str | None = None
+    duration: float | None = None
 
 
 class Guardrail(ABC):
     """Base interface for agent guardrails."""
 
     @abstractmethod
-    async def run(self, context: RunContext) -> Optional[str]:
+    async def run(self, context: RunContext) -> str | None:
         """Run guardrail checks before agent execution.
 
         Args:
@@ -46,7 +46,7 @@ class Guardrail(ABC):
         pass
 
     @abstractmethod
-    async def validate(self, context: RunContext, result: Any) -> Optional[str]:
+    async def validate(self, context: RunContext, result: Any) -> str | None:
         """Validate results after agent execution.
 
         Args:

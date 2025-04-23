@@ -1,17 +1,16 @@
 """Base API layer for the Agent Safety Framework."""
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, TypeVar, Generic, Union
 from dataclasses import dataclass
-from enum import Enum, auto
 from datetime import datetime
 from decimal import Decimal
+from enum import Enum, auto
+from typing import Any, Generic, TypeVar
 
-from ..exceptions import AgentSafetyError, InvalidConfigurationError
+from ..config import Config
 from ..core.budget_coordination import BudgetPool
 from ..monitoring.metrics import AgentMetrics, SystemMetrics
 from ..types.agent import Agent
-from ..config import Config
 
 T = TypeVar("T")
 
@@ -29,9 +28,9 @@ class APIResponse(Generic[T]):
     """Standard API response format."""
 
     success: bool
-    data: Optional[T] = None
-    error: Optional[Dict[str, Any]] = None
-    meta: Optional[Dict[str, Any]] = None
+    data: T | None = None
+    error: dict[str, Any] | None = None
+    meta: dict[str, Any] | None = None
 
 
 class APIContract(ABC):
@@ -48,9 +47,9 @@ class APIContract(ABC):
 
     def create_response(
         self,
-        data: Optional[T] = None,
-        error: Optional[Dict[str, Any]] = None,
-        meta: Optional[Dict[str, Any]] = None,
+        data: T | None = None,
+        error: dict[str, Any] | None = None,
+        meta: dict[str, Any] | None = None,
     ) -> APIResponse[T]:
         """Create a standardized API response."""
         return APIResponse(
@@ -91,7 +90,7 @@ class BudgetAPIContract(APIContract):
         pass
 
     @abstractmethod
-    def get_budget_pools(self) -> List[BudgetPool]:
+    def get_budget_pools(self) -> list[BudgetPool]:
         """Get all budget pools.
 
         Returns:
@@ -101,7 +100,10 @@ class BudgetAPIContract(APIContract):
 
     @abstractmethod
     def create_budget_pool(
-        self, name: str, initial_budget: Decimal, priority: int = 0
+        self,
+        name: str,
+        initial_budget: Decimal,
+        priority: int = 0,
     ) -> BudgetPool:
         """Create a new budget pool.
 
@@ -142,7 +144,9 @@ class MetricsAPIContract(APIContract):
 
     @abstractmethod
     def create_metrics(
-        self, agent_id: str, metrics: Union[AgentMetrics, SystemMetrics]
+        self,
+        agent_id: str,
+        metrics: AgentMetrics | SystemMetrics,
     ) -> None:
         """Create new metrics.
 
@@ -170,7 +174,10 @@ class AgentAPIContract(APIContract):
 
     @abstractmethod
     def create_agent(
-        self, name: str, initial_budget: Decimal, priority: int = 0
+        self,
+        name: str,
+        initial_budget: Decimal,
+        priority: int = 0,
     ) -> Agent:
         """Create a new agent.
 

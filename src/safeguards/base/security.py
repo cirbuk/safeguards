@@ -1,7 +1,7 @@
 """Security module for agent safety framework."""
 
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -19,16 +19,16 @@ class Role(BaseModel):
     """Role definition with associated permissions."""
 
     name: str
-    permissions: List[Permission]
-    description: Optional[str] = None
+    permissions: list[Permission]
+    description: str | None = None
 
 
 class SecurityContext(BaseModel):
     """Security context for agent operations."""
 
     agent_id: str
-    roles: List[Role]
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    roles: list[Role]
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class SecurityValidator:
@@ -67,7 +67,10 @@ class SecurityValidator:
         return self._validate_context(context)
 
     def validate_resource_access(
-        self, resource: str, permission: Permission, context: SecurityContext
+        self,
+        resource: str,
+        permission: Permission,
+        context: SecurityContext,
     ) -> bool:
         """Validate resource access against security policies.
 

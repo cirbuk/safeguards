@@ -2,13 +2,14 @@
 
 from datetime import datetime, timedelta
 from decimal import Decimal
+
 import pytest
 
 from safeguards.base.budget import BudgetPeriod
 from safeguards.budget.token_tracker import TokenTracker, TokenUsage
 
 
-@pytest.fixture
+@pytest.fixture()
 def token_tracker():
     """Create a token tracker instance for testing."""
     model_costs = {

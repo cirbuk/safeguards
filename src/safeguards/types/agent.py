@@ -1,13 +1,13 @@
 """Base Agent interface for agent safety module."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class Agent(ABC):
     """Base interface for agents that can be monitored by safety controllers."""
 
-    def __init__(self, name: str, instructions: Optional[str] = None):
+    def __init__(self, name: str, instructions: str | None = None):
         """Initialize the agent.
 
         Args:
@@ -18,7 +18,7 @@ class Agent(ABC):
         self.instructions = instructions or ""
 
     @abstractmethod
-    def run(self, **kwargs: Any) -> Dict[str, Any]:
+    def run(self, **kwargs: Any) -> dict[str, Any]:
         """Run the agent with the given inputs.
 
         Args:
@@ -31,5 +31,12 @@ class Agent(ABC):
 
     @property
     def id(self) -> str:
-        """Get the unique identifier for this agent."""
-        return f"{self.__class__.__name__}_{self.name}"
+        """Get the unique identifier for this agent.
+
+        By default, just use the agent's name for simplicity and compatibility
+        with tests. Subclasses can override this if needed.
+
+        Returns:
+            The agent's name as its ID
+        """
+        return self.name

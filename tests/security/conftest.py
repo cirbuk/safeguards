@@ -1,18 +1,17 @@
 """Configuration and fixtures for security tests."""
 
 import pytest
-from typing import Dict, Set
 
-from safeguards.rules.base import RuleContext, RulePriority
+from safeguards.rules.base import RuleContext
 from safeguards.rules.defaults import (
     PermissionGuardrail,
-    SecurityContextRule,
     RateLimitRule,
+    SecurityContextRule,
 )
 
 
-@pytest.fixture
-def test_roles() -> Dict[str, Set[str]]:
+@pytest.fixture()
+def test_roles() -> dict[str, set[str]]:
     """Common role definitions for testing."""
     return {
         "admin": {
@@ -40,13 +39,13 @@ def test_roles() -> Dict[str, Set[str]]:
     }
 
 
-@pytest.fixture
-def test_environments() -> Set[str]:
+@pytest.fixture()
+def test_environments() -> set[str]:
     """Common environment definitions for testing."""
     return {"prod", "staging", "dev", "test"}
 
 
-@pytest.fixture
+@pytest.fixture()
 def security_rule_chain(test_roles, test_environments):
     """Create a chain of security rules for testing."""
     from safeguards.rules.base import RuleChain
@@ -58,7 +57,7 @@ def security_rule_chain(test_roles, test_environments):
         PermissionGuardrail(
             required_permissions={"read", "write"},
             role_permissions=test_roles,
-        )
+        ),
     )
 
     # Add security context validation
@@ -66,7 +65,7 @@ def security_rule_chain(test_roles, test_environments):
         SecurityContextRule(
             required_security_level="medium",
             allowed_environments=test_environments,
-        )
+        ),
     )
 
     # Add rate limiting
@@ -74,13 +73,13 @@ def security_rule_chain(test_roles, test_environments):
         RateLimitRule(
             max_requests=100,
             time_window_seconds=60,
-        )
+        ),
     )
 
     return chain
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_context_factory():
     """Factory for creating test contexts with different security settings."""
 

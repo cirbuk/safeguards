@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Protocol
+from typing import Protocol
 
 
 @dataclass
@@ -20,7 +20,7 @@ class ResourceMetrics:
 
     def __init__(
         self,
-        timestamp: datetime = None,
+        timestamp: datetime | None = None,
         cpu_percent: float = 0.0,
         memory_percent: float = 0.0,
         disk_percent: float = 0.0,
@@ -28,18 +28,18 @@ class ResourceMetrics:
         process_count: int = 0,
         open_files: int = 0,
         # Backward compatibility parameters
-        cpu_usage: float = None,
-        memory_usage: float = None,
-        disk_usage: float = None,
-        network_usage: float = None,
-        memory_used: Optional[int] = None,
-        memory_total: Optional[int] = None,
-        disk_used: Optional[int] = None,
-        disk_total: Optional[int] = None,
-        network_sent: Optional[int] = None,
-        network_received: Optional[int] = None,
-        network_speed: Optional[float] = None,
-        last_updated: datetime = None,
+        cpu_usage: float | None = None,
+        memory_usage: float | None = None,
+        disk_usage: float | None = None,
+        network_usage: float | None = None,
+        memory_used: int | None = None,
+        memory_total: int | None = None,
+        disk_used: int | None = None,
+        disk_total: int | None = None,
+        network_sent: int | None = None,
+        network_received: int | None = None,
+        network_speed: float | None = None,
+        last_updated: datetime | None = None,
     ):
         """Initialize resource metrics with support for backward compatibility.
 
@@ -68,9 +68,7 @@ class ResourceMetrics:
         """
         self.timestamp = timestamp or datetime.now()
         self.cpu_percent = cpu_usage if cpu_usage is not None else cpu_percent
-        self.memory_percent = (
-            memory_usage if memory_usage is not None else memory_percent
-        )
+        self.memory_percent = memory_usage if memory_usage is not None else memory_percent
         self.disk_percent = disk_usage if disk_usage is not None else disk_percent
         self.network_mbps = network_speed if network_speed is not None else network_mbps
         self.process_count = process_count
@@ -95,17 +93,21 @@ class ResourceMetrics:
 
     def __post_init__(self):
         """Validate metrics are within valid ranges."""
-        for field in ["cpu_percent", "memory_percent", "disk_percent"]:
-            value = getattr(self, field)
+        for field_name in ["cpu_percent", "memory_percent", "disk_percent"]:
+            value = getattr(self, field_name)
             if not 0 <= value <= 100:
-                raise ValueError(f"{field} must be between 0 and 100")
+                msg = f"{field_name} must be between 0 and 100"
+                raise ValueError(msg)
 
         if self.network_mbps < 0:
-            raise ValueError("network_mbps must be non-negative")
+            msg = "network_mbps must be non-negative"
+            raise ValueError(msg)
         if self.process_count < 0:
-            raise ValueError("process_count must be non-negative")
+            msg = "process_count must be non-negative"
+            raise ValueError(msg)
         if self.open_files < 0:
-            raise ValueError("open_files must be non-negative")
+            msg = "open_files must be non-negative"
+            raise ValueError(msg)
 
 
 @dataclass
@@ -121,17 +123,21 @@ class ResourceThresholds:
 
     def __post_init__(self):
         """Validate thresholds are within valid ranges."""
-        for field in ["cpu_percent", "memory_percent", "disk_percent"]:
-            value = getattr(self, field)
+        for field_name in ["cpu_percent", "memory_percent", "disk_percent"]:
+            value = getattr(self, field_name)
             if not 0 <= value <= 100:
-                raise ValueError(f"{field} must be between 0 and 100")
+                msg = f"{field_name} must be between 0 and 100"
+                raise ValueError(msg)
 
         if self.network_mbps < 0:
-            raise ValueError("network_mbps must be non-negative")
+            msg = "network_mbps must be non-negative"
+            raise ValueError(msg)
         if self.process_count < 0:
-            raise ValueError("process_count must be non-negative")
+            msg = "process_count must be non-negative"
+            raise ValueError(msg)
         if self.open_files < 0:
-            raise ValueError("open_files must be non-negative")
+            msg = "open_files must be non-negative"
+            raise ValueError(msg)
 
 
 class MetricsStorage(Protocol):
@@ -145,7 +151,7 @@ class MetricsStorage(Protocol):
         self,
         start_time: datetime,
         end_time: datetime,
-    ) -> List[ResourceMetrics]:
+    ) -> list[ResourceMetrics]:
         """Retrieve metrics for a time range."""
         ...
 
@@ -159,9 +165,9 @@ class ResourceMonitor(ABC):
 
     def __init__(
         self,
-        thresholds: Optional[ResourceThresholds] = None,
+        thresholds: ResourceThresholds | None = None,
         history_retention_days: int = 7,
-        metrics_storage: Optional[MetricsStorage] = None,
+        metrics_storage: MetricsStorage | None = None,
     ):
         """Initialize resource monitor.
 
@@ -184,7 +190,7 @@ class ResourceMonitor(ABC):
         ...
 
     @abstractmethod
-    def check_thresholds(self, metrics: ResourceMetrics) -> Dict[str, bool]:
+    def check_thresholds(self, metrics: ResourceMetrics) -> dict[str, bool]:
         """Check if metrics exceed thresholds.
 
         Args:
@@ -204,7 +210,7 @@ class ResourceMonitor(ABC):
         self,
         start_time: datetime,
         end_time: datetime,
-    ) -> List[ResourceMetrics]:
+    ) -> list[ResourceMetrics]:
         """Get historical metrics for time range.
 
         Args:
@@ -218,13 +224,12 @@ class ResourceMonitor(ABC):
             RuntimeError if no metrics storage configured
         """
         if not self.metrics_storage:
-            raise RuntimeError("No metrics storage configured")
+            msg = "No metrics storage configured"
+            raise RuntimeError(msg)
         return self.metrics_storage.get_metrics(start_time, end_time)
 
     def cleanup_old_metrics(self) -> None:
         """Clean up metrics older than retention period."""
         if self.metrics_storage:
-            cutoff = datetime.now().timestamp() - (
-                self.history_retention_days * 24 * 60 * 60
-            )
+            cutoff = datetime.now().timestamp() - (self.history_retention_days * 24 * 60 * 60)
             self.metrics_storage.cleanup_old_metrics(datetime.fromtimestamp(cutoff))

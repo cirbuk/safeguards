@@ -1,17 +1,16 @@
 """Tests for notification manager."""
 
-from datetime import datetime
-import pytest
 from unittest.mock import patch
 
+import pytest
+
 from safeguards.notifications.manager import (
-    NotificationManager,
     NotificationLevel,
-    Notification,
+    NotificationManager,
 )
 
 
-@pytest.fixture
+@pytest.fixture()
 def notification_manager() -> NotificationManager:
     """Create a notification manager instance."""
     return NotificationManager()
@@ -38,7 +37,8 @@ def test_get_notifications_all(notification_manager: NotificationManager):
     """Test getting all notifications."""
     notification_manager.notify(level=NotificationLevel.INFO, message="Info message")
     notification_manager.notify(
-        level=NotificationLevel.WARNING, message="Warning message"
+        level=NotificationLevel.WARNING,
+        message="Warning message",
     )
     notification_manager.notify(level=NotificationLevel.ERROR, message="Error message")
 
@@ -50,12 +50,13 @@ def test_get_notifications_filtered_by_level(notification_manager: NotificationM
     """Test getting notifications filtered by level."""
     notification_manager.notify(level=NotificationLevel.INFO, message="Info message")
     notification_manager.notify(
-        level=NotificationLevel.WARNING, message="Warning message"
+        level=NotificationLevel.WARNING,
+        message="Warning message",
     )
     notification_manager.notify(level=NotificationLevel.ERROR, message="Error message")
 
     notifications = notification_manager.get_notifications(
-        level=NotificationLevel.WARNING
+        level=NotificationLevel.WARNING,
     )
     assert len(notifications) == 1
     assert notifications[0].message == "Warning message"
@@ -83,7 +84,8 @@ def test_clear_notifications_all(notification_manager: NotificationManager):
     """Test clearing all notifications."""
     notification_manager.notify(level=NotificationLevel.INFO, message="Info message")
     notification_manager.notify(
-        level=NotificationLevel.WARNING, message="Warning message"
+        level=NotificationLevel.WARNING,
+        message="Warning message",
     )
 
     notification_manager.clear_notifications()
@@ -94,7 +96,8 @@ def test_clear_notifications_by_level(notification_manager: NotificationManager)
     """Test clearing notifications by level."""
     notification_manager.notify(level=NotificationLevel.INFO, message="Info message")
     notification_manager.notify(
-        level=NotificationLevel.WARNING, message="Warning message"
+        level=NotificationLevel.WARNING,
+        message="Warning message",
     )
 
     notification_manager.clear_notifications(level=NotificationLevel.INFO)
@@ -131,7 +134,8 @@ def test_notification_handlers(mock_print, notification_manager: NotificationMan
 
     # Test WARNING handler
     notification_manager.notify(
-        level=NotificationLevel.WARNING, message="Warning message"
+        level=NotificationLevel.WARNING,
+        message="Warning message",
     )
     mock_print.assert_called_with("WARNING: Warning message")
 
@@ -141,6 +145,7 @@ def test_notification_handlers(mock_print, notification_manager: NotificationMan
 
     # Test CRITICAL handler
     notification_manager.notify(
-        level=NotificationLevel.CRITICAL, message="Critical message"
+        level=NotificationLevel.CRITICAL,
+        message="Critical message",
     )
     mock_print.assert_called_with("CRITICAL: Critical message")

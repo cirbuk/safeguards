@@ -1,22 +1,20 @@
 """Integration tests for budget monitoring functionality."""
 
-import pytest
-from decimal import Decimal
-from datetime import datetime, timedelta
-from typing import Dict, List, Any
-import asyncio
 import concurrent.futures
+from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import Any
 
+import pytest
+
+from safeguards.core.alert_types import AlertSeverity
 from safeguards.core.budget_coordination import (
     BudgetCoordinator,
-    TransferType,
-    TransferStatus,
 )
 from safeguards.core.notification_manager import NotificationManager
 from safeguards.monitoring.metrics import MetricsAnalyzer
-from safeguards.core.alert_types import AlertSeverity
-from safeguards.types import Agent
 from safeguards.monitoring.violation_reporter import ViolationReporter
+from safeguards.types import Agent
 
 
 class TestAgent(Agent):
@@ -27,7 +25,7 @@ class TestAgent(Agent):
         super().__init__(name=name)
         self._usage = Decimal("0")
 
-    def run(self, **kwargs: Any) -> Dict[str, Any]:
+    def run(self, **kwargs: Any) -> dict[str, Any]:
         """Mock run method."""
         return {"cost": Decimal("10")}
 
@@ -41,31 +39,34 @@ class TestAgent(Agent):
         return self._usage
 
 
-@pytest.fixture
+@pytest.fixture()
 def notification_manager():
     """Create notification manager fixture."""
     return NotificationManager()
 
 
-@pytest.fixture
+@pytest.fixture()
 def violation_reporter(notification_manager):
     """Create violation reporter fixture."""
     return ViolationReporter(notification_manager=notification_manager)
 
 
-@pytest.fixture
+@pytest.fixture()
 def metrics_analyzer():
     """Create metrics analyzer fixture."""
     return MetricsAnalyzer()
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_data_generator():
     """Create a test data generator."""
 
     class TestDataGenerator:
         def create_test_agent(
-            self, name: str, initial_budget: Decimal, priority: int
+            self,
+            name: str,
+            initial_budget: Decimal,
+            priority: int,
         ) -> TestAgent:
             """Create a test agent."""
             return TestAgent(name=name)
@@ -73,21 +74,22 @@ def test_data_generator():
     return TestDataGenerator()
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_agent():
     """Create a test agent."""
     return TestAgent(name="test_agent")
 
 
-@pytest.fixture
+@pytest.fixture()
 def budget_coordinator(notification_manager):
     """Create a budget coordinator."""
     return BudgetCoordinator(
-        notification_manager=notification_manager, initial_pool_budget=Decimal("1000.0")
+        notification_manager=notification_manager,
+        initial_pool_budget=Decimal("1000.0"),
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def registered_agent(budget_coordinator, test_agent):
     """Register test agent with coordinator."""
     return budget_coordinator.register_agent(
@@ -98,14 +100,14 @@ def registered_agent(budget_coordinator, test_agent):
     )
 
 
-@pytest.fixture
-def test_agents(budget_coordinator) -> List[Agent]:
+@pytest.fixture()
+def test_agents(budget_coordinator) -> list[Agent]:
     """Create test agents with different priorities."""
     agents = []
     priorities = [1, 5, 10]  # Low, Medium, High
     initial_budgets = [Decimal("100"), Decimal("200"), Decimal("300")]
 
-    for i, (priority, budget) in enumerate(zip(priorities, initial_budgets)):
+    for i, (priority, budget) in enumerate(zip(priorities, initial_budgets, strict=False)):
         agent = TestAgent(name=f"test_agent_{i}")
         budget_coordinator.register_agent(
             name=agent.name,
@@ -183,7 +185,10 @@ class TestBudgetMonitoring:
         assert abs(system_metrics["error_rate"] - expected_error_rate) < 0.001
 
     def test_budget_threshold_alerts(
-        self, budget_coordinator, notification_manager, test_agents
+        self,
+        budget_coordinator,
+        notification_manager,
+        test_agents,
     ):
         """Test budget threshold alerts."""
         agent = test_agents[0]
@@ -197,8 +202,7 @@ class TestBudgetMonitoring:
         # Check for warning alert
         alerts = notification_manager.get_alerts(agent.id)
         assert any(
-            alert.severity == AlertSeverity.WARNING
-            and "High Budget Usage" in alert.title
+            alert.severity == AlertSeverity.WARNING and "High Budget Usage" in alert.title
             for alert in alerts
         )
 
@@ -207,7 +211,10 @@ class TestBudgetMonitoring:
         agent = TestAgent("test_agent")
         initial_budget = Decimal("1000.0")
         budget_coordinator.register_agent(
-            name=agent.name, initial_budget=initial_budget, priority=5, agent=agent
+            name=agent.name,
+            initial_budget=initial_budget,
+            priority=5,
+            agent=agent,
         )
 
         num_updates = 10
@@ -217,7 +224,8 @@ class TestBudgetMonitoring:
         def update_budget():
             current_budget = budget_coordinator.get_agent_budget(agent.id)
             budget_coordinator.update_agent_budget(
-                agent.id, current_budget - update_amount
+                agent.id,
+                current_budget - update_amount,
             )
 
         # Execute budget updates concurrently
@@ -230,7 +238,10 @@ class TestBudgetMonitoring:
         assert final_budget == expected_final_budget
 
     def test_budget_utilization_tracking(
-        self, budget_coordinator, metrics_analyzer, test_agents
+        self,
+        budget_coordinator,
+        metrics_analyzer,
+        test_agents,
     ):
         """Test budget utilization tracking over time."""
         agent = test_agents[0]
@@ -247,7 +258,7 @@ class TestBudgetMonitoring:
             (Decimal("90"), 10, 2),
         ]
 
-        for (used, actions, errors), timestamp in zip(utilization_data, timestamps):
+        for (used, actions, errors), timestamp in zip(utilization_data, timestamps, strict=False):
             metrics_analyzer.record_metrics(
                 agent.id,
                 {
@@ -266,16 +277,21 @@ class TestBudgetMonitoring:
         assert agent_metrics["error_count"] == 2
 
     def test_emergency_budget_allocation(
-        self, budget_coordinator, metrics_analyzer, notification_manager, test_agents
+        self,
+        budget_coordinator,
+        metrics_analyzer,
+        notification_manager,
+        test_agents,
     ):
         """Test emergency budget allocation and monitoring."""
         high_priority_agent = test_agents[2]  # Agent with highest priority
         emergency_amount = Decimal("150")
 
         # For testing, manually add an emergency alert
-        from safeguards.types import SafetyAlert
-        from safeguards.core.alert_types import AlertSeverity
         from datetime import datetime
+
+        from safeguards.core.alert_types import AlertSeverity
+        from safeguards.types import SafetyAlert
 
         notification_manager.create_alert(
             SafetyAlert(
@@ -284,13 +300,14 @@ class TestBudgetMonitoring:
                 severity=AlertSeverity.WARNING,
                 timestamp=datetime.now(),
                 metadata={"agent_id": high_priority_agent.id},
-            )
+            ),
         )
 
         # Request emergency allocation
         try:
             budget_coordinator.handle_emergency_allocation(
-                high_priority_agent.id, emergency_amount
+                high_priority_agent.id,
+                emergency_amount,
             )
 
             # Verify allocation
@@ -311,8 +328,7 @@ class TestBudgetMonitoring:
             # Verify alert
             alerts = notification_manager.get_alerts(high_priority_agent.id)
             assert any(
-                alert.severity == AlertSeverity.WARNING
-                and "Emergency Allocation" in alert.title
+                alert.severity == AlertSeverity.WARNING and "Emergency Allocation" in alert.title
                 for alert in alerts
             )
 
@@ -360,7 +376,8 @@ class TestBudgetMonitoring:
         current_budget = budget_coordinator.get_agent_budget(registered_agent.id)
         used_amount = Decimal("10.0")
         budget_coordinator.update_agent_budget(
-            registered_agent.id, current_budget - used_amount
+            registered_agent.id,
+            current_budget - used_amount,
         )
 
         # Get metrics
@@ -397,7 +414,9 @@ class TestBudgetMonitoring:
 
         # Test registering without providing agent
         new_agent = budget_coordinator.register_agent(
-            name="new_agent", initial_budget=Decimal("100.0"), priority=1
+            name="new_agent",
+            initial_budget=Decimal("100.0"),
+            priority=1,
         )
         assert isinstance(new_agent, Agent)
         assert new_agent.name == "new_agent"
@@ -407,19 +426,25 @@ class TestBudgetMonitoring:
         # Test registering with negative budget
         with pytest.raises(ValueError, match="Initial budget must be positive"):
             budget_coordinator.register_agent(
-                name="test_agent", initial_budget=Decimal("-100.0"), priority=1
+                name="test_agent",
+                initial_budget=Decimal("-100.0"),
+                priority=1,
             )
 
         # Test registering with zero budget
         with pytest.raises(ValueError, match="Initial budget must be positive"):
             budget_coordinator.register_agent(
-                name="test_agent", initial_budget=Decimal("0.0"), priority=1
+                name="test_agent",
+                initial_budget=Decimal("0.0"),
+                priority=1,
             )
 
         # Test registering with invalid priority
         with pytest.raises(ValueError, match="Priority must be between 1 and 10"):
             budget_coordinator.register_agent(
-                name="test_agent", initial_budget=Decimal("100.0"), priority=11
+                name="test_agent",
+                initial_budget=Decimal("100.0"),
+                priority=11,
             )
 
     def test_get_agent_metrics(self, budget_coordinator):
@@ -428,7 +453,10 @@ class TestBudgetMonitoring:
         agent = TestAgent("test_agent")
         initial_budget = Decimal("100.0")
         budget_coordinator.register_agent(
-            name=agent.name, initial_budget=initial_budget, priority=5, agent=agent
+            name=agent.name,
+            initial_budget=initial_budget,
+            priority=5,
+            agent=agent,
         )
 
         # Update the budget to simulate usage

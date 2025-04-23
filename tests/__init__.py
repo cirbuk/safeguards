@@ -1,1 +1,1 @@
-"""Tests for the agent safety framework."""
+"""Tests package."""

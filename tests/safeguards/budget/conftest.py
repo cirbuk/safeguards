@@ -1,6 +1,7 @@
 """Pytest configuration and shared fixtures."""
 
 from decimal import Decimal
+
 import pytest
 
 from safeguards.base.budget import BudgetPeriod
@@ -8,7 +9,7 @@ from safeguards.budget.api_tracker import APITracker
 from safeguards.budget.token_tracker import TokenTracker
 
 
-@pytest.fixture
+@pytest.fixture()
 def model_costs():
     """Common model costs for testing."""
     return {
@@ -23,7 +24,7 @@ def model_costs():
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def api_costs():
     """Common API costs for testing."""
     return {
@@ -33,7 +34,7 @@ def api_costs():
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def token_tracker(model_costs):
     """Shared token tracker instance."""
     return TokenTracker(
@@ -44,7 +45,7 @@ def token_tracker(model_costs):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def api_tracker(api_costs):
     """Shared API tracker instance."""
     return APITracker(

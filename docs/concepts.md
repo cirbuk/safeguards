@@ -19,6 +19,7 @@ The Safeguards is built around several key concepts:
 An agent in this framework represents an autonomous entity that performs tasks and consumes resources. The `Agent` class is the base abstraction for all agent implementations.
 
 Key characteristics of agents:
+
 - **Identity**: Each agent has a unique identifier
 - **Budget**: Agents consume budget when performing actions
 - **Priority**: Agents can have different priority levels (1-10)
@@ -31,6 +32,7 @@ Agents are registered with the system and their resource usage is tracked throug
 Budgets represent the resources available to agents. These are typically numerical values (e.g., tokens, API calls, compute time) that are consumed when agents perform actions.
 
 Key characteristics of budgets:
+
 - **Initial Allocation**: Starting amount of resources
 - **Usage Tracking**: System tracks consumption over time
 - **Limits**: Configurable thresholds (hourly, daily, total)
@@ -41,6 +43,7 @@ Key characteristics of budgets:
 Budget pools are containers that hold shared resources that can be distributed among multiple agents. Pools allow for more efficient resource allocation and sharing.
 
 Key characteristics of pools:
+
 - **Total Budget**: Overall resources available in the pool
 - **Allocated Budget**: Resources currently assigned to agents
 - **Priority**: Pools have priority levels for resource contention
@@ -51,6 +54,7 @@ Key characteristics of pools:
 Budget coordination is the process of managing resource allocation, transfers, and rebalancing across agents and pools.
 
 Key capabilities:
+
 - **Registration**: Adding agents and pools to the system
 - **Transfer**: Moving resources between agents or pools
 - **Allocation**: Distributing resources based on priorities
@@ -62,6 +66,7 @@ Key capabilities:
 Monitoring involves tracking system metrics, agent behavior, and resource usage to ensure safe operation.
 
 Key monitoring aspects:
+
 - **Resource Metrics**: CPU, memory, disk usage
 - **Agent Metrics**: Budget usage, action counts, latency
 - **System Metrics**: Overall usage, error rates, health status
@@ -72,6 +77,7 @@ Key monitoring aspects:
 Guardrails are protective mechanisms that prevent unsafe operations. They typically implement validation logic that runs before agent actions.
 
 Types of guardrails:
+
 - **Budget Guardrails**: Prevent budget overruns
 - **Resource Guardrails**: Prevent excessive resource consumption
 - **Permission Guardrails**: Enforce access controls
@@ -83,6 +89,7 @@ Types of guardrails:
 The notification system provides visibility into system events, warnings, and errors.
 
 Key elements:
+
 - **Alert Levels**: Different severity levels (INFO, WARNING, ERROR, CRITICAL)
 - **Channels**: Different notification methods (console, email, webhook)
 - **Targeting**: Specific notifications for specific components or agents
@@ -93,6 +100,7 @@ Key elements:
 The framework uses API contracts to define consistent interfaces across different versions.
 
 Key API categories:
+
 - **Agent API**: For agent management
 - **Budget API**: For budget operations
 - **Metrics API**: For monitoring and metrics
@@ -104,6 +112,7 @@ Key API categories:
 The framework uses a transaction system to ensure operations that span multiple resources remain consistent.
 
 Key aspects:
+
 - **Atomicity**: Operations succeed completely or fail completely
 - **Consistency**: System remains in a valid state
 - **Isolation**: Concurrent operations don't interfere
@@ -114,6 +123,7 @@ Key aspects:
 Priority determines the importance of agents, pools, and operations, influencing resource allocation.
 
 Priority levels range from 1-10:
+
 - **1-2**: Low priority (background tasks)
 - **3-5**: Normal priority (standard operations)
 - **6-8**: High priority (important services)

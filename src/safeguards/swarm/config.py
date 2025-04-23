@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Dict, List, Optional, Type
 
 from agents.guardrails import Guardrail
 
@@ -37,4 +36,4 @@ class SwarmConfig(SafetyConfig):
     enable_load_balancing: bool = True
 
     # Additional guardrails
-    custom_guardrails: List[Type[Guardrail]] = field(default_factory=list)
+    custom_guardrails: list[type[Guardrail]] = field(default_factory=list)

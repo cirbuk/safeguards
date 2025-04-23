@@ -7,15 +7,13 @@ Please refer to pyproject.toml for the current build configuration.
 # This file is kept for backward compatibility
 # All configuration has been moved to pyproject.toml
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
-with open("README.md", "r", encoding="utf-8") as fh:
+with open("README.md", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open("requirements.txt", "r", encoding="utf-8") as fh:
-    requirements = [
-        line.strip() for line in fh if line.strip() and not line.startswith("#")
-    ]
+with open("requirements.txt", encoding="utf-8") as fh:
+    requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
 
 setup(
     name="agent-safeguards",
@@ -26,7 +24,19 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/cirbuk/agent-safeguards",
-    packages=find_packages(where="src"),
+    packages=find_packages(
+        where="src",
+        exclude=[
+            "*.tests",
+            "*.tests.*",
+            "tests.*",
+            "tests",
+            "*.testing",
+            "*.testing.*",
+            "testing.*",
+            "testing",
+        ],
+    ),
     package_dir={"": "src"},
     classifiers=[
         "Development Status :: 4 - Beta",

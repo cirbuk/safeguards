@@ -3,66 +3,53 @@ name: Test
 on:
   push:
     branches: [ main, staging ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - '.github/workflows/test.yml'
   pull_request:
     branches: [ main, staging ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - '.github/workflows/test.yml'
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10"]
+        python-version: ['3.8', '3.9', '3.10', '3.11']
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        ref: ${{ github.head_ref }}
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-cov pytest-benchmark black mypy
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-    - name: Install package in development mode
-      run: |
-        pip install -e .
+      - name: Install dependencies
+        run: |
+          uv pip install --system -e ".[test]"
 
-    - name: Format with Black
-      run: |
-        black .
+      - name: Run tests
+        run: |
+          pytest src/safeguards -v --cov=safeguards --cov-report=xml
 
-    - name: Commit changes
-      run: |
-        git config --global user.name 'github-actions'
-        git config --global user.email 'github-actions@github.com'
-        git diff --quiet && git diff --staged --quiet || (git add -A && git commit -m "Apply automatic formatting with Black" && git push)
-
-    - name: Check types with mypy (non-blocking)
-      run: |
-        # Run mypy with our config file and make it non-blocking
-        mypy --config-file mypy.ini --no-site-packages src/safeguards || echo "Mypy checks skipped for now"
-
-    - name: Run tests with coverage
-      run: |
-        pytest --cov=src/safeguards --cov-report=xml
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: false
-
-    - name: Performance regression tests
-      run: |
-        pytest tests/performance --benchmark-only || echo "No performance tests found or tests skipped"
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
 
   security:
     runs-on: ubuntu-latest

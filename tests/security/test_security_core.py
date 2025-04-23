@@ -1,7 +1,5 @@
 """Tests for the security module."""
 
-import pytest
-
 from safeguards.base.security import (
     Permission,
     Role,
@@ -36,7 +34,9 @@ def test_security_context_creation():
     """Test SecurityContext model creation."""
     role = Role(name="test_role", permissions=[Permission.READ])
     context = SecurityContext(
-        agent_id="test_agent", roles=[role], metadata={"key": "value"}
+        agent_id="test_agent",
+        roles=[role],
+        metadata={"key": "value"},
     )
     assert context.agent_id == "test_agent"
     assert len(context.roles) == 1
@@ -59,11 +59,5 @@ def test_security_validator():
     assert validator.validate_output(None, context) is False
 
     # Test resource access validation
-    assert (
-        validator.validate_resource_access("test_resource", Permission.READ, context)
-        is True
-    )
-    assert (
-        validator.validate_resource_access("test_resource", Permission.WRITE, context)
-        is False
-    )
+    assert validator.validate_resource_access("test_resource", Permission.READ, context) is True
+    assert validator.validate_resource_access("test_resource", Permission.WRITE, context) is False

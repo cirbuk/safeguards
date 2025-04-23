@@ -3,7 +3,6 @@
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, List, Optional
 
 from ..base.budget import BudgetPeriod
 
@@ -15,9 +14,9 @@ class APIUsage:
     endpoint: str
     timestamp: datetime
     cost: Decimal
-    data_transfer_mb: Optional[float] = None
-    status_code: Optional[int] = None
-    error: Optional[str] = None
+    data_transfer_mb: float | None = None
+    status_code: int | None = None
+    error: str | None = None
 
 
 class APITracker:
@@ -25,11 +24,11 @@ class APITracker:
 
     def __init__(
         self,
-        api_costs: Dict[str, Decimal],  # endpoint -> cost per call
-        call_budget: Optional[int] = None,
-        cost_budget: Optional[Decimal] = None,
+        api_costs: dict[str, Decimal],  # endpoint -> cost per call
+        call_budget: int | None = None,
+        cost_budget: Decimal | None = None,
         period: BudgetPeriod = BudgetPeriod.DAILY,
-        data_transfer_cost_per_gb: Optional[Decimal] = None,
+        data_transfer_cost_per_gb: Decimal | None = None,
     ):
         """Initialize API tracker.
 
@@ -45,17 +44,17 @@ class APITracker:
         self.cost_budget = cost_budget
         self.period = period
         self.data_transfer_cost_per_gb = data_transfer_cost_per_gb
-        self.usage_history: List[APIUsage] = []
+        self.usage_history: list[APIUsage] = []
         self._total_calls = 0
         self._total_cost = Decimal("0")
 
     def record_usage(
         self,
         endpoint: str,
-        timestamp: Optional[datetime] = None,
-        data_transfer_mb: Optional[float] = None,
-        status_code: Optional[int] = None,
-        error: Optional[str] = None,
+        timestamp: datetime | None = None,
+        data_transfer_mb: float | None = None,
+        status_code: int | None = None,
+        error: str | None = None,
     ) -> APIUsage:
         """Record an API call.
 
@@ -73,7 +72,8 @@ class APITracker:
             ValueError: If endpoint is not recognized
         """
         if endpoint not in self.api_costs:
-            raise ValueError(f"Unknown API endpoint: {endpoint}")
+            msg = f"Unknown API endpoint: {endpoint}"
+            raise ValueError(msg)
 
         timestamp = timestamp or datetime.now()
 
@@ -108,7 +108,7 @@ class APITracker:
         self,
         start_time: datetime,
         end_time: datetime,
-    ) -> List[APIUsage]:
+    ) -> list[APIUsage]:
         """Get API usage records for a specific time period.
 
         Args:
@@ -118,13 +118,9 @@ class APITracker:
         Returns:
             List of API usage records in the period
         """
-        return [
-            usage
-            for usage in self.usage_history
-            if start_time <= usage.timestamp <= end_time
-        ]
+        return [usage for usage in self.usage_history if start_time <= usage.timestamp <= end_time]
 
-    def get_total_calls(self, endpoint: Optional[str] = None) -> int:
+    def get_total_calls(self, endpoint: str | None = None) -> int:
         """Get total number of API calls.
 
         Args:
@@ -137,7 +133,7 @@ class APITracker:
             return sum(1 for usage in self.usage_history if usage.endpoint == endpoint)
         return self._total_calls
 
-    def get_total_cost(self, endpoint: Optional[str] = None) -> Decimal:
+    def get_total_cost(self, endpoint: str | None = None) -> Decimal:
         """Get total cost of API usage.
 
         Args:
@@ -147,15 +143,13 @@ class APITracker:
             Total cost in decimal
         """
         if endpoint:
-            return sum(
-                usage.cost for usage in self.usage_history if usage.endpoint == endpoint
-            )
+            return sum(usage.cost for usage in self.usage_history if usage.endpoint == endpoint)
         return self._total_cost
 
     def check_budget_available(
         self,
         endpoint: str,
-        data_transfer_mb: Optional[float] = None,
+        data_transfer_mb: float | None = None,
     ) -> bool:
         """Check if call/cost budget is available.
 
@@ -174,28 +168,23 @@ class APITracker:
         if self.cost_budget:
             new_cost = self.api_costs[endpoint]
             if data_transfer_mb and self.data_transfer_cost_per_gb:
-                new_cost += (
-                    Decimal(str(data_transfer_mb / 1024))
-                    * self.data_transfer_cost_per_gb
-                )
+                new_cost += Decimal(str(data_transfer_mb / 1024)) * self.data_transfer_cost_per_gb
             if self._total_cost + new_cost > self.cost_budget:
                 return False
 
         return True
 
-    def get_usage_stats(self) -> Dict[str, Dict[str, int]]:
+    def get_usage_stats(self) -> dict[str, dict[str, int]]:
         """Get usage statistics broken down by endpoint.
 
         Returns:
             Dict mapping endpoints to their usage stats
         """
         stats = {}
-        for endpoint in self.api_costs.keys():
+        for endpoint in self.api_costs:
             endpoint_usage = [u for u in self.usage_history if u.endpoint == endpoint]
             successful_calls = sum(
-                1
-                for u in endpoint_usage
-                if u.status_code and 200 <= u.status_code < 300
+                1 for u in endpoint_usage if u.status_code and 200 <= u.status_code < 300
             )
             failed_calls = sum(
                 1
@@ -207,13 +196,11 @@ class APITracker:
                 "total_calls": len(endpoint_usage),
                 "successful_calls": successful_calls,
                 "failed_calls": failed_calls,
-                "data_transfer_mb": sum(
-                    u.data_transfer_mb or 0 for u in endpoint_usage
-                ),
+                "data_transfer_mb": sum(u.data_transfer_mb or 0 for u in endpoint_usage),
             }
         return stats
 
-    def get_error_stats(self) -> Dict[str, List[str]]:
+    def get_error_stats(self) -> dict[str, list[str]]:
         """Get error statistics by endpoint.
 
         Returns:

@@ -1,28 +1,30 @@
 #!/usr/bin/env python
 """Example of using safety features with a single agent."""
 
-import os
 import asyncio
 import logging
+import os
 from decimal import Decimal
 
 # Import OpenAI Agents SDK components
 from agents import Agent, Runner
 
-# Import Safeguards framework components
-from safeguards.notifications import NotificationManager, NotificationLevel
-from safeguards.violations import ViolationReporter, Violation, ViolationType
-from safeguards.core import BudgetCoordinator, BudgetPool
+from safeguards.core import BudgetCoordinator
 from safeguards.monitoring.metrics import MetricsAnalyzer
-from safeguards.types import NotificationChannel
 from safeguards.monitoring.violation_reporter import (
-    ViolationSeverity,
     ViolationContext,
+    ViolationSeverity,
 )
+
+# Import Safeguards framework components
+from safeguards.notifications import NotificationManager
+from safeguards.types import NotificationChannel
+from safeguards.violations import ViolationReporter, ViolationType
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -81,9 +83,9 @@ class SimpleAgentWrapper:
                     context=context,
                     description=f"Agent {self.name} has no remaining budget",
                 )
-                return f"Unable to process request due to budget limitations."
+                return "Unable to process request due to budget limitations."
         except Exception as e:
-            logger.error(f"Error checking budget: {str(e)}")
+            logger.error(f"Error checking budget: {e!s}")
 
         try:
             # Run the agent using Runner
@@ -113,14 +115,14 @@ class SimpleAgentWrapper:
                 metrics = self.budget_coordinator.get_agent_metrics(self.id)
                 logger.info(
                     f"Agent {self.name} used ${cost:.6f}, "
-                    f"remaining budget: ${metrics.get('remaining_budget', 0):.6f}"
+                    f"remaining budget: ${metrics.get('remaining_budget', 0):.6f}",
                 )
 
             return response_text
 
         except Exception as e:
-            logger.error(f"Error running agent: {str(e)}")
-            return f"Error: {str(e)}"
+            logger.error(f"Error running agent: {e!s}")
+            return f"Error: {e!s}"
 
     def _calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         """Calculate the cost based on token usage."""
@@ -140,7 +142,7 @@ def setup_safety_framework():
     """Set up the core components of the Safeguards framework."""
     # Create notification manager with console notifications enabled
     notification_manager = NotificationManager(
-        enabled_channels={NotificationChannel.CONSOLE}
+        enabled_channels={NotificationChannel.CONSOLE},
     )
 
     # Optional: Configure webhook if needed
@@ -150,7 +152,8 @@ def setup_safety_framework():
     slack_webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
     if slack_webhook_url:
         notification_manager.configure_slack(
-            webhook_url=slack_webhook_url, channel="#safeguards"
+            webhook_url=slack_webhook_url,
+            channel="#safeguards",
         )
 
     # Create violation reporter

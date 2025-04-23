@@ -1,19 +1,19 @@
 """Example of implementing and using safety guardrails."""
 
-from decimal import Decimal
-from typing import Dict, Any, List, Optional
 import asyncio
+import inspect
 import time
 from dataclasses import dataclass
-import inspect
+from decimal import Decimal
+from typing import Any, Optional
 
-from safeguards.types.agent import Agent
+from safeguards.budget.manager import BudgetManager as BaseManager
+from safeguards.core.notification_manager import NotificationManager
 from safeguards.guardrails.budget import BudgetGuardrail
 from safeguards.guardrails.resource import ResourceGuardrail
-from safeguards.budget.manager import BudgetManager as BaseManager
 from safeguards.monitoring.resource_monitor import ResourceMonitor
-from safeguards.core.notification_manager import NotificationManager
 from safeguards.types import BudgetConfig, ResourceThresholds
+from safeguards.types.agent import Agent
 
 
 # Create a customized BudgetManager that's compatible with our example
@@ -62,7 +62,7 @@ class ExampleAgent(Agent):
         self.cost_per_action = cost_per_action
         self.action_count = 0
 
-    def run(self, **kwargs: Any) -> Dict[str, Any]:
+    def run(self, **kwargs: Any) -> dict[str, Any]:
         """Run the agent with the given input."""
         # Simulate agent work
         self.action_count += 1
@@ -84,17 +84,19 @@ class ValidationResult:
 
     is_valid: bool
     message: str
-    details: Dict[str, Any] = None
+    details: dict[str, Any] = None
 
 
 class ContentGuardrail:
     """Example custom guardrail that checks content safety."""
 
-    def __init__(self, forbidden_words: List[str]):
+    def __init__(self, forbidden_words: list[str]):
         self.forbidden_words = [word.lower() for word in forbidden_words]
 
     def validate_input(
-        self, input_text: Optional[str] = None, **kwargs
+        self,
+        input_text: Optional[str] = None,
+        **kwargs,
     ) -> ValidationResult:
         """Validate that input doesn't contain forbidden words."""
         if not input_text:
@@ -102,7 +104,9 @@ class ContentGuardrail:
 
         if not input_text:
             return ValidationResult(
-                is_valid=True, message="No input text to validate", details={}
+                is_valid=True,
+                message="No input text to validate",
+                details={},
             )
 
         lower_input = input_text.lower()
@@ -121,7 +125,9 @@ class ContentGuardrail:
             )
 
         return ValidationResult(
-            is_valid=True, message="Input content is safe", details={}
+            is_valid=True,
+            message="Input content is safe",
+            details={},
         )
 
     async def run(self, context) -> Optional[str]:
@@ -175,7 +181,7 @@ class ContentGuardrail:
 class CompositeGuardrail:
     """Combines multiple guardrails into one."""
 
-    def __init__(self, guardrails: List[Any]):
+    def __init__(self, guardrails: list[Any]):
         self.guardrails = guardrails
 
     async def run(self, fn, **kwargs):
@@ -202,12 +208,9 @@ class CompositeGuardrail:
             # For custom guardrails with only validate_input method (not framework-compatible)
             if hasattr(guardrail, "validate_input") and not hasattr(guardrail, "run"):
                 validation_result = guardrail.validate_input(**kwargs)
-                if (
-                    hasattr(validation_result, "is_valid")
-                    and not validation_result.is_valid
-                ):
+                if hasattr(validation_result, "is_valid") and not validation_result.is_valid:
                     raise ValueError(
-                        f"Guardrail violation: {validation_result.message}"
+                        f"Guardrail violation: {validation_result.message}",
                     )
 
             # For framework-compatible guardrails
@@ -262,7 +265,7 @@ async def main():
 
     # Create content guardrail
     content_guardrail = ContentGuardrail(
-        forbidden_words=["dangerous", "harmful", "illegal"]
+        forbidden_words=["dangerous", "harmful", "illegal"],
     )
 
     # Create budget guardrail
@@ -273,14 +276,16 @@ async def main():
 
     # Create composite guardrail
     composite_guardrail = CompositeGuardrail(
-        [content_guardrail, budget_guardrail, resource_guardrail]
+        [content_guardrail, budget_guardrail, resource_guardrail],
     )
 
     # Test valid input
     try:
         print("\nTest 1: Valid input")
         result = await composite_guardrail.run(
-            agent.run, agent=agent, input="Process this normal text safely"
+            agent.run,
+            agent=agent,
+            input="Process this normal text safely",
         )
         print(f"Result: {result}")
 
@@ -289,18 +294,20 @@ async def main():
         print(f"Remaining budget: {budget_manager.get_remaining_budget()}")
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"Error: {e!s}")
 
     # Test content violation
     try:
         print("\nTest 2: Content violation")
         result = await composite_guardrail.run(
-            agent.run, agent=agent, input="Process this dangerous and harmful content"
+            agent.run,
+            agent=agent,
+            input="Process this dangerous and harmful content",
         )
         print(f"Result: {result}")  # Should not reach here
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"Error: {e!s}")
 
     # Test budget violation
     try:
@@ -308,17 +315,19 @@ async def main():
         # Deplete the budget
         budget_manager.record_cost(budget_manager.get_remaining_budget())
         print(
-            f"Remaining budget after depletion: {budget_manager.get_remaining_budget()}"
+            f"Remaining budget after depletion: {budget_manager.get_remaining_budget()}",
         )
 
         # This should now fail due to budget constraint
         result = await composite_guardrail.run(
-            agent.run, agent=agent, input="This should fail due to budget constraints"
+            agent.run,
+            agent=agent,
+            input="This should fail due to budget constraints",
         )
         print(f"Result: {result}")  # Should not reach here
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"Error: {e!s}")
 
     # Print a summary
     print("\n=== Guardrails Demonstration Summary ===")

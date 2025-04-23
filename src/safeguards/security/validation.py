@@ -8,11 +8,11 @@ This module provides:
 """
 
 import re
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Pattern, Set, Union
 from decimal import Decimal
+from re import Pattern
+from typing import Any
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 
 class SecurityPolicy(BaseModel):
@@ -21,13 +21,13 @@ class SecurityPolicy(BaseModel):
     # Input validation
     max_string_length: int = Field(default=10000, gt=0)
     max_number_value: float = Field(default=1e9)
-    allowed_schemes: Set[str] = Field(default={"http", "https"})
-    blocked_domains: Set[str] = Field(default=set())
+    allowed_schemes: set[str] = Field(default={"http", "https"})
+    blocked_domains: set[str] = Field(default=set())
 
     # Resource access
     max_file_size_bytes: int = Field(default=10 * 1024 * 1024)  # 10MB
-    allowed_file_types: Set[str] = Field(default={".txt", ".log", ".json", ".yaml"})
-    blocked_paths: Set[str] = Field(default={"/etc", "/var/log", "/root"})
+    allowed_file_types: set[str] = Field(default={".txt", ".log", ".json", ".yaml"})
+    blocked_paths: set[str] = Field(default={"/etc", "/var/log", "/root"})
 
     # Rate limiting
     max_requests_per_minute: int = Field(default=60, gt=0)
@@ -51,15 +51,15 @@ class InputValidator:
             "filename": re.compile(r"^[a-zA-Z0-9_.-]{1,255}$"),
             "path": re.compile(r"^[a-zA-Z0-9/_.-]{1,1024}$"),
             "url": re.compile(
-                r"^https?://[a-zA-Z0-9-.]+(:[0-9]+)?(/[a-zA-Z0-9_./-]*)?(\?[a-zA-Z0-9=&_.-]*)?$"
+                r"^https?://[a-zA-Z0-9-.]+(:[0-9]+)?(/[a-zA-Z0-9_./-]*)?(\?[a-zA-Z0-9=&_.-]*)?$",
             ),
         }
 
     def validate_string(
         self,
         value: str,
-        pattern: Optional[Union[str, Pattern]] = None,
-        max_length: Optional[int] = None,
+        pattern: str | Pattern | None = None,
+        max_length: int | None = None,
     ) -> str:
         """Validate and sanitize a string value.
 
@@ -75,31 +75,35 @@ class InputValidator:
             ValueError: If validation fails
         """
         if not isinstance(value, str):
-            raise ValueError("Value must be a string")
+            msg = "Value must be a string"
+            raise ValueError(msg)
 
         # Check length
         max_len = max_length or self.policy.max_string_length
         if len(value) > max_len:
-            raise ValueError(f"String exceeds maximum length of {max_len}")
+            msg = f"String exceeds maximum length of {max_len}"
+            raise ValueError(msg)
 
         # Apply pattern matching
         if pattern:
             if isinstance(pattern, str):
                 if pattern not in self._patterns:
-                    raise ValueError(f"Unknown pattern: {pattern}")
+                    msg = f"Unknown pattern: {pattern}"
+                    raise ValueError(msg)
                 pattern = self._patterns[pattern]
 
             if not pattern.match(value):
-                raise ValueError(f"String does not match required pattern")
+                msg = "String does not match required pattern"
+                raise ValueError(msg)
 
         return value
 
     def validate_number(
         self,
-        value: Union[int, float, Decimal],
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None,
-    ) -> Union[int, float, Decimal]:
+        value: int | float | Decimal,
+        min_value: float | None = None,
+        max_value: float | None = None,
+    ) -> int | float | Decimal:
         """Validate a numeric value.
 
         Args:
@@ -113,19 +117,22 @@ class InputValidator:
         Raises:
             ValueError: If validation fails
         """
-        if not isinstance(value, (int, float, Decimal)):
-            raise ValueError("Value must be a number")
+        if not isinstance(value, int | float | Decimal):
+            msg = "Value must be a number"
+            raise ValueError(msg)
 
         # Convert to float for comparison
         float_val = float(value)
 
         # Check bounds
         if min_value is not None and float_val < min_value:
-            raise ValueError(f"Number below minimum value of {min_value}")
+            msg = f"Number below minimum value of {min_value}"
+            raise ValueError(msg)
 
         max_val = max_value or self.policy.max_number_value
         if float_val > max_val:
-            raise ValueError(f"Number exceeds maximum value of {max_val}")
+            msg = f"Number exceeds maximum value of {max_val}"
+            raise ValueError(msg)
 
         return value
 
@@ -143,17 +150,20 @@ class InputValidator:
         """
         # Basic pattern check
         if not self._patterns["url"].match(url):
-            raise ValueError("Invalid URL format")
+            msg = "Invalid URL format"
+            raise ValueError(msg)
 
         # Check scheme
         scheme = url.split("://")[0]
         if scheme not in self.policy.allowed_schemes:
-            raise ValueError(f"URL scheme {scheme} not allowed")
+            msg = f"URL scheme {scheme} not allowed"
+            raise ValueError(msg)
 
         # Check domain
         domain = url.split("://")[1].split("/")[0].split(":")[0]
         if domain in self.policy.blocked_domains:
-            raise ValueError(f"Domain {domain} is blocked")
+            msg = f"Domain {domain} is blocked"
+            raise ValueError(msg)
 
         return url
 
@@ -178,16 +188,19 @@ class InputValidator:
         """
         # Check path pattern
         if not self._patterns["path"].match(path):
-            raise ValueError("Invalid path format")
+            msg = "Invalid path format"
+            raise ValueError(msg)
 
         # Check blocked paths
         if any(path.startswith(blocked) for blocked in self.policy.blocked_paths):
-            raise ValueError("Access to path is blocked")
+            msg = "Access to path is blocked"
+            raise ValueError(msg)
 
         # Check file extension
         ext = path.split(".")[-1] if "." in path else ""
         if f".{ext}" not in self.policy.allowed_file_types:
-            raise ValueError(f"File type .{ext} not allowed")
+            msg = f"File type .{ext} not allowed"
+            raise ValueError(msg)
 
         # Check file size for reads
         if check_size and operation == "read":
@@ -196,9 +209,9 @@ class InputValidator:
 
                 size = os.path.getsize(path)
                 if size > self.policy.max_file_size_bytes:
+                    msg = f"File size {size} exceeds maximum of {self.policy.max_file_size_bytes}"
                     raise ValueError(
-                        f"File size {size} exceeds maximum of "
-                        f"{self.policy.max_file_size_bytes}"
+                        msg,
                     )
             except OSError:
                 pass  # Ignore size check if file doesn't exist
@@ -278,7 +291,7 @@ class OutputEncoder:
 class SecurityValidator:
     """Main security validation interface."""
 
-    def __init__(self, policy: Optional[SecurityPolicy] = None):
+    def __init__(self, policy: SecurityPolicy | None = None):
         """Initialize validator.
 
         Args:
@@ -291,8 +304,8 @@ class SecurityValidator:
     def validate_agent_input(
         self,
         agent_id: str,
-        input_data: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        input_data: dict[str, Any],
+    ) -> dict[str, Any]:
         """Validate agent input data.
 
         Args:
@@ -313,17 +326,13 @@ class SecurityValidator:
         for key, value in input_data.items():
             if isinstance(value, str):
                 validated[key] = self.input_validator.validate_string(value)
-            elif isinstance(value, (int, float, Decimal)):
+            elif isinstance(value, int | float | Decimal):
                 validated[key] = self.input_validator.validate_number(value)
             elif isinstance(value, dict):
                 validated[key] = self.validate_agent_input(agent_id, value)
             elif isinstance(value, list):
                 validated[key] = [
-                    (
-                        self.validate_agent_input(agent_id, item)
-                        if isinstance(item, dict)
-                        else item
-                    )
+                    (self.validate_agent_input(agent_id, item) if isinstance(item, dict) else item)
                     for item in value
                 ]
             else:
@@ -334,7 +343,7 @@ class SecurityValidator:
     def encode_agent_output(
         self,
         agent_id: str,
-        output_data: Dict[str, Any],
+        output_data: dict[str, Any],
         encoding: str = "json",
     ) -> str:
         """Encode agent output data.
@@ -356,12 +365,12 @@ class SecurityValidator:
         # Apply encoding
         if encoding == "json":
             return self.output_encoder.encode_json(output_data)
-        elif encoding == "html":
+        if encoding == "html":
             return self.output_encoder.encode_html(str(output_data))
-        elif encoding == "shell":
+        if encoding == "shell":
             return self.output_encoder.encode_shell(str(output_data))
-        else:
-            raise ValueError(f"Unknown encoding type: {encoding}")
+        msg = f"Unknown encoding type: {encoding}"
+        raise ValueError(msg)
 
     def validate_resource_access(
         self,

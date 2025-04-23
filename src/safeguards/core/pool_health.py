@@ -9,16 +9,13 @@ This module provides functionality for:
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from decimal import Decimal
 from enum import Enum, auto
-from typing import Dict, List, Optional, Set
 
-from safeguards.core.alert_types import Alert, AlertSeverity
 from safeguards.core.notification_manager import NotificationManager
 from safeguards.monitoring.violation_reporter import (
     ViolationReporter,
-    ViolationType,
     ViolationSeverity,
+    ViolationType,
 )
 
 
@@ -58,9 +55,9 @@ class PoolHealthReport:
 
     pool_id: str
     status: HealthStatus
-    metrics: Dict[HealthMetricType, HealthMetric]
+    metrics: dict[HealthMetricType, HealthMetric]
     timestamp: datetime = field(default_factory=datetime.now)
-    recommendations: List[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
 
 class PoolHealthMonitor:
@@ -99,14 +96,18 @@ class PoolHealthMonitor:
         self.emergency_usage_warning = emergency_usage_warning
 
         # Track metrics history by pool
-        self._metrics_history: Dict[str, Dict[HealthMetricType, List[HealthMetric]]] = (
-            {}
-        )
-        self._last_check: Dict[str, datetime] = {}
-        self._pool_status: Dict[str, HealthStatus] = {}
+        self._metrics_history: dict[
+            str,
+            dict[HealthMetricType, list[HealthMetric]],
+        ] = {}
+        self._last_check: dict[str, datetime] = {}
+        self._pool_status: dict[str, HealthStatus] = {}
 
     def record_metric(
-        self, pool_id: str, metric_type: HealthMetricType, value: float
+        self,
+        pool_id: str,
+        metric_type: HealthMetricType,
+        value: float,
     ) -> None:
         """Record a new metric measurement.
 
@@ -135,7 +136,7 @@ class PoolHealthMonitor:
         # Check if health check is needed
         self._check_health_if_needed(pool_id)
 
-    def get_pool_health(self, pool_id: str) -> Optional[PoolHealthReport]:
+    def get_pool_health(self, pool_id: str) -> PoolHealthReport | None:
         """Get current health report for a pool.
 
         Args:
@@ -177,7 +178,7 @@ class PoolHealthMonitor:
 
         # Check each metric type
         for metric_type in HealthMetricType:
-            if metric_type in pool_metrics and pool_metrics[metric_type]:
+            if pool_metrics.get(metric_type):
                 # Get most recent metric
                 metric = pool_metrics[metric_type][-1]
                 current_metrics[metric_type] = metric
@@ -186,18 +187,18 @@ class PoolHealthMonitor:
                 if metric.value >= metric.threshold_critical:
                     status = HealthStatus.CRITICAL
                     recommendations.append(
-                        f"Critical: {metric_type.name} at {metric.value:.1%}"
+                        f"Critical: {metric_type.name} at {metric.value:.1%}",
                     )
                 elif metric.value >= metric.threshold_warning:
                     if status != HealthStatus.CRITICAL:
                         status = HealthStatus.WARNING
                     recommendations.append(
-                        f"Warning: {metric_type.name} at {metric.value:.1%}"
+                        f"Warning: {metric_type.name} at {metric.value:.1%}",
                     )
 
                 # Add metric-specific recommendations
                 recommendations.extend(
-                    self._get_metric_recommendations(metric_type, metric.value)
+                    self._get_metric_recommendations(metric_type, metric.value),
                 )
 
         # Create report
@@ -254,8 +255,10 @@ class PoolHealthMonitor:
         return thresholds.get(metric_type, 0.95)  # Default 95%
 
     def _get_metric_recommendations(
-        self, metric_type: HealthMetricType, value: float
-    ) -> List[str]:
+        self,
+        metric_type: HealthMetricType,
+        value: float,
+    ) -> list[str]:
         """Get recommendations based on metric type and value.
 
         Args:
@@ -272,7 +275,7 @@ class PoolHealthMonitor:
                     "Consider increasing pool budget",
                     "Review agent budget allocations",
                     "Check for unused reservations",
-                ]
+                ],
             )
         elif metric_type == HealthMetricType.RESERVATION_RATE and value > 0.7:
             recommendations.extend(
@@ -280,7 +283,7 @@ class PoolHealthMonitor:
                     "Review reservation expiry times",
                     "Check for reservation leaks",
                     "Consider implementing request throttling",
-                ]
+                ],
             )
         elif metric_type == HealthMetricType.EMERGENCY_USAGE and value > 0.5:
             recommendations.extend(
@@ -288,7 +291,7 @@ class PoolHealthMonitor:
                     "Audit emergency fund usage patterns",
                     "Review emergency request criteria",
                     "Consider increasing emergency fund allocation",
-                ]
+                ],
             )
         elif metric_type == HealthMetricType.DENIAL_RATE and value > 0.2:
             recommendations.extend(
@@ -296,7 +299,7 @@ class PoolHealthMonitor:
                     "Review denial reasons",
                     "Check budget allocation strategy",
                     "Consider adjusting reservation thresholds",
-                ]
+                ],
             )
         return recommendations
 
@@ -310,9 +313,7 @@ class PoolHealthMonitor:
         old_status = self._pool_status.get(pool_id)
         if old_status != new_status:
             severity = (
-                "HIGH"
-                if new_status in (HealthStatus.WARNING, HealthStatus.CRITICAL)
-                else "INFO"
+                "HIGH" if new_status in (HealthStatus.WARNING, HealthStatus.CRITICAL) else "INFO"
             )
             self.notification_manager.send_notification(
                 agent_id="system",

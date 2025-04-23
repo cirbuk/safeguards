@@ -1,50 +1,36 @@
 """Budget coordination system for multi-agent resource management."""
 
+import copy
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum, auto
-from typing import Dict, List, Optional, Set, Any
 from uuid import UUID, uuid4
 
 from safeguards.core.alert_types import Alert, AlertSeverity
-from safeguards.monitoring.violation_reporter import (
-    ViolationContext,
-    ViolationReporter,
-    ViolationType,
-    ViolationSeverity,
-)
-from safeguards.core.budget_override import (
-    OverrideRequest,
-    OverrideStatus,
-    OverrideType,
-)
 from safeguards.core.dynamic_budget import (
-    AgentBudgetProfile,
     AgentPriority,
     BudgetPool,
 )
 from safeguards.core.transaction import (
+    Transactional,
     TransactionContext,
     TransactionError,
     TransactionManager,
-    Transactional,
+    TransactionStatus,
 )
-from ..types.agent import Agent
-from ..types import SafetyAlert
+from safeguards.monitoring.budget_monitor import BudgetMonitor
+from safeguards.monitoring.violation_reporter import (
+    ViolationContext,
+    ViolationReporter,
+    ViolationSeverity,
+    ViolationType,
+)
+
 from ..exceptions import AgentSafetyError, BudgetError
-
-# Import TestAgent for agent creation
-try:
-    from tests.integration.test_budget_monitoring import TestAgent
-except ImportError:
-    # Fallback for when not running tests
-    class TestAgent(Agent):
-        """Concrete implementation of Agent for use in BudgetCoordinator."""
-
-        def run(self, **kwargs: Any) -> Dict[str, Any]:
-            """Simple implementation for the abstract run method."""
-            return {"success": True}
+from ..types import SafetyAlert
+from ..types.agent import Agent
+from ..types.default_agent import DefaultAgent
 
 
 class TransferStatus(Enum):
@@ -83,8 +69,8 @@ class TransferRequest:
     priority: AgentPriority = AgentPriority.MEDIUM
     created_at: datetime = field(default_factory=datetime.now)
     status: TransferStatus = TransferStatus.PENDING
-    executed_at: Optional[datetime] = None
-    metadata: Dict = field(default_factory=dict)
+    executed_at: datetime | None = None
+    metadata: dict = field(default_factory=dict)
     notes: str = ""
 
 
@@ -97,24 +83,26 @@ class SharedPool:
     allocated_budget: Decimal = Decimal("0")
     min_balance: Decimal = Decimal("0")
     priority: AgentPriority = AgentPriority.MEDIUM
-    agent_allocations: Dict[str, Decimal] = field(default_factory=dict)
-    active_agents: Set[str] = field(default_factory=set)
-    metadata: Dict = field(default_factory=dict)
+    agent_allocations: dict[str, Decimal] = field(default_factory=dict)
+    active_agents: set[str] = field(default_factory=set)
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass
 class BudgetState:
     """Snapshot of budget state."""
 
-    balances: Dict[str, Decimal]
-    pending_transfers: Dict[UUID, TransferRequest]
+    balances: dict[str, Decimal]
+    pending_transfers: dict[UUID, TransferRequest]
 
 
 class BudgetCoordinator(Transactional[BudgetState]):
     """Manages multi-agent budget coordination and transfers."""
 
     def __init__(
-        self, notification_manager=None, initial_pool_budget: Decimal = Decimal("0")
+        self,
+        notification_manager=None,
+        initial_pool_budget: Decimal = Decimal("0"),
     ):
         """Initialize the budget coordinator.
 
@@ -124,20 +112,140 @@ class BudgetCoordinator(Transactional[BudgetState]):
         """
         self.notification_manager = notification_manager
         self.violation_reporter = ViolationReporter(notification_manager)
-        self._shared_pools: Dict[str, SharedPool] = {}
-        self._transfer_requests: Dict[UUID, TransferRequest] = {}
-        self._agent_pools: Dict[str, Set[str]] = {}  # Agent -> Pool memberships
-        self._balances: Dict[str, Decimal] = {
-            f"pool_{len(self._shared_pools) + 1}": initial_pool_budget
+        self._shared_pools: dict[str, SharedPool] = {}
+        self._transfer_requests: dict[UUID, TransferRequest] = {}
+        self._agent_pools: dict[str, set[str]] = {}  # Agent -> Pool memberships
+        self._balances: dict[str, Decimal] = {
+            f"pool_{len(self._shared_pools) + 1}": initial_pool_budget,
         }
-        self._pending_transfers: Dict[UUID, TransferRequest] = {}
-        self._registered_agents: Set[str] = set()
+        self._pending_transfers: dict[UUID, TransferRequest] = {}
+        self._registered_agents: set[str] = set()
         self._transaction_manager = TransactionManager()
-        self._pools: Dict[str, BudgetPool] = {}
-        self._agents: Dict[str, Agent] = {}
-        self._agent_budgets: Dict[str, Decimal] = {}
-        self._agent_pools: Dict[str, str] = {}  # agent_id -> pool_id
-        self._initial_budgets: Dict[str, Decimal] = {}
+        self._pools: dict[str, BudgetPool] = {}
+        self._agents: dict[str, Agent] = {}
+        self._agent_budgets: dict[str, Decimal] = {}
+        self._agent_pools: dict[str, str] = {}  # agent_id -> pool_id
+        self._initial_budgets: dict[str, Decimal] = {}
+
+        # Initialize budget monitor
+        self.budget_monitor = BudgetMonitor(notification_manager)
+
+    def begin_transaction(self) -> TransactionContext:
+        """Begin a new transaction for budget operations.
+
+        Creates a transaction context and captures the current state for potential rollback.
+
+        Returns:
+            New transaction context
+        """
+        ctx = TransactionContext()
+        ctx.changes["snapshot"] = self.get_snapshot()
+
+        # Log the transaction start
+        if self.notification_manager:
+            self.notification_manager.send_alert(
+                Alert(
+                    title="Budget Transaction Started",
+                    description=f"Transaction {ctx.transaction_id} initiated",
+                    severity=AlertSeverity.INFO,
+                    metadata={"transaction_id": str(ctx.transaction_id)},
+                ),
+            )
+
+        return ctx
+
+    def commit_transaction(self, ctx: TransactionContext) -> None:
+        """Commit a budget transaction.
+
+        Finalizes changes made during the transaction.
+
+        Args:
+            ctx: Transaction context to commit
+
+        Raises:
+            TransactionError: If commit fails
+        """
+        # Mark the transaction as committed
+        ctx.status = TransactionStatus.COMMITTED
+
+        # Log the transaction commit
+        if self.notification_manager:
+            self.notification_manager.send_alert(
+                Alert(
+                    title="Budget Transaction Committed",
+                    description=f"Transaction {ctx.transaction_id} committed successfully",
+                    severity=AlertSeverity.INFO,
+                    metadata={
+                        "transaction_id": str(ctx.transaction_id),
+                        "changes": {k: str(v) for k, v in ctx.changes.items() if k != "snapshot"},
+                    },
+                ),
+            )
+
+    def rollback_transaction(self, ctx: TransactionContext) -> None:
+        """Rollback a budget transaction.
+
+        Reverts all changes made during the transaction.
+
+        Args:
+            ctx: Transaction context to rollback
+
+        Raises:
+            TransactionError: If rollback fails
+        """
+        try:
+            # Restore the snapshot
+            if "snapshot" in ctx.changes:
+                self.restore_snapshot(ctx.changes["snapshot"])
+
+            # Mark the transaction as rolled back
+            ctx.status = TransactionStatus.ROLLED_BACK
+
+            # Log the transaction rollback
+            if self.notification_manager:
+                self.notification_manager.send_alert(
+                    Alert(
+                        title="Budget Transaction Rolled Back",
+                        description=f"Transaction {ctx.transaction_id} rolled back",
+                        severity=AlertSeverity.WARNING,
+                        metadata={"transaction_id": str(ctx.transaction_id)},
+                    ),
+                )
+        except Exception as e:
+            ctx.status = TransactionStatus.FAILED
+            msg = f"Rollback failed: {e!s}"
+            raise TransactionError(msg)
+
+    def get_snapshot(self) -> BudgetState:
+        """Get a snapshot of the current budget state.
+
+        Creates a complete copy of the current budget state for potential rollback.
+
+        Returns:
+            Snapshot of current state
+        """
+        return BudgetState(
+            balances=self._balances.copy(),
+            pending_transfers={k: copy.deepcopy(v) for k, v in self._pending_transfers.items()},
+        )
+
+    def restore_snapshot(self, snapshot: BudgetState) -> None:
+        """Restore state from a snapshot.
+
+        Args:
+            snapshot: State snapshot to restore
+
+        Raises:
+            TransactionError: If restore fails
+        """
+        try:
+            self._balances = snapshot.balances.copy()
+            self._pending_transfers = {
+                k: copy.deepcopy(v) for k, v in snapshot.pending_transfers.items()
+            }
+        except Exception as e:
+            msg = f"Failed to restore state from snapshot: {e!s}"
+            raise TransactionError(msg)
 
     def create_shared_pool(
         self,
@@ -145,7 +253,7 @@ class BudgetCoordinator(Transactional[BudgetState]):
         total_budget: Decimal,
         min_balance: Decimal = Decimal("0"),
         priority: AgentPriority = AgentPriority.MEDIUM,
-        metadata: Optional[Dict] = None,
+        metadata: dict | None = None,
     ) -> SharedPool:
         """Create a new shared resource pool.
 
@@ -163,7 +271,8 @@ class BudgetCoordinator(Transactional[BudgetState]):
             ValueError: If pool ID already exists
         """
         if pool_id in self._shared_pools:
-            raise ValueError(f"Pool {pool_id} already exists")
+            msg = f"Pool {pool_id} already exists"
+            raise ValueError(msg)
 
         pool = SharedPool(
             pool_id=pool_id,
@@ -179,7 +288,7 @@ class BudgetCoordinator(Transactional[BudgetState]):
         self,
         agent_id: str,
         pool_id: str,
-        initial_allocation: Optional[Decimal] = None,
+        initial_allocation: Decimal | None = None,
     ) -> None:
         """Add an agent to a shared pool.
 
@@ -192,15 +301,17 @@ class BudgetCoordinator(Transactional[BudgetState]):
             ValueError: If pool doesn't exist or insufficient pool budget
         """
         if pool_id not in self._shared_pools:
-            raise ValueError(f"Pool {pool_id} does not exist")
+            msg = f"Pool {pool_id} does not exist"
+            raise ValueError(msg)
 
         pool = self._shared_pools[pool_id]
 
         if initial_allocation:
             available = pool.total_budget - pool.allocated_budget
             if initial_allocation > available:
+                msg = f"Insufficient pool budget. Available: {available}, Requested: {initial_allocation}"
                 raise ValueError(
-                    f"Insufficient pool budget. Available: {available}, Requested: {initial_allocation}"
+                    msg,
                 )
             pool.agent_allocations[agent_id] = initial_allocation
             pool.allocated_budget += initial_allocation
@@ -222,11 +333,13 @@ class BudgetCoordinator(Transactional[BudgetState]):
             ValueError: If pool doesn't exist or agent not in pool
         """
         if pool_id not in self._shared_pools:
-            raise ValueError(f"Pool {pool_id} does not exist")
+            msg = f"Pool {pool_id} does not exist"
+            raise ValueError(msg)
 
         pool = self._shared_pools[pool_id]
         if agent_id not in pool.active_agents:
-            raise ValueError(f"Agent {agent_id} not in pool {pool_id}")
+            msg = f"Agent {agent_id} not in pool {pool_id}"
+            raise ValueError(msg)
 
         if agent_id in pool.agent_allocations:
             pool.allocated_budget -= pool.agent_allocations[agent_id]
@@ -246,7 +359,7 @@ class BudgetCoordinator(Transactional[BudgetState]):
         justification: str,
         requester: str,
         priority: AgentPriority = AgentPriority.MEDIUM,
-        metadata: Optional[Dict] = None,
+        metadata: dict | None = None,
     ) -> UUID:
         """Request a budget transfer.
 
@@ -269,27 +382,32 @@ class BudgetCoordinator(Transactional[BudgetState]):
         # Validate source has sufficient funds
         if transfer_type == TransferType.DIRECT:
             if source_id not in self._agent_pools:
-                raise ValueError(f"Source agent {source_id} not found")
+                msg = f"Source agent {source_id} not found"
+                raise ValueError(msg)
             # Check source agent's total allocation across pools
             total_allocation = sum(
                 self._shared_pools[pool_id].agent_allocations.get(
-                    source_id, Decimal("0")
+                    source_id,
+                    Decimal("0"),
                 )
                 for pool_id in self._agent_pools[source_id]
             )
             if amount > total_allocation:
+                msg = f"Insufficient funds. Available: {total_allocation}, Requested: {amount}"
                 raise ValueError(
-                    f"Insufficient funds. Available: {total_allocation}, Requested: {amount}"
+                    msg,
                 )
 
         elif transfer_type == TransferType.POOL_WITHDRAW:
             if source_id not in self._shared_pools:
-                raise ValueError(f"Source pool {source_id} not found")
+                msg = f"Source pool {source_id} not found"
+                raise ValueError(msg)
             pool = self._shared_pools[source_id]
             available = pool.total_budget - pool.allocated_budget
             if amount > available:
+                msg = f"Insufficient pool funds. Available: {available}, Requested: {amount}"
                 raise ValueError(
-                    f"Insufficient pool funds. Available: {available}, Requested: {amount}"
+                    msg,
                 )
 
         # Create transfer request
@@ -334,11 +452,13 @@ class BudgetCoordinator(Transactional[BudgetState]):
             ValueError: If request not found or invalid status
         """
         if request_id not in self._transfer_requests:
-            raise ValueError(f"Transfer request {request_id} not found")
+            msg = f"Transfer request {request_id} not found"
+            raise ValueError(msg)
 
         request = self._transfer_requests[request_id]
         if request.status != TransferStatus.PENDING:
-            raise ValueError(f"Transfer {request_id} is not pending approval")
+            msg = f"Transfer {request_id} is not pending approval"
+            raise ValueError(msg)
 
         request.status = TransferStatus.APPROVED
         request.metadata["approver"] = approver
@@ -357,11 +477,13 @@ class BudgetCoordinator(Transactional[BudgetState]):
             ValueError: If request not found or not approved
         """
         if request_id not in self._transfer_requests:
-            raise ValueError(f"Transfer request {request_id} not found")
+            msg = f"Transfer request {request_id} not found"
+            raise ValueError(msg)
 
         request = self._transfer_requests[request_id]
         if request.status != TransferStatus.APPROVED:
-            raise ValueError(f"Transfer {request_id} is not approved")
+            msg = f"Transfer {request_id} is not approved"
+            raise ValueError(msg)
 
         try:
             if request.transfer_type == TransferType.DIRECT:
@@ -390,8 +512,8 @@ class BudgetCoordinator(Transactional[BudgetState]):
                 self._send_transfer_alert(
                     request,
                     "Budget Transfer Failed",
-                    f"Transfer failed: {str(e)}",
-                    AlertSeverity.HIGH,
+                    f"Transfer failed: {e!s}",
+                    AlertSeverity.ERROR,
                 )
 
             raise
@@ -408,11 +530,13 @@ class BudgetCoordinator(Transactional[BudgetState]):
             ValueError: If request not found or invalid status
         """
         if request_id not in self._transfer_requests:
-            raise ValueError(f"Transfer request {request_id} not found")
+            msg = f"Transfer request {request_id} not found"
+            raise ValueError(msg)
 
         request = self._transfer_requests[request_id]
         if request.status != TransferStatus.PENDING:
-            raise ValueError(f"Transfer {request_id} is not pending approval")
+            msg = f"Transfer {request_id} is not pending approval"
+            raise ValueError(msg)
 
         request.status = TransferStatus.REJECTED
         request.metadata["rejector"] = rejector
@@ -430,7 +554,7 @@ class BudgetCoordinator(Transactional[BudgetState]):
     def _check_and_report_violation(
         self,
         agent_id: str,
-        pool_id: Optional[str],
+        pool_id: str | None,
         current_balance: Decimal,
         required_amount: Decimal,
         violation_type: ViolationType,
@@ -487,178 +611,219 @@ class BudgetCoordinator(Transactional[BudgetState]):
         Raises:
             ValueError: If agents not found, insufficient funds, or invalid pool state
         """
-        # Validate both agents exist and have pool memberships
-        if request.source_id not in self._agent_pools:
-            raise ValueError(f"Source agent {request.source_id} not found")
-        if request.target_id not in self._agent_pools:
-            raise ValueError(f"Target agent {request.target_id} not found")
+        # Start a transaction for atomic operation
+        tx_ctx = self.begin_transaction()
 
-        # Get all pools where source agent has allocations
-        source_pools = self._agent_pools[request.source_id]
-        source_allocations = {
-            pool_id: self._shared_pools[pool_id].agent_allocations.get(
-                request.source_id, Decimal("0")
-            )
-            for pool_id in source_pools
-        }
+        try:
+            # Validate both agents exist and have pool memberships
+            if request.source_id not in self._agent_pools:
+                msg = f"Source agent {request.source_id} not found"
+                raise ValueError(msg)
+            if request.target_id not in self._agent_pools:
+                msg = f"Target agent {request.target_id} not found"
+                raise ValueError(msg)
 
-        # Verify total source allocation is sufficient
-        total_source_allocation = sum(source_allocations.values())
-        if request.amount > total_source_allocation:
-            # Report violation before raising error
-            self._check_and_report_violation(
-                agent_id=request.source_id,
-                pool_id=None,
-                current_balance=total_source_allocation,
-                required_amount=request.amount,
-                violation_type=ViolationType.OVERSPEND,
-            )
-            raise ValueError(
-                f"Insufficient total allocation. Available: {total_source_allocation}, "
-                f"Requested: {request.amount}"
-            )
+            # Get all pools where source agent has allocations
+            source_pools = self._agent_pools[request.source_id]
+            source_allocations = {
+                pool_id: self._shared_pools[pool_id].agent_allocations.get(
+                    request.source_id,
+                    Decimal("0"),
+                )
+                for pool_id in source_pools
+            }
 
-        # Find pools where target agent is active
-        target_pools = self._agent_pools[request.target_id]
-        if not target_pools:
-            raise ValueError(f"Target agent {request.target_id} has no active pools")
+            # Save original allocations for potential rollback
+            request.metadata["original_allocations"] = {
+                pool_id: dict(self._shared_pools[pool_id].agent_allocations.items())
+                for pool_id in set(source_pools) | self._agent_pools[request.target_id]
+            }
 
-        # Choose the highest priority pool for the target
-        target_pool_id = max(
-            target_pools,
-            key=lambda pid: (
-                self._shared_pools[pid].priority.value
-                if hasattr(self._shared_pools[pid], "priority")
-                else 0
-            ),
-        )
-        target_pool = self._shared_pools[target_pool_id]
+            # Store the original pool allocated budgets
+            request.metadata["original_pool_budgets"] = {
+                pool_id: self._shared_pools[pool_id].allocated_budget
+                for pool_id in set(source_pools) | self._agent_pools[request.target_id]
+            }
 
-        # Transfer the budget
-        remaining_amount = request.amount
-        for pool_id, allocation in sorted(
-            source_allocations.items(),
-            key=lambda x: (
-                (
-                    self._shared_pools[x[0]].priority.value
-                    if hasattr(self._shared_pools[x[0]], "priority")
-                    else 0
-                ),
-                x[1],
-            ),
-        ):
-            if allocation <= 0:
-                continue
-
-            source_pool = self._shared_pools[pool_id]
-            transfer_amount = min(remaining_amount, allocation)
-
-            # Check for pool minimum balance violation
-            if (
-                source_pool.total_budget
-                - source_pool.allocated_budget
-                - transfer_amount
-            ) < source_pool.min_balance:
+            # Verify total source allocation is sufficient
+            total_source_allocation = sum(source_allocations.values())
+            if request.amount > total_source_allocation:
+                # Report violation before raising error
                 self._check_and_report_violation(
                     agent_id=request.source_id,
-                    pool_id=pool_id,
-                    current_balance=source_pool.total_budget
-                    - source_pool.allocated_budget,
-                    required_amount=transfer_amount,
-                    violation_type=ViolationType.POOL_BREACH,
+                    pool_id=None,
+                    current_balance=total_source_allocation,
+                    required_amount=request.amount,
+                    violation_type=ViolationType.OVERSPEND,
+                )
+                msg = (
+                    f"Insufficient total allocation. Available: {total_source_allocation}, "
+                    f"Requested: {request.amount}"
+                )
+                raise ValueError(
+                    msg,
                 )
 
-            # Update source pool
-            source_pool.agent_allocations[request.source_id] -= transfer_amount
-            source_pool.allocated_budget -= transfer_amount
+            # Find pools where target agent is active
+            target_pools = self._agent_pools[request.target_id]
+            if not target_pools:
+                msg = f"Target agent {request.target_id} has no active pools"
+                raise ValueError(
+                    msg,
+                )
 
-            # Update target pool
-            target_pool.agent_allocations[request.target_id] = (
-                target_pool.agent_allocations.get(request.target_id, Decimal("0"))
-                + transfer_amount
+            # Choose the highest priority pool for the target
+            target_pool_id = max(
+                target_pools,
+                key=lambda pid: (
+                    self._shared_pools[pid].priority.value
+                    if hasattr(self._shared_pools[pid], "priority")
+                    else 0
+                ),
             )
-            target_pool.allocated_budget += transfer_amount
+            target_pool = self._shared_pools[target_pool_id]
 
-            remaining_amount -= transfer_amount
-            if remaining_amount <= 0:
-                break
+            # Transfer the budget
+            remaining_amount = request.amount
+            for pool_id, allocation in sorted(
+                source_allocations.items(),
+                key=lambda x: (
+                    (
+                        self._shared_pools[x[0]].priority.value
+                        if hasattr(self._shared_pools[x[0]], "priority")
+                        else 0
+                    ),
+                    x[1],
+                ),
+            ):
+                if allocation <= 0:
+                    continue
 
-        # Verify transfer completed
-        if remaining_amount > 0:
-            # Report violation before rollback
-            self._check_and_report_violation(
-                agent_id=request.source_id,
-                pool_id=None,
-                current_balance=total_source_allocation
-                - (request.amount - remaining_amount),
-                required_amount=remaining_amount,
-                violation_type=ViolationType.OVERSPEND,
-            )
-            # Rollback the transfer
-            self._rollback_transfer(request)
-            raise ValueError(
-                f"Failed to transfer full amount. Remaining: {remaining_amount}"
-            )
+                source_pool = self._shared_pools[pool_id]
+                transfer_amount = min(remaining_amount, allocation)
 
-    def _rollback_transfer(self, request: TransferRequest) -> None:
-        """Rollback a failed transfer.
+                # Check for pool minimum balance violation
+                if (
+                    source_pool.total_budget - source_pool.allocated_budget - transfer_amount
+                ) < source_pool.min_balance:
+                    self._check_and_report_violation(
+                        agent_id=request.source_id,
+                        pool_id=pool_id,
+                        current_balance=source_pool.total_budget - source_pool.allocated_budget,
+                        required_amount=transfer_amount,
+                        violation_type=ViolationType.POOL_BREACH,
+                    )
 
-        Args:
-            request: The failed transfer request
-        """
-        request.status = TransferStatus.ROLLED_BACK
+                # Update source pool
+                source_pool.agent_allocations[request.source_id] -= transfer_amount
+                source_pool.allocated_budget -= transfer_amount
 
-        # Restore original allocations from metadata if available
-        if "original_allocations" in request.metadata:
-            original = request.metadata["original_allocations"]
-            for pool_id, allocations in original.items():
-                pool = self._shared_pools[pool_id]
-                pool.agent_allocations.update(allocations)
-                pool.allocated_budget = sum(pool.agent_allocations.values())
+                # Update target pool
+                target_pool.agent_allocations[request.target_id] = (
+                    target_pool.agent_allocations.get(request.target_id, Decimal("0"))
+                    + transfer_amount
+                )
+                target_pool.allocated_budget += transfer_amount
 
-        if self.notification_manager:
-            self._send_transfer_alert(
-                request,
-                "Budget Transfer Rolled Back",
-                "Transfer was rolled back due to an error",
-                AlertSeverity.WARNING,
-            )
+                remaining_amount -= transfer_amount
+                if remaining_amount <= 0:
+                    break
+
+            # Verify transfer completed
+            if remaining_amount > 0:
+                # Report violation before rollback
+                self._check_and_report_violation(
+                    agent_id=request.source_id,
+                    pool_id=None,
+                    current_balance=total_source_allocation - (request.amount - remaining_amount),
+                    required_amount=remaining_amount,
+                    violation_type=ViolationType.OVERSPEND,
+                )
+                # Roll back the transaction
+                self.rollback_transaction(tx_ctx)
+                msg = f"Failed to transfer full amount. Remaining: {remaining_amount}"
+                raise ValueError(
+                    msg,
+                )
+
+            # Commit the successful transaction
+            self.commit_transaction(tx_ctx)
+
+        except Exception:
+            # Roll back on any error
+            self.rollback_transaction(tx_ctx)
+            raise
 
     def _execute_pool_deposit(self, request: TransferRequest) -> None:
         """Execute a deposit to a shared pool."""
-        pool = self._shared_pools[request.target_id]
-        pool.total_budget += request.amount
+        # Start a transaction for atomic operation
+        tx_ctx = self.begin_transaction()
+
+        try:
+            pool = self._shared_pools[request.target_id]
+
+            # Store original state for potential rollback
+            request.metadata["original_pool_budget"] = pool.total_budget
+
+            # Execute the deposit
+            pool.total_budget += request.amount
+
+            # Commit the successful transaction
+            self.commit_transaction(tx_ctx)
+
+        except Exception:
+            # Rollback on any error
+            self.rollback_transaction(tx_ctx)
+            raise
 
     def _execute_pool_withdraw(self, request: TransferRequest) -> None:
         """Execute a withdrawal from a shared pool."""
-        pool = self._shared_pools[request.source_id]
-        available = pool.total_budget - pool.allocated_budget
+        # Start a transaction for atomic operation
+        tx_ctx = self.begin_transaction()
 
-        if request.amount > available:
-            # Report violation before raising error
-            self._check_and_report_violation(
-                agent_id=request.target_id,
-                pool_id=request.source_id,
-                current_balance=available,
-                required_amount=request.amount,
-                violation_type=ViolationType.POOL_BREACH,
-            )
-            raise ValueError(
-                f"Insufficient pool funds. Available: {available}, "
-                f"Requested: {request.amount}"
-            )
+        try:
+            pool = self._shared_pools[request.source_id]
+            available = pool.total_budget - pool.allocated_budget
 
-        # Check minimum balance
-        if (available - request.amount) < pool.min_balance:
-            self._check_and_report_violation(
-                agent_id=request.target_id,
-                pool_id=request.source_id,
-                current_balance=available,
-                required_amount=request.amount,
-                violation_type=ViolationType.POOL_BREACH,
-            )
+            # Store original state for potential rollback
+            request.metadata["original_pool_budget"] = pool.total_budget
 
-        pool.total_budget -= request.amount
+            if request.amount > available:
+                # Report violation before raising error
+                self._check_and_report_violation(
+                    agent_id=request.target_id,
+                    pool_id=request.source_id,
+                    current_balance=available,
+                    required_amount=request.amount,
+                    violation_type=ViolationType.POOL_BREACH,
+                )
+                msg = (
+                    f"Insufficient pool funds. Available: {available}, Requested: {request.amount}"
+                )
+                raise ValueError(
+                    msg,
+                )
+
+            # Check minimum balance
+            if (available - request.amount) < pool.min_balance:
+                self._check_and_report_violation(
+                    agent_id=request.target_id,
+                    pool_id=request.source_id,
+                    current_balance=available,
+                    required_amount=request.amount,
+                    violation_type=ViolationType.POOL_BREACH,
+                )
+
+            # Execute the withdrawal
+            pool.total_budget -= request.amount
+
+            # Commit the successful transaction
+            self.commit_transaction(tx_ctx)
+
+        except Exception:
+            # Rollback on any error
+            self.rollback_transaction(tx_ctx)
+            raise
 
     def _send_transfer_alert(
         self,
@@ -729,8 +894,9 @@ class BudgetCoordinator(Transactional[BudgetState]):
             candidate_pools.append((pool_id, pool_score))
 
         if not candidate_pools:
+            msg = f"No suitable pool found for agent {agent_id} requiring {required_budget}"
             raise ValueError(
-                f"No suitable pool found for agent {agent_id} requiring {required_budget}"
+                msg,
             )
 
         # Select pool with highest score
@@ -750,14 +916,12 @@ class BudgetCoordinator(Transactional[BudgetState]):
         for pool in self._shared_pools.values():
             for agent_id in pool.active_agents:
                 all_agents.append(
-                    (agent_id, pool.agent_allocations.get(agent_id, Decimal("0")))
+                    (agent_id, pool.agent_allocations.get(agent_id, Decimal("0"))),
                 )
 
         # Sort by priority (higher priority first)
         all_agents.sort(
-            key=lambda x: self._shared_pools[
-                self._agent_pools[x[0]].pop()
-            ].priority.value,
+            key=lambda x: self._shared_pools[self._agent_pools[x[0]].pop()].priority.value,
             reverse=True,
         )
 
@@ -773,7 +937,9 @@ class BudgetCoordinator(Transactional[BudgetState]):
                     # Move agent to better pool
                     self.remove_agent_from_pool(agent_id, current_pool_id)
                     self.add_agent_to_pool(
-                        agent_id, optimal_pool_id, current_allocation
+                        agent_id,
+                        optimal_pool_id,
+                        current_allocation,
                     )
             except ValueError:
                 # No better pool found, optimize within current pool
@@ -790,24 +956,23 @@ class BudgetCoordinator(Transactional[BudgetState]):
         pool_priority = pool.priority
 
         # Calculate optimal allocation based on priority and available budget
-        available_budget = (
-            pool.total_budget - pool.allocated_budget + current_allocation
-        )
+        available_budget = pool.total_budget - pool.allocated_budget + current_allocation
         priority_weight = pool.priority_weights.get(pool_priority, 0.5)
 
         # Higher priority agents get larger share of available budget
         optimal_allocation = available_budget * Decimal(str(priority_weight))
 
         # Ensure we maintain minimum balance
-        if optimal_allocation > (pool.total_budget - pool.min_balance):
-            optimal_allocation = pool.total_budget - pool.min_balance
+        optimal_allocation = min(optimal_allocation, pool.total_budget - pool.min_balance)
 
         # Update allocation
         pool.agent_allocations[agent_id] = optimal_allocation
         pool.allocated_budget = sum(pool.agent_allocations.values())
 
     def handle_emergency_allocation(
-        self, agent_id: str, required_budget: Decimal
+        self,
+        agent_id: str,
+        required_budget: Decimal,
     ) -> None:
         """Handle emergency budget allocation for critical operations.
 
@@ -824,7 +989,8 @@ class BudgetCoordinator(Transactional[BudgetState]):
             ValueError: If emergency allocation cannot be satisfied
         """
         if agent_id not in self._agent_pools:
-            raise ValueError(f"Agent {agent_id} not registered")
+            msg = f"Agent {agent_id} not registered"
+            raise ValueError(msg)
 
         # Try to allocate from current pool first
         current_pool_id = self._agent_pools[agent_id]
@@ -845,9 +1011,7 @@ class BudgetCoordinator(Transactional[BudgetState]):
         if freed_budget >= needed:
             # Update allocation
             self._agent_budgets[agent_id] = required_budget
-            current_pool.used_budget = sum(
-                self._agent_budgets[aid] for aid in current_pool.agents
-            )
+            current_pool.used_budget = sum(self._agent_budgets[aid] for aid in current_pool.agents)
             return
 
         # If still not enough, try other pools
@@ -864,12 +1028,16 @@ class BudgetCoordinator(Transactional[BudgetState]):
                 self._agent_budgets[agent_id] = required_budget
                 new_pool.used_budget += required_budget
             else:
+                msg = f"Could not satisfy emergency allocation of {required_budget} for agent {agent_id}"
                 raise ValueError(
-                    f"Could not satisfy emergency allocation of {required_budget} for agent {agent_id}"
+                    msg,
                 )
         except ValueError:
-            raise ValueError(
+            msg = (
                 f"Could not satisfy emergency allocation of {required_budget} for agent {agent_id}"
+            )
+            raise ValueError(
+                msg,
             )
 
     def _free_up_budget(self, pool: SharedPool, needed: Decimal) -> Decimal:
@@ -887,9 +1055,7 @@ class BudgetCoordinator(Transactional[BudgetState]):
         # Get all agents in pool sorted by priority (lowest first)
         agents = sorted(
             [(aid, pool.agent_allocations[aid]) for aid in pool.active_agents],
-            key=lambda x: self._shared_pools[
-                self._agent_pools[x[0]].pop()
-            ].priority.value,
+            key=lambda x: self._shared_pools[self._agent_pools[x[0]].pop()].priority.value,
         )
 
         # Reduce allocations of lower priority agents
@@ -916,9 +1082,7 @@ class BudgetCoordinator(Transactional[BudgetState]):
         """
         # Calculate overall system utilization
         total_budget = sum(pool.total_budget for pool in self._shared_pools.values())
-        total_allocated = sum(
-            pool.allocated_budget for pool in self._shared_pools.values()
-        )
+        total_allocated = sum(pool.allocated_budget for pool in self._shared_pools.values())
         system_utilization = total_allocated / total_budget if total_budget > 0 else 1
 
         # Handle high utilization - might need new pools
@@ -969,9 +1133,7 @@ class BudgetCoordinator(Transactional[BudgetState]):
             pool2 = self._shared_pools[pool2_id]
 
             # Merge into pool with higher priority
-            target_pool = (
-                pool1 if pool1.priority.value > pool2.priority.value else pool2
-            )
+            target_pool = pool1 if pool1.priority.value > pool2.priority.value else pool2
             source_pool = pool2 if target_pool == pool1 else pool1
 
             # Move all agents from source to target
@@ -1010,13 +1172,8 @@ class BudgetCoordinator(Transactional[BudgetState]):
 
             # Sort agents by priority (lowest first)
             agents = sorted(
-                [
-                    (aid, over_pool.agent_allocations[aid])
-                    for aid in over_pool.active_agents
-                ],
-                key=lambda x: self._shared_pools[
-                    self._agent_pools[x[0]].pop()
-                ].priority.value,
+                [(aid, over_pool.agent_allocations[aid]) for aid in over_pool.active_agents],
+                key=lambda x: self._shared_pools[self._agent_pools[x[0]].pop()].priority.value,
             )
 
             # Try to move lower priority agents to underloaded pools
@@ -1026,10 +1183,7 @@ class BudgetCoordinator(Transactional[BudgetState]):
 
                 for under_id in underloaded[:]:
                     under_pool = self._shared_pools[under_id]
-                    if (
-                        under_pool.total_budget - under_pool.allocated_budget
-                        >= allocation
-                    ):
+                    if under_pool.total_budget - under_pool.allocated_budget >= allocation:
                         # Move agent
                         self.remove_agent_from_pool(agent_id, over_id)
                         self.add_agent_to_pool(agent_id, under_id, allocation)
@@ -1043,7 +1197,9 @@ class BudgetCoordinator(Transactional[BudgetState]):
                         break
 
     def _redistribute_agents(
-        self, source_pool: SharedPool, target_pool: SharedPool
+        self,
+        source_pool: SharedPool,
+        target_pool: SharedPool,
     ) -> None:
         """Redistribute agents from source pool to target pool.
 
@@ -1053,19 +1209,14 @@ class BudgetCoordinator(Transactional[BudgetState]):
         """
         # Calculate how much to move
         move_budget = source_pool.allocated_budget * Decimal(
-            "0.4"
+            "0.4",
         )  # Move 40% of allocation
         moved_budget = Decimal("0")
 
         # Sort agents by priority (lowest first)
         agents = sorted(
-            [
-                (aid, source_pool.agent_allocations[aid])
-                for aid in source_pool.active_agents
-            ],
-            key=lambda x: self._shared_pools[
-                self._agent_pools[x[0]].pop()
-            ].priority.value,
+            [(aid, source_pool.agent_allocations[aid]) for aid in source_pool.active_agents],
+            key=lambda x: self._shared_pools[self._agent_pools[x[0]].pop()].priority.value,
         )
 
         # Move agents until we've moved enough budget
@@ -1097,7 +1248,8 @@ class BudgetCoordinator(Transactional[BudgetState]):
             ValueError: If pool ID already exists
         """
         if pool_id in self._pools:
-            raise ValueError(f"Pool {pool_id} already exists")
+            msg = f"Pool {pool_id} already exists"
+            raise ValueError(msg)
 
         pool = BudgetPool(
             pool_id=pool_id,
@@ -1112,59 +1264,98 @@ class BudgetCoordinator(Transactional[BudgetState]):
         name: str,
         initial_budget: Decimal,
         priority: int = 0,
-        agent: Optional[Agent] = None,
+        agent: Agent | None = None,
     ) -> Agent:
-        """Register a new agent.
+        """Register an agent with the budget coordinator.
 
         Args:
             name: Agent name
             initial_budget: Initial budget allocation
-            priority: Agent priority level (1-10)
-            agent: Optional existing agent instance to register
+            priority: Agent priority level (higher = more important)
+            agent: Optional Agent instance
 
         Returns:
-            Registered agent
+            Registered agent instance
 
         Raises:
-            ValueError: If validation fails
+            ValueError: If agent is already registered or validation fails
         """
-        # Validate budget
+        # Validate inputs
         if initial_budget <= Decimal("0"):
-            raise ValueError("Initial budget must be positive")
+            msg = "Initial budget must be positive"
+            raise ValueError(msg)
 
-        # Validate priority
-        if priority < 1 or priority > 10:
-            raise ValueError("Priority must be between 1 and 10")
+        if not name or not isinstance(name, str):
+            msg = "Agent name must be a non-empty string"
+            raise ValueError(msg)
 
-        # Create or use existing agent
+        # Validate priority for backward compatibility with tests
+        if priority < 0 or priority > 10:
+            msg = "Priority must be between 1 and 10"
+            raise ValueError(msg)
+
+        agent_id = name  # For simplicity, use name as ID
+
+        if agent_id in self._registered_agents:
+            msg = f"Agent {agent_id} is already registered"
+            raise ValueError(msg)
+
+        # Create agent if not provided
         if agent is None:
-            agent = TestAgent(name=name)  # Use TestAgent instead of Agent class
+            agent = DefaultAgent(name=name)
+        # Check for name mismatch for backward compatibility with tests
         elif agent.name != name:
-            raise ValueError(f"Agent name mismatch: {agent.name} != {name}")
+            msg = f"Agent name mismatch: {agent.name} != {name}"
+            raise ValueError(msg)
 
-        # Find or create pool
-        pool = None
-        for p in self._pools.values():
-            if p.priority == priority and p.remaining_budget >= initial_budget:
-                pool = p
-                break
+        # Create default pool if needed
+        default_pool_id = "default_pool"
+        if default_pool_id not in self._pools:
+            # Start with twice the initial budget to have room for growth
+            pool_budget = max(initial_budget * Decimal("2"), Decimal("1000"))
+            self.create_pool(default_pool_id, pool_budget, priority)
 
-        if not pool:
-            pool = self.create_pool(
-                pool_id=f"pool_{priority}",
-                total_budget=initial_budget * Decimal("2"),  # Extra capacity
-                priority=priority,
+        # Get pool
+        pool = self._pools[default_pool_id]
+
+        # Check if pool has enough budget
+        if initial_budget > pool.remaining_budget:
+            msg = f"Pool {default_pool_id} does not have enough budget for agent {name}"
+            raise ValueError(
+                msg,
             )
 
-        # Register agent
+        # Add agent to pool
         self._agents[agent.id] = agent
         self._agent_budgets[agent.id] = initial_budget
-        # Store the initial budget for metrics reporting
-        if not hasattr(self, "_initial_budgets"):
-            self._initial_budgets = {}
+
+        # Track initial budget for usage calculation
         self._initial_budgets[agent.id] = initial_budget
         self._agent_pools[agent.id] = pool.pool_id
         pool.agents.add(agent.id)
+        self._registered_agents.add(agent.id)
+
+        # Initialize budget monitoring
+        if initial_budget > Decimal("0"):
+            self.budget_monitor.check_budget_usage(
+                agent.id,
+                Decimal("0"),
+                initial_budget,
+            )
+
+        # Log the registration
+        if self.notification_manager:
+            self.notification_manager.send_alert(
+                Alert(
+                    title="Agent Registered",
+                    description=f"Agent {agent_id} registered with initial budget {initial_budget}",
+                    severity=AlertSeverity.INFO,
+                    metadata={
+                        "agent_id": agent_id,
+                        "initial_budget": str(initial_budget),
+                    },
+                ),
+            )
 
         return agent
 
@@ -1178,7 +1369,8 @@ class BudgetCoordinator(Transactional[BudgetState]):
             AgentSafetyError: If agent not found
         """
         if agent_id not in self._agents:
-            raise AgentSafetyError(f"Agent {agent_id} not found")
+            msg = f"Agent {agent_id} not found"
+            raise AgentSafetyError(msg)
 
         # Get pool and remove agent
         pool_id = self._agent_pools[agent_id]
@@ -1193,6 +1385,11 @@ class BudgetCoordinator(Transactional[BudgetState]):
         del self._agents[agent_id]
         del self._agent_budgets[agent_id]
         del self._agent_pools[agent_id]
+        if agent_id in self._initial_budgets:
+            del self._initial_budgets[agent_id]
+
+        # Reset budget monitor for this agent
+        self.budget_monitor.reset_agent_alerts(agent_id)
 
     def get_agent(self, agent_id: str) -> Agent:
         """Get an agent.
@@ -1204,7 +1401,8 @@ class BudgetCoordinator(Transactional[BudgetState]):
             Agent instance
         """
         if agent_id not in self._agents:
-            raise AgentSafetyError(f"Agent {agent_id} not found")
+            msg = f"Agent {agent_id} not found"
+            raise AgentSafetyError(msg)
         return self._agents[agent_id]
 
     def get_agent_budget(self, agent_id: str) -> Decimal:
@@ -1217,7 +1415,8 @@ class BudgetCoordinator(Transactional[BudgetState]):
             Current budget amount
         """
         if agent_id not in self._agent_budgets:
-            raise BudgetError(f"No budget found for agent {agent_id}")
+            msg = f"No budget found for agent {agent_id}"
+            raise BudgetError(msg)
         return self._agent_budgets[agent_id]
 
     def update_agent_budget(self, agent_id: str, new_budget: Decimal) -> None:
@@ -1231,7 +1430,8 @@ class BudgetCoordinator(Transactional[BudgetState]):
             BudgetError: If update fails
         """
         if agent_id not in self._agent_budgets:
-            raise BudgetError(f"No budget found for agent {agent_id}")
+            msg = f"No budget found for agent {agent_id}"
+            raise BudgetError(msg)
 
         current_budget = self._agent_budgets[agent_id]
         pool = self._pools[self._agent_pools[agent_id]]
@@ -1241,34 +1441,35 @@ class BudgetCoordinator(Transactional[BudgetState]):
 
         # Check if enough budget in pool
         if budget_change > 0 and budget_change > pool.remaining_budget:
-            raise BudgetError("Insufficient budget in pool")
+            msg = "Insufficient budget in pool"
+            raise BudgetError(msg)
 
         # Calculate original initial budget and used budget
-        initial_budget = self._agent_budgets[agent_id]
+        initial_budget = self._initial_budgets.get(agent_id, current_budget)
         used_budget = initial_budget - new_budget
-        usage_ratio = (
-            used_budget / initial_budget
-            if initial_budget != Decimal("0")
-            else Decimal("0")
-        )
 
         # Update budgets
         self._agent_budgets[agent_id] = new_budget
         pool.used_budget += budget_change
         pool.last_update = datetime.now()
 
-        # Check for high usage and generate alerts
-        if usage_ratio >= Decimal("0.75"):  # 75% threshold
-            if self.notification_manager:
-                self.notification_manager.create_alert(
-                    SafetyAlert(
-                        title="High Budget Usage",
-                        description=f"Agent {agent_id} has used {usage_ratio * 100:.1f}% of its budget",
-                        severity=AlertSeverity.WARNING,
-                        timestamp=datetime.now(),
-                        metadata={"agent_id": agent_id},
-                    )
-                )
+        # Check budget usage and trigger alerts if necessary
+        self.budget_monitor.check_budget_usage(agent_id, used_budget, initial_budget)
+
+        # Create high usage budget alert if necessary
+        usage_ratio = (
+            used_budget / initial_budget if initial_budget != Decimal("0") else Decimal("0")
+        )
+        if usage_ratio >= Decimal("0.75") and self.notification_manager:
+            self.notification_manager.create_alert(
+                SafetyAlert(
+                    title="High Budget Usage",
+                    description=f"Agent {agent_id} has used {usage_ratio * 100:.1f}% of its budget",
+                    severity=AlertSeverity.WARNING,
+                    timestamp=datetime.now(),
+                    metadata={"agent_id": agent_id},
+                ),
+            )
 
     def get_pool(self, pool_id: str) -> BudgetPool:
         """Get a budget pool.
@@ -1280,7 +1481,8 @@ class BudgetCoordinator(Transactional[BudgetState]):
             Budget pool
         """
         if pool_id not in self._pools:
-            raise BudgetError(f"Pool {pool_id} not found")
+            msg = f"Pool {pool_id} not found"
+            raise BudgetError(msg)
         return self._pools[pool_id]
 
     def get_agent_pool(self, agent_id: str) -> BudgetPool:
@@ -1293,10 +1495,11 @@ class BudgetCoordinator(Transactional[BudgetState]):
             Agent's budget pool
         """
         if agent_id not in self._agent_pools:
-            raise BudgetError(f"No pool found for agent {agent_id}")
+            msg = f"No pool found for agent {agent_id}"
+            raise BudgetError(msg)
         return self._pools[self._agent_pools[agent_id]]
 
-    def get_pools(self) -> List[BudgetPool]:
+    def get_pools(self) -> list[BudgetPool]:
         """Get all budget pools.
 
         Returns:
@@ -1305,24 +1508,30 @@ class BudgetCoordinator(Transactional[BudgetState]):
         return list(self._pools.values())
 
     def create_agent(
-        self, name: str, initial_budget: Decimal, priority: int = 0
+        self,
+        name: str,
+        initial_budget: Decimal,
+        priority: int = 0,
     ) -> Agent:
         """Create and register a new agent.
 
         Args:
-            name: Name of the agent
+            name: Agent name
             initial_budget: Initial budget allocation
-            priority: Priority level (default 0)
+            priority: Agent priority level (higher = more important)
 
         Returns:
-            Newly created agent
-
-        Raises:
-            ValueError: If validation fails
+            Created agent instance
         """
-        return self.register_agent(name, initial_budget, priority)
+        agent = DefaultAgent(name=name)
+        return self.register_agent(
+            name=name,
+            initial_budget=initial_budget,
+            priority=priority,
+            agent=agent,
+        )
 
-    def get_agent_metrics(self, agent_id: str) -> Dict:
+    def get_agent_metrics(self, agent_id: str) -> dict:
         """Get budget metrics for a specific agent.
 
         Args:
@@ -1337,11 +1546,13 @@ class BudgetCoordinator(Transactional[BudgetState]):
         """
         agent = self.get_agent(agent_id)
         if not agent:
-            raise ValueError(f"No agent found with ID {agent_id}")
+            msg = f"No agent found with ID {agent_id}"
+            raise ValueError(msg)
 
         pool = self.get_agent_pool(agent_id)
         if not pool:
-            raise ValueError(f"No pool found for agent {agent_id}")
+            msg = f"No pool found for agent {agent_id}"
+            raise ValueError(msg)
 
         # Get the agent's initial and current budget allocation
         if not hasattr(self, "_initial_budgets"):
@@ -1349,7 +1560,8 @@ class BudgetCoordinator(Transactional[BudgetState]):
             self._initial_budgets[agent_id] = self._agent_budgets[agent_id]
 
         initial_budget = self._initial_budgets.get(
-            agent_id, self._agent_budgets[agent_id]
+            agent_id,
+            self._agent_budgets[agent_id],
         )
         current_budget = self._agent_budgets[agent_id]
         used_budget = initial_budget - current_budget

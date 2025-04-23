@@ -1,29 +1,31 @@
 #!/usr/bin/env python
 """Example of comprehensive budget control features in Agent Safety Framework."""
 
-import os
 import asyncio
 import logging
+import os
 from decimal import Decimal
-from typing import Dict, List, Optional
+from typing import Optional
 
 # Import OpenAI Agents SDK components
 from agents import Agent, Runner, function_tool
 
-# Import Agent Safety Framework components
-from safeguards.notifications import NotificationManager, NotificationLevel
-from safeguards.types import NotificationChannel, BudgetConfig, ResourceThresholds
-from safeguards.violations import ViolationReporter, ViolationType
-from safeguards.core import BudgetCoordinator, BudgetPool
+from safeguards.core import BudgetCoordinator
 from safeguards.monitoring.metrics import MetricsAnalyzer
 from safeguards.monitoring.violation_reporter import (
-    ViolationSeverity,
     ViolationContext,
+    ViolationSeverity,
 )
+
+# Import Agent Safety Framework components
+from safeguards.notifications import NotificationManager
+from safeguards.types import NotificationChannel
+from safeguards.violations import ViolationReporter, ViolationType
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -37,7 +39,7 @@ TOKEN_COST_PER_1K = {
 
 # Example tool for cost estimation
 @function_tool
-def estimate_cost(query_length: int, expected_response_length: int, model: str) -> Dict:
+def estimate_cost(query_length: int, expected_response_length: int, model: str) -> dict:
     """Estimate the cost of an API call based on input and expected output length.
 
     Args:
@@ -76,7 +78,7 @@ class BudgetAwareAgent:
         violation_reporter: ViolationReporter,
         model: str = DEFAULT_MODEL,
         initial_budget: Decimal = Decimal("1.0"),
-        tools: Optional[List] = None,
+        tools: Optional[list] = None,
         pool_id: Optional[str] = None,
     ):
         self.name = name
@@ -105,7 +107,7 @@ class BudgetAwareAgent:
         if pool_id:
             self.pool_id = pool_id
             logger.info(
-                f"Agent {self.id} associated with pool {pool_id} (not added to pool)"
+                f"Agent {self.id} associated with pool {pool_id} (not added to pool)",
             )
         else:
             self.pool_id = None
@@ -136,13 +138,13 @@ class BudgetAwareAgent:
                     current_balance=Decimal("0"),
                     violation_amount=Decimal("0"),
                 )
-                return f"Unable to process request due to budget limitations."
+                return "Unable to process request due to budget limitations."
 
             # If cost estimate provided, check if we can afford it
             if cost_estimate and Decimal(str(cost_estimate)) > remaining_budget:
                 logger.warning(
                     f"Agent {self.name} has insufficient budget for estimated cost "
-                    f"(${cost_estimate:.4f} > ${remaining_budget:.4f})"
+                    f"(${cost_estimate:.4f} > ${remaining_budget:.4f})",
                 )
                 self._report_budget_violation(
                     "Insufficient budget for estimated cost",
@@ -152,7 +154,7 @@ class BudgetAwareAgent:
                 return f"Unable to process request: estimated cost (${cost_estimate:.4f}) exceeds remaining budget (${remaining_budget:.4f})."
 
         except Exception as e:
-            logger.error(f"Error checking budget: {str(e)}")
+            logger.error(f"Error checking budget: {e!s}")
 
         try:
             # Run the agent
@@ -175,13 +177,14 @@ class BudgetAwareAgent:
             return response_text
 
         except Exception as e:
-            logger.error(f"Error running agent: {str(e)}")
-            return f"Error: {str(e)}"
+            logger.error(f"Error running agent: {e!s}")
+            return f"Error: {e!s}"
 
     def _calculate_cost(self, input_tokens: int, output_tokens: int) -> float:
         """Calculate cost based on token usage."""
         model_costs = TOKEN_COST_PER_1K.get(
-            self.model, TOKEN_COST_PER_1K[DEFAULT_MODEL]
+            self.model,
+            TOKEN_COST_PER_1K[DEFAULT_MODEL],
         )
 
         input_cost = (input_tokens / 1000) * model_costs["input"]
@@ -205,20 +208,24 @@ class BudgetAwareAgent:
             metrics = self.budget_coordinator.get_agent_metrics(self.id)
             logger.info(
                 f"Agent {self.name} used ${cost:.6f}, "
-                f"remaining budget: ${metrics.get('remaining_budget', 0):.6f}"
+                f"remaining budget: ${metrics.get('remaining_budget', 0):.6f}",
             )
 
             # Check for low budget warning
             if metrics.get("remaining_budget", 0) < metrics.get(
-                "initial_budget", 1
+                "initial_budget",
+                1,
             ) * Decimal("0.2"):
                 logger.warning(f"Agent {self.name} budget is running low")
 
         except Exception as e:
-            logger.error(f"Error updating budget: {str(e)}")
+            logger.error(f"Error updating budget: {e!s}")
 
     def _report_budget_violation(
-        self, message: str, current_balance: Decimal, violation_amount: Decimal
+        self,
+        message: str,
+        current_balance: Decimal,
+        violation_amount: Decimal,
     ) -> None:
         """Report a budget violation."""
         context = ViolationContext(
@@ -240,14 +247,15 @@ def setup_framework():
     """Set up the Agent Safety Framework components."""
     # Create notification manager
     notification_manager = NotificationManager(
-        enabled_channels={NotificationChannel.CONSOLE}
+        enabled_channels={NotificationChannel.CONSOLE},
     )
 
     # Configure Slack if available
     slack_webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
     if slack_webhook_url:
         notification_manager.configure_slack(
-            webhook_url=slack_webhook_url, channel="#agent-safety"
+            webhook_url=slack_webhook_url,
+            channel="#agent-safety",
         )
 
     # Create violation reporter
@@ -288,7 +296,7 @@ async def main():
         )
         logger.info(f"Created research pool: {research_pool}")
     except Exception as e:
-        logger.warning(f"Could not create research pool: {str(e)}")
+        logger.warning(f"Could not create research pool: {e!s}")
 
     try:
         support_pool = budget_coordinator.create_pool(
@@ -298,7 +306,7 @@ async def main():
         )
         logger.info(f"Created support pool: {support_pool}")
     except Exception as e:
-        logger.warning(f"Could not create support pool: {str(e)}")
+        logger.warning(f"Could not create support pool: {e!s}")
 
     # Create agents
     researcher = BudgetAwareAgent(
@@ -338,24 +346,24 @@ async def main():
     # Run the actual query with the cost estimate
     research_response = await researcher.run(research_query, cost_estimate=est_cost)
     logger.info(
-        f"Researcher response: {research_response[:100]}..."
+        f"Researcher response: {research_response[:100]}...",
     )  # Show first 100 chars
 
     # Run assistant with follow-up
     logger.info("Running assistant agent...")
     assist_response = await assistant.run(
-        f"Summarize this research in simple terms: {research_response[:500]}"
+        f"Summarize this research in simple terms: {research_response[:500]}",
     )
     logger.info(
-        f"Assistant response: {assist_response[:100]}..."
+        f"Assistant response: {assist_response[:100]}...",
     )  # Show first 100 chars
 
     # Display pool metrics
     logger.info(
-        f"Research pool ID: {research_pool.pool_id if 'research_pool' in locals() else 'not created'}"
+        f"Research pool ID: {research_pool.pool_id if 'research_pool' in locals() else 'not created'}",
     )
     logger.info(
-        f"Support pool ID: {support_pool.pool_id if 'support_pool' in locals() else 'not created'}"
+        f"Support pool ID: {support_pool.pool_id if 'support_pool' in locals() else 'not created'}",
     )
 
     # Display agent metrics
@@ -363,7 +371,7 @@ async def main():
         metrics = budget_coordinator.get_agent_metrics(agent.id)
         logger.info(f"{agent.name} usage: ${metrics.get('used_budget', 0):.4f}")
         logger.info(
-            f"{agent.name} remaining: ${metrics.get('remaining_budget', 0):.4f}"
+            f"{agent.name} remaining: ${metrics.get('remaining_budget', 0):.4f}",
         )
         usage_percentage = (
             (metrics.get("used_budget", 0) / metrics.get("initial_budget", 1)) * 100

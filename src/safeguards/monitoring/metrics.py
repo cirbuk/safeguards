@@ -1,11 +1,8 @@
 """Metrics analyzer for monitoring and analyzing agent and system metrics."""
 
+from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, List, Optional
-from dataclasses import dataclass, field
-
-from ..types import BudgetMetrics, ResourceMetrics, SafetyMetrics
 
 
 @dataclass
@@ -22,7 +19,7 @@ class AgentMetrics:
     error_count: int = 0
     average_latency: float = 0.0
     last_updated: datetime = field(default_factory=datetime.now)
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -36,9 +33,9 @@ class SystemMetrics:
     budget_utilization: float
     error_rate: float
     last_updated: datetime = field(default_factory=datetime.now)
-    cpu_usage: Optional[float] = None
-    memory_usage: Optional[float] = None
-    metadata: Dict = field(default_factory=dict)
+    cpu_usage: float | None = None
+    memory_usage: float | None = None
+    metadata: dict = field(default_factory=dict)
 
 
 class MetricsAnalyzer:
@@ -46,8 +43,8 @@ class MetricsAnalyzer:
 
     def __init__(self):
         """Initialize metrics analyzer."""
-        self._agent_metrics: Dict[str, Dict] = {}
-        self._system_metrics: Dict = {
+        self._agent_metrics: dict[str, dict] = {}
+        self._system_metrics: dict = {
             "total_agents": 0,
             "active_agents": 0,
             "total_budget": Decimal("0"),
@@ -57,7 +54,7 @@ class MetricsAnalyzer:
             "last_updated": datetime.now(),
         }
 
-    def record_metrics(self, agent_id: str, metrics: Dict) -> None:
+    def record_metrics(self, agent_id: str, metrics: dict) -> None:
         """Record new metrics for an agent.
 
         Args:
@@ -74,7 +71,7 @@ class MetricsAnalyzer:
         # Update system metrics
         self._update_system_metrics()
 
-    def get_agent_metrics(self, agent_id: str) -> Dict:
+    def get_agent_metrics(self, agent_id: str) -> dict:
         """Get metrics for an agent.
 
         Args:
@@ -84,10 +81,11 @@ class MetricsAnalyzer:
             Agent metrics
         """
         if agent_id not in self._agent_metrics:
-            raise ValueError(f"No metrics found for agent {agent_id}")
+            msg = f"No metrics found for agent {agent_id}"
+            raise ValueError(msg)
         return self._agent_metrics[agent_id]
 
-    def get_system_metrics(self) -> Dict:
+    def get_system_metrics(self) -> dict:
         """Get system-wide metrics.
 
         Returns:
@@ -105,20 +103,16 @@ class MetricsAnalyzer:
         )
 
         total_budget = sum(
-            Decimal(str(metrics.get("total_budget", 0)))
-            for metrics in self._agent_metrics.values()
+            Decimal(str(metrics.get("total_budget", 0))) for metrics in self._agent_metrics.values()
         )
 
         used_budget = sum(
-            Decimal(str(metrics.get("used_budget", 0)))
-            for metrics in self._agent_metrics.values()
+            Decimal(str(metrics.get("used_budget", 0))) for metrics in self._agent_metrics.values()
         )
 
         budget_utilization = float(used_budget / total_budget) if total_budget else 0.0
 
-        error_count = sum(
-            metrics.get("error_count", 0) for metrics in self._agent_metrics.values()
-        )
+        error_count = sum(metrics.get("error_count", 0) for metrics in self._agent_metrics.values())
         total_actions = sum(
             metrics.get("action_count", 0) for metrics in self._agent_metrics.values()
         )
@@ -133,5 +127,5 @@ class MetricsAnalyzer:
                 "budget_utilization": budget_utilization,
                 "error_rate": error_rate,
                 "last_updated": datetime.now(),
-            }
+            },
         )

@@ -1,9 +1,7 @@
 """Cost estimation module for predicting agent operation costs."""
 
 from dataclasses import dataclass
-from datetime import datetime
 from decimal import Decimal
-from typing import Dict, Optional
 
 from ..base.budget import BudgetPeriod
 
@@ -13,7 +11,7 @@ class CostEstimate:
     """Represents a cost estimate with breakdown."""
 
     total_cost: Decimal
-    breakdown: Dict[str, Decimal]
+    breakdown: dict[str, Decimal]
     confidence_score: float  # 0-1 score indicating estimation confidence
     period: BudgetPeriod
     margin_of_error: float  # Percentage of potential variance
@@ -24,8 +22,8 @@ class CostEstimator:
 
     def __init__(
         self,
-        llm_costs: Dict[str, Decimal],  # Model ID to cost per 1K tokens mapping
-        api_costs: Dict[str, Decimal],  # API endpoint to cost per call mapping
+        llm_costs: dict[str, Decimal],  # Model ID to cost per 1K tokens mapping
+        api_costs: dict[str, Decimal],  # API endpoint to cost per call mapping
         storage_cost_per_gb: Decimal,
         compute_cost_per_hour: Decimal,
     ):
@@ -69,7 +67,7 @@ class CostEstimator:
         self,
         endpoint: str,
         num_calls: int,
-        data_size_mb: Optional[float] = None,
+        data_size_mb: float | None = None,
     ) -> Decimal:
         """Estimate cost for API calls.
 
@@ -87,7 +85,7 @@ class CostEstimator:
         # Add data transfer costs if applicable
         if data_size_mb:
             data_cost = Decimal("0.01") * Decimal(
-                str(data_size_mb / 1000)
+                str(data_size_mb / 1000),
             )  # Cost per GB
             cost += data_cost
 
@@ -135,8 +133,8 @@ class CostEstimator:
 
     def create_total_estimate(
         self,
-        llm_usage: Dict[str, int],  # model_id -> estimated tokens
-        api_calls: Dict[str, int],  # endpoint -> number of calls
+        llm_usage: dict[str, int],  # model_id -> estimated tokens
+        api_calls: dict[str, int],  # endpoint -> number of calls
         storage_gb: float,
         cpu_hours: float,
         gpu_hours: float = 0.0,
@@ -162,7 +160,9 @@ class CostEstimator:
         for model_id, tokens in llm_usage.items():
             input_cost = self.estimate_llm_cost(model_id, tokens, is_output=False)
             output_cost = self.estimate_llm_cost(
-                model_id, tokens // 4, is_output=True
+                model_id,
+                tokens // 4,
+                is_output=True,
             )  # Assume 4:1 input:output ratio
             llm_cost += input_cost + output_cost
             breakdown[f"llm_{model_id}"] = input_cost + output_cost
@@ -185,7 +185,11 @@ class CostEstimator:
 
         # Calculate confidence score based on estimation factors
         confidence_score = self._calculate_confidence_score(
-            llm_usage, api_calls, storage_gb, cpu_hours, gpu_hours
+            llm_usage,
+            api_calls,
+            storage_gb,
+            cpu_hours,
+            gpu_hours,
         )
 
         # Calculate margin of error based on confidence
@@ -201,8 +205,8 @@ class CostEstimator:
 
     def _calculate_confidence_score(
         self,
-        llm_usage: Dict[str, int],
-        api_calls: Dict[str, int],
+        llm_usage: dict[str, int],
+        api_calls: dict[str, int],
         storage_gb: float,
         cpu_hours: float,
         gpu_hours: float,

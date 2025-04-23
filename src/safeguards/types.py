@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum, auto
-from typing import Dict, Optional, List
 
 
 class AlertSeverity(Enum):
@@ -24,7 +23,7 @@ class SafetyAlert:
     description: str
     severity: AlertSeverity
     timestamp: datetime = field(default_factory=datetime.now)
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -56,7 +55,7 @@ class SafetyMetrics:
 
     budget: BudgetMetrics
     resources: ResourceMetrics
-    alerts: Optional[List[SafetyAlert]] = None
+    alerts: list[SafetyAlert] | None = None
 
 
 @dataclass
@@ -69,5 +68,5 @@ class BudgetOverride:
     status: str  # PENDING, APPROVED, REJECTED
     requester: str
     timestamp: datetime = field(default_factory=datetime.now)
-    approver: Optional[str] = None
-    approval_time: Optional[datetime] = None
+    approver: str | None = None
+    approval_time: datetime | None = None

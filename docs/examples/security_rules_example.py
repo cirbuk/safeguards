@@ -3,9 +3,9 @@
 from safeguards.rules.base import RuleChain
 from safeguards.rules.defaults import (
     PermissionGuardrail,
-    SecurityContextRule,
     RateLimitRule,
     ResourceLimitRule,
+    SecurityContextRule,
 )
 
 
@@ -26,7 +26,7 @@ def setup_security_rules():
         PermissionGuardrail(
             required_permissions={"read", "write"},
             role_permissions=role_permissions,
-        )
+        ),
     )
 
     # Add security context validation
@@ -34,7 +34,7 @@ def setup_security_rules():
         SecurityContextRule(
             required_security_level="medium",
             allowed_environments={"prod", "staging", "dev"},
-        )
+        ),
     )
 
     # Add resource limits
@@ -42,7 +42,7 @@ def setup_security_rules():
         ResourceLimitRule(
             max_memory_mb=1024,
             max_cpu_percent=80,
-        )
+        ),
     )
 
     # Add rate limiting
@@ -50,7 +50,7 @@ def setup_security_rules():
         RateLimitRule(
             max_requests=100,
             time_window_seconds=60,
-        )
+        ),
     )
 
     return chain
@@ -70,7 +70,7 @@ def example_usage():
             "memory_mb": 512,
             "cpu_percent": 50,
             "request_count": 50,
-        }
+        },
     )
     print("Example 1 (Valid):", result.is_valid)
     if not result.is_valid:
@@ -85,7 +85,7 @@ def example_usage():
             "memory_mb": 512,
             "cpu_percent": 50,
             "request_count": 50,
-        }
+        },
     )
     print("\nExample 2 (Invalid Permissions):", result.is_valid)
     if not result.is_valid:
@@ -100,7 +100,7 @@ def example_usage():
             "memory_mb": 2048,  # Exceeds limit
             "cpu_percent": 90,  # Exceeds limit
             "request_count": 50,
-        }
+        },
     )
     print("\nExample 3 (Resource Limits):", result.is_valid)
     if not result.is_valid:

@@ -5,6 +5,7 @@ Usage: python bump_version.py [patch|minor|major]
 """
 
 import sys
+
 import toml
 
 

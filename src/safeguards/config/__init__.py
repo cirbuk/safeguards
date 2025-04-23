@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Dict, List, Optional, Any
+from typing import Any
 
-from ..types import ResourceThresholds, BudgetConfig
+from ..types import BudgetConfig, ResourceThresholds
 
 
 @dataclass
@@ -16,8 +16,8 @@ class Config:
     log_level: str = "INFO"
     enable_monitoring: bool = True
     enable_notifications: bool = True
-    notification_endpoints: List[Dict[str, Any]] = field(default_factory=list)
-    api_keys: Dict[str, str] = field(default_factory=dict)
+    notification_endpoints: list[dict[str, Any]] = field(default_factory=list)
+    api_keys: dict[str, str] = field(default_factory=dict)
 
     @classmethod
     def default(cls) -> "Config":

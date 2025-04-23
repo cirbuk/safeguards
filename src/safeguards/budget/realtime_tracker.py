@@ -5,12 +5,10 @@ import json
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, List, Optional, Set
 
 import websockets
 from websockets.server import WebSocketServerProtocol
 
-from safeguards.base.budget import BudgetPeriod
 from safeguards.budget.cost_tracker import CostTracker
 from safeguards.budget.token_tracker import TokenTracker
 
@@ -36,7 +34,7 @@ class BudgetUpdate:
     current_usage: Decimal
     remaining_budget: Decimal
     usage_percentage: float
-    alert: Optional[BudgetAlert] = None
+    alert: BudgetAlert | None = None
 
 
 class RealtimeBudgetTracker:
@@ -47,7 +45,7 @@ class RealtimeBudgetTracker:
         cost_tracker: CostTracker,
         token_tracker: TokenTracker,
         websocket_port: int = 8765,
-        alert_thresholds: Dict[str, float] = None,
+        alert_thresholds: dict[str, float] | None = None,
     ):
         """Initialize realtime budget tracker.
 
@@ -67,7 +65,7 @@ class RealtimeBudgetTracker:
             "emergency": 0.95,
         }
 
-        self.connected_clients: Set[WebSocketServerProtocol] = set()
+        self.connected_clients: set[WebSocketServerProtocol] = set()
         self._server = None
         self._running = False
 
@@ -75,7 +73,9 @@ class RealtimeBudgetTracker:
         """Start the websocket server."""
         self._running = True
         self._server = await websockets.serve(
-            self._handle_client, "localhost", self.websocket_port
+            self._handle_client,
+            "localhost",
+            self.websocket_port,
         )
         await self._server.wait_closed()
 
@@ -101,7 +101,7 @@ class RealtimeBudgetTracker:
             # Keep connection alive and handle incoming messages
             while self._running:
                 try:
-                    message = await websocket.recv()
+                    await websocket.recv()
                     # Handle client messages if needed
                     await asyncio.sleep(0.1)
                 except websockets.exceptions.ConnectionClosed:
@@ -126,12 +126,15 @@ class RealtimeBudgetTracker:
         """
         message = json.dumps(asdict(update), default=str)
         await asyncio.gather(
-            *[client.send(message) for client in self.connected_clients]
+            *[client.send(message) for client in self.connected_clients],
         )
 
     def check_alerts(
-        self, agent_id: str, usage: Decimal, budget: Decimal
-    ) -> Optional[BudgetAlert]:
+        self,
+        agent_id: str,
+        usage: Decimal,
+        budget: Decimal,
+    ) -> BudgetAlert | None:
         """Check for budget alerts based on usage.
 
         Args:
@@ -155,7 +158,7 @@ class RealtimeBudgetTracker:
                 usage_percentage=usage_percentage,
                 timestamp=datetime.now(),
             )
-        elif usage_percentage >= self.alert_thresholds["critical"]:
+        if usage_percentage >= self.alert_thresholds["critical"]:
             return BudgetAlert(
                 agent_id=agent_id,
                 alert_type="critical",
@@ -165,7 +168,7 @@ class RealtimeBudgetTracker:
                 usage_percentage=usage_percentage,
                 timestamp=datetime.now(),
             )
-        elif usage_percentage >= self.alert_thresholds["warning"]:
+        if usage_percentage >= self.alert_thresholds["warning"]:
             return BudgetAlert(
                 agent_id=agent_id,
                 alert_type="warning",

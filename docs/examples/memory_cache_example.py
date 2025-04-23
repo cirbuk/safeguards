@@ -1,10 +1,11 @@
 """Example usage of memory and cache management features."""
 
-from safeguards.core.memory_manager import MemoryManager
-from safeguards.core.cache_manager import CacheManager
 import time
 from dataclasses import dataclass
 from typing import Optional
+
+from safeguards.core.cache_manager import CacheManager
+from safeguards.core.memory_manager import MemoryManager
 
 
 @dataclass
@@ -27,7 +28,9 @@ def example_memory_management():
 
     # Create request pool
     request_pool = memory_manager.create_pool(
-        name="request_pool", factory=lambda: Request(), max_size=100
+        name="request_pool",
+        factory=lambda: Request(),
+        max_size=100,
     )
 
     # Example of using pooled objects
@@ -87,7 +90,8 @@ def example_cache_management():
     # Add items
     cache_manager.put_in_cache("timed", "api_results", "temp", "data")
     print(
-        "Initial value:", cache_manager.get_from_cache("timed", "api_results", "temp")
+        "Initial value:",
+        cache_manager.get_from_cache("timed", "api_results", "temp"),
     )
 
     # Wait for expiration

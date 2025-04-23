@@ -1,29 +1,31 @@
 #!/usr/bin/env python
 """Example of using safety features with multiple coordinating agents."""
 
-import os
 import asyncio
 import logging
+import os
 from decimal import Decimal
-from typing import Dict, List, Optional
+from typing import Optional
 
 # Import OpenAI Agents SDK components
 from agents import Agent, Runner, function_tool
 
-# Import Agent Safety Framework components
-from safeguards.notifications import NotificationManager, NotificationLevel
-from safeguards.types import NotificationChannel
-from safeguards.violations import ViolationReporter, ViolationType
-from safeguards.core import BudgetCoordinator, BudgetPool
+from safeguards.core import BudgetCoordinator
 from safeguards.monitoring.metrics import MetricsAnalyzer
 from safeguards.monitoring.violation_reporter import (
-    ViolationSeverity,
     ViolationContext,
+    ViolationSeverity,
 )
+
+# Import Agent Safety Framework components
+from safeguards.notifications import NotificationManager
+from safeguards.types import NotificationChannel
+from safeguards.violations import ViolationReporter, ViolationType
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -48,7 +50,7 @@ class CoordinatedAgent:
         budget_coordinator: BudgetCoordinator,
         violation_reporter: ViolationReporter,
         model: str = DEFAULT_MODEL,
-        tools: Optional[List] = None,
+        tools: Optional[list] = None,
         instructions: str = None,
     ):
         self.name = name
@@ -77,9 +79,9 @@ class CoordinatedAgent:
             if metrics.get("remaining_budget", 0) <= 0:
                 logger.warning(f"Agent {self.name} has no remaining budget")
                 self._report_budget_violation("No remaining budget")
-                return f"Unable to process request due to budget limitations."
+                return "Unable to process request due to budget limitations."
         except Exception as e:
-            logger.error(f"Error checking budget: {str(e)}")
+            logger.error(f"Error checking budget: {e!s}")
 
         try:
             # Run the agent
@@ -103,14 +105,14 @@ class CoordinatedAgent:
                 self.budget_coordinator.update_agent_budget(self.id, new_budget)
 
                 logger.info(
-                    f"Agent {self.name} used ${cost:.4f}, remaining: ${new_budget:.4f}"
+                    f"Agent {self.name} used ${cost:.4f}, remaining: ${new_budget:.4f}",
                 )
 
             return result
 
         except Exception as e:
-            logger.error(f"Error running agent: {str(e)}")
-            return f"Error: {str(e)}"
+            logger.error(f"Error running agent: {e!s}")
+            return f"Error: {e!s}"
 
     def _report_budget_violation(self, message: str):
         """Report a budget violation."""
@@ -133,14 +135,15 @@ def setup_framework():
     """Set up the Agent Safety Framework components."""
     # Create notification manager
     notification_manager = NotificationManager(
-        enabled_channels={NotificationChannel.CONSOLE}
+        enabled_channels={NotificationChannel.CONSOLE},
     )
 
     # Configure Slack if available
     slack_webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
     if slack_webhook_url:
         notification_manager.configure_slack(
-            webhook_url=slack_webhook_url, channel="#agent-safety"
+            webhook_url=slack_webhook_url,
+            channel="#agent-safety",
         )
 
     # Create violation reporter
@@ -232,12 +235,12 @@ async def main():
 
     logger.info("Running Analyst agent...")
     analysis_result = await analyst.run(
-        f"Analyze these findings: {research_result.final_output}"
+        f"Analyze these findings: {research_result.final_output}",
     )
 
     logger.info("Running Writer agent...")
     report_result = await writer.run(
-        f"Write a report about: {analysis_result.final_output}"
+        f"Write a report about: {analysis_result.final_output}",
     )
 
     # Display final metrics
