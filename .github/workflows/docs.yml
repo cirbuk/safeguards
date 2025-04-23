@@ -29,7 +29,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mkdocs mkdocs-material mkdocstrings mkdocstrings-python pymdownx
+          pip install mkdocs mkdocs-material mkdocstrings mkdocstrings-python pymdown-extensions
 
       - name: Deploy documentation
         run: |
