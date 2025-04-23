@@ -77,9 +77,26 @@ jobs:
         with:
           sarif_file: semgrep.sarif
 
+      - name: Check for Snyk Token
+        id: check_snyk
+        run: |
+          if [ -n "${{ secrets.SNYK_TOKEN }}" ]; then
+            echo "has_token=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_token=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/python@master
+        if: ${{ steps.check_snyk.outputs.has_token == 'true' }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: monitor
+          args: --no-root
+
+      - name: Snyk Token Info
+        if: ${{ steps.check_snyk.outputs.has_token != 'true' }}
+        run: |
+          echo "::warning::Snyk token not found! Vulnerability monitoring was skipped."
+          echo "::warning::To enable Snyk vulnerability monitoring, obtain a token from snyk.io and add it as a GitHub Secret named SNYK_TOKEN."
