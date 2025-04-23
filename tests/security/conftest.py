@@ -84,12 +84,12 @@ def mock_context_factory():
     """Factory for creating test contexts with different security settings."""
 
     def create_context(
-        roles: list[str] = None,
-        security_level: str = None,
-        environment: str = None,
-        request_count: int = None,
-        operation: str = None,
-        metadata: dict = None,
+        roles: list[str] | None = None,
+        security_level: str | None = None,
+        environment: str | None = None,
+        request_count: int | None = None,
+        operation: str | None = None,
+        metadata: dict | None = None,
     ) -> RuleContext:
         """Create a test context with the specified security settings.
 

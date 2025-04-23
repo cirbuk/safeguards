@@ -152,7 +152,7 @@ class BudgetManagedAgent(Agent):
         # Simulate API usage if complex query
         if complexity > 1.0:
             # Simulate using the vision API for complex queries
-            api_usage = self.api_tracker.record_usage(
+            self.api_tracker.record_usage(
                 endpoint="vision",
                 data_transfer_mb=1.5
                 * complexity,  # Simulate data transfer proportional to complexity

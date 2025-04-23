@@ -2,7 +2,6 @@
 
 import time
 from dataclasses import dataclass
-from typing import Optional
 
 from safeguards.core.cache_manager import CacheManager
 from safeguards.core.memory_manager import MemoryManager
@@ -12,8 +11,8 @@ from safeguards.core.memory_manager import MemoryManager
 class Request:
     """Example request object for pooling."""
 
-    id: Optional[int] = None
-    data: Optional[str] = None
+    id: int | None = None
+    data: str | None = None
 
     def reset(self):
         """Reset request data."""

@@ -140,7 +140,7 @@ def main():
 
     # Register a financial agent
     financial_agent = FinancialAgent("financial_advisor", Decimal("1000.00"))
-    registered_agent = budget_coordinator.register_agent(
+    budget_coordinator.register_agent(
         name=financial_agent.name,
         initial_budget=Decimal("5000.00"),
         priority=5,
@@ -237,7 +237,7 @@ def main():
         # )
 
         # Wait for the response to be processed
-        status = action_handler.wait_for_action(action)
+        action_handler.wait_for_action(action)
 
         # Handle the result
         handle_human_approval(action, financial_agent, high_value_context)
@@ -285,7 +285,7 @@ def main():
         )
 
         # Wait for the response to be processed
-        status = action_handler.wait_for_action(action)
+        action_handler.wait_for_action(action)
 
         # Handle the result
         handle_human_approval(action, financial_agent, restricted_context)

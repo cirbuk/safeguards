@@ -5,7 +5,7 @@ import inspect
 import time
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 from safeguards.budget.manager import BudgetManager as BaseManager
 from safeguards.core.notification_manager import NotificationManager
@@ -95,7 +95,7 @@ class ContentGuardrail:
 
     def validate_input(
         self,
-        input_text: Optional[str] = None,
+        input_text: str | None = None,
         **kwargs,
     ) -> ValidationResult:
         """Validate that input doesn't contain forbidden words."""
@@ -130,7 +130,7 @@ class ContentGuardrail:
             details={},
         )
 
-    async def run(self, context) -> Optional[str]:
+    async def run(self, context) -> str | None:
         """Run function with content safety checks.
 
         Args:
@@ -156,7 +156,7 @@ class ContentGuardrail:
         # No issues found
         return None
 
-    async def validate(self, context, result) -> Optional[str]:
+    async def validate(self, context, result) -> str | None:
         """Framework-compatible validation method.
 
         Validates results to ensure they don't contain any forbidden words.
@@ -187,18 +187,19 @@ class CompositeGuardrail:
     async def run(self, fn, **kwargs):
         """Run all guardrails in sequence."""
         # Create context for guardrails
-        context = kwargs.copy()
+        kwargs.copy()
 
         # For framework guardrails, we need to create a proper RunContext
         # Create a mock agent for demonstration purposes
         from safeguards.types.guardrail import RunContext
 
         # Get the agent from kwargs
-        agent = kwargs.get("agent", None)
+        agent = kwargs.get("agent")
 
         # Make sure we have a valid agent
         if agent is None:
-            raise ValueError("An agent instance must be provided to run guardrails")
+            msg = "An agent instance must be provided to run guardrails"
+            raise ValueError(msg)
 
         # Create a RunContext for framework guardrails
         run_context = RunContext(agent=agent, inputs=kwargs, metadata={})
@@ -209,15 +210,17 @@ class CompositeGuardrail:
             if hasattr(guardrail, "validate_input") and not hasattr(guardrail, "run"):
                 validation_result = guardrail.validate_input(**kwargs)
                 if hasattr(validation_result, "is_valid") and not validation_result.is_valid:
+                    msg = f"Guardrail violation: {validation_result.message}"
                     raise ValueError(
-                        f"Guardrail violation: {validation_result.message}",
+                        msg,
                     )
 
             # For framework-compatible guardrails
             elif hasattr(guardrail, "run"):
                 error = await guardrail.run(run_context)
                 if error:
-                    raise ValueError(f"Guardrail violation: {error}")
+                    msg = f"Guardrail violation: {error}"
+                    raise ValueError(msg)
 
         # All guardrails passed, run the function
         # Check if the function is async
@@ -231,7 +234,8 @@ class CompositeGuardrail:
             if hasattr(guardrail, "validate") and hasattr(guardrail, "run"):
                 error = await guardrail.validate(run_context, result)
                 if error:
-                    raise ValueError(f"Result validation failed: {error}")
+                    msg = f"Result validation failed: {error}"
+                    raise ValueError(msg)
 
         return result
 
@@ -241,7 +245,7 @@ async def main():
     print("=== Safety Guardrails Example ===")
 
     # Create notification manager for alerts
-    notification_manager = NotificationManager()
+    NotificationManager()
 
     # Set up notification callback
     def alert_callback(agent_id, alert_type, severity, message):

@@ -1,6 +1,6 @@
 """Example of implementing a custom security rule."""
 
-from typing import Optional, cast
+from typing import cast
 
 from safeguards.base.guardrails import GuardrailViolation, ValidationResult
 from safeguards.rules.base import RuleChain, RuleContext, RulePriority, SafetyRule
@@ -14,7 +14,7 @@ class DataPrivacyRule(SafetyRule):
         allowed_data_types: list[str],
         pii_fields: list[str],
         required_encryption: bool = True,
-        dependencies: Optional[list[type[SafetyRule]]] = None,
+        dependencies: list[type[SafetyRule]] | None = None,
     ):
         """Initialize data privacy rule.
 

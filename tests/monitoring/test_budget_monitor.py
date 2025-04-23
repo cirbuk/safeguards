@@ -113,8 +113,8 @@ class TestBudgetMonitor:
         assert status["total_budget"] == total_budget
         assert status["used_budget"] == used_budget
         assert status["usage_ratio"] == Decimal("0.75")
-        assert status["warning_alert"] == True
-        assert status["critical_alert"] == False
+        assert status["warning_alert"] is True
+        assert status["critical_alert"] is False
 
     def test_reset_agent_alerts(self, budget_monitor):
         """Test resetting alerts for an agent."""

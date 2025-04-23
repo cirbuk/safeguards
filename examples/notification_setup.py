@@ -51,7 +51,7 @@ class SimpleAgent(Agent):
         }
 
 
-def load_env_var(name: str, default: str = None) -> str:
+def load_env_var(name: str, default: str | None = None) -> str:
     """Safely load environment variable with optional default."""
     value = os.environ.get(name, default)
     if value is None:

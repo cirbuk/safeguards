@@ -123,7 +123,7 @@ class TestMultiAgentCoordination:
         """Test budget allocation based on pool priorities."""
         budget_api = test_scenario["budget_api"]
         agent_api = test_scenario["agent_api"]
-        pools = test_scenario["created_pools"]
+        test_scenario["created_pools"]
 
         # Create high-priority agent
         high_priority_agent = agent_api.create_agent(

@@ -5,7 +5,6 @@ import asyncio
 import logging
 import os
 from decimal import Decimal
-from typing import Optional
 
 # Import OpenAI Agents SDK components
 from agents import Agent, Runner, function_tool
@@ -78,8 +77,8 @@ class BudgetAwareAgent:
         violation_reporter: ViolationReporter,
         model: str = DEFAULT_MODEL,
         initial_budget: Decimal = Decimal("1.0"),
-        tools: Optional[list] = None,
-        pool_id: Optional[str] = None,
+        tools: list | None = None,
+        pool_id: str | None = None,
     ):
         self.name = name
         self.model = model
@@ -116,7 +115,7 @@ class BudgetAwareAgent:
         self.total_input_tokens = 0
         self.total_output_tokens = 0
 
-    async def run(self, query: str, cost_estimate: Optional[float] = None):
+    async def run(self, query: str, cost_estimate: float | None = None):
         """Run the agent with budget checks and monitoring.
 
         Args:
@@ -279,7 +278,8 @@ async def main():
     """Run the budget control example."""
     # Check for OpenAI API key
     if not os.environ.get("OPENAI_API_KEY"):
-        raise ValueError("Please set the OPENAI_API_KEY environment variable")
+        msg = "Please set the OPENAI_API_KEY environment variable"
+        raise ValueError(msg)
 
     # Set up framework
     framework = setup_framework()

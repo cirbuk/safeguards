@@ -68,7 +68,7 @@ class TestSystemResourceMonitor:
         assert "open_files" in exceeded
 
         # Verify boolean results
-        for metric, is_exceeded in exceeded.items():
+        for _metric, is_exceeded in exceeded.items():
             assert isinstance(is_exceeded, bool)
 
         # Test with custom thresholds

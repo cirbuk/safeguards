@@ -44,7 +44,8 @@ def fetch_user_data(user_id: str) -> dict[str, Any]:
     # For demonstration, we'll simulate random failures
     if random.random() < 0.5:  # 50% chance of failure
         logger.warning(f"Simulating network error for {url}")
-        raise ConnectionError("Connection refused")
+        msg = "Connection refused"
+        raise ConnectionError(msg)
 
     # Simulate successful response
     logger.info(f"Successfully fetched data from {url}")
@@ -86,7 +87,8 @@ class DatabaseClient:
                 # Simulate connection attempt that might fail
                 if random.random() < 0.3:  # 30% chance of failure
                     logger.warning("Simulating database connection error")
-                    raise ConnectionError("Database connection failed")
+                    msg = "Database connection failed"
+                    raise ConnectionError(msg)
 
                 self.connected = True
                 logger.info("Database connection established")
@@ -113,14 +115,16 @@ class DatabaseClient:
             MaxRetriesExceeded: If maximum retry attempts are exceeded
         """
         if not self.connected:
-            raise ValueError("Not connected to database")
+            msg = "Not connected to database"
+            raise ValueError(msg)
 
         logger.info(f"Executing query: {sql}")
 
         # Simulate random database timeout
         if random.random() < 0.4:  # 40% chance of timeout
             logger.warning("Simulating database timeout")
-            raise TimeoutError("Query timeout")
+            msg = "Query timeout"
+            raise TimeoutError(msg)
 
         # Simulate successful query
         logger.info("Query executed successfully")
@@ -169,11 +173,13 @@ class PaymentProcessor:
 
         if rand_val < 0.3:  # 30% gateway error (will retry)
             logger.warning("Simulating payment gateway error")
-            raise self.PaymentGatewayError("Gateway unavailable")
+            msg = "Gateway unavailable"
+            raise self.PaymentGatewayError(msg)
 
         if rand_val < 0.5:  # 20% declined (won't retry)
             logger.warning("Simulating payment declined")
-            raise self.PaymentDeclinedError("Insufficient funds")
+            msg = "Insufficient funds"
+            raise self.PaymentDeclinedError(msg)
 
         # Successful payment
         logger.info("Payment processed successfully")

@@ -177,16 +177,17 @@ async def main():
     """Run single agent example."""
     # Check if OpenAI API key is set
     if not os.environ.get("OPENAI_API_KEY"):
-        raise ValueError("Please set the OPENAI_API_KEY environment variable")
+        msg = "Please set the OPENAI_API_KEY environment variable"
+        raise ValueError(msg)
 
     # Set up safety framework
     framework = setup_safety_framework()
-    notification_manager = framework["notification_manager"]
+    framework["notification_manager"]
     violation_reporter = framework["violation_reporter"]
     budget_coordinator = framework["budget_coordinator"]
 
     # Create a budget pool
-    pool = budget_coordinator.create_pool(
+    budget_coordinator.create_pool(
         pool_id="analyst_pool",
         total_budget=Decimal("1.0"),  # $1.00 initial budget
         priority=5,  # Medium priority

@@ -5,7 +5,6 @@ import asyncio
 import logging
 import os
 from decimal import Decimal
-from typing import Optional
 
 # Import OpenAI Agents SDK components
 from agents import Agent, Runner, function_tool
@@ -50,8 +49,8 @@ class CoordinatedAgent:
         budget_coordinator: BudgetCoordinator,
         violation_reporter: ViolationReporter,
         model: str = DEFAULT_MODEL,
-        tools: Optional[list] = None,
-        instructions: str = None,
+        tools: list | None = None,
+        instructions: str | None = None,
     ):
         self.name = name
         self.id = f"agent_{name.lower().replace(' ', '_')}"
@@ -86,7 +85,6 @@ class CoordinatedAgent:
         try:
             # Run the agent
             result = await Runner.run(self.agent, input=query)
-            response_text = result.final_output
 
             # Update usage tracking (if available)
             usage = getattr(result, "usage", None)
@@ -167,11 +165,12 @@ async def main():
     """Run multi-agent example."""
     # Check for OpenAI API key
     if not os.environ.get("OPENAI_API_KEY"):
-        raise ValueError("Please set the OPENAI_API_KEY environment variable")
+        msg = "Please set the OPENAI_API_KEY environment variable"
+        raise ValueError(msg)
 
     # Set up framework
     framework = setup_framework()
-    notification_manager = framework["notification_manager"]
+    framework["notification_manager"]
     violation_reporter = framework["violation_reporter"]
     budget_coordinator = framework["budget_coordinator"]
 
@@ -239,7 +238,7 @@ async def main():
     )
 
     logger.info("Running Writer agent...")
-    report_result = await writer.run(
+    await writer.run(
         f"Write a report about: {analysis_result.final_output}",
     )
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Simple test script to verify safeguards package can be imported."""
+import sys
 
 try:
     import safeguards
@@ -8,4 +9,4 @@ try:
     print("Package can be imported correctly.")
 except ImportError as e:
     print(f"Error importing safeguards: {e}")
-    exit(1)
+    sys.exit(1)

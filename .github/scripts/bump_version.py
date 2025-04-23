@@ -23,7 +23,8 @@ def bump_version(version: str, bump_type: str) -> str:
         minor = 0
         patch = 0
     else:
-        raise ValueError(f"Invalid bump type: {bump_type}")
+        msg = f"Invalid bump type: {bump_type}"
+        raise ValueError(msg)
 
     return f"{major}.{minor}.{patch}"
 

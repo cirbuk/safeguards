@@ -18,7 +18,7 @@ import asyncio
 import logging
 import os
 from decimal import Decimal
-from typing import Any, Optional
+from typing import Any
 
 # Import OpenAI Agents SDK components
 try:
@@ -64,8 +64,8 @@ class OpenAIAgentWrapper:
         name: str,
         description: str,
         model: str = DEFAULT_MODEL,
-        budget_coordinator: Optional[BudgetCoordinator] = None,
-        violation_reporter: Optional[ViolationReporter] = None,
+        budget_coordinator: BudgetCoordinator | None = None,
+        violation_reporter: ViolationReporter | None = None,
     ):
         self.name = name
         self.description = description
@@ -237,7 +237,7 @@ async def main_async():
 
     # Set up safety framework
     framework = setup_safety_framework()
-    notification_manager = framework["notification_manager"]
+    framework["notification_manager"]
     violation_reporter = framework["violation_reporter"]
     budget_coordinator = framework["budget_coordinator"]
 
