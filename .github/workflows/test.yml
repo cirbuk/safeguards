@@ -43,7 +43,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest src/safeguards -v --cov=safeguards --cov-report=xml
+          pytest tests -v --cov=safeguards --cov-report=xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
